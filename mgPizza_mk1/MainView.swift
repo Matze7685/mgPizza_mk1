@@ -9,9 +9,9 @@ import SwiftUI
 import UIKit
 
 struct MainView: View {
-    @State private var doughBallsCount: Int = 1
-    @State private var doughBallsWeight: Int = 100
-    @State private var waterRatio: Int = 100
+    @State private var doughBallsCount: Double = 1
+    @State private var doughBallsWeight: Double = 100
+    @State private var waterRatio: Double = 100
     @State private var saltRatio: Double = 3
     @State private var proofingTimeIndoor: Int = 1
     @State private var proofingTimeFridge: Int = 1
@@ -40,7 +40,7 @@ struct MainView: View {
         VStack {
             HStack {
                 CustomStepperView(value: $doughBallsCount, stepValue: 1, minimumValue: 1, maximumValue: 100)
-                Text("Dough Balls Count: \(doughBallsCount)")
+                Text("Dough Balls Count: \(String(format: "%.0f", doughBallsCount))")
                 Spacer()
             }
             .frame(height: 40)
@@ -51,7 +51,7 @@ struct MainView: View {
         VStack {
             HStack {
                 CustomStepperView(value: $doughBallsWeight, stepValue: 5, minimumValue: 5, maximumValue: 1000)
-                Text("Dough Balls Weight: \(doughBallsWeight)")
+                Text("Dough Balls Weight: \(String(format: "%.0f", doughBallsWeight))g")
                 Spacer()
             }
             .frame(height: 40)
@@ -62,7 +62,7 @@ struct MainView: View {
         VStack {
             HStack {
                 CustomStepperView(value: $waterRatio, stepValue: 1, minimumValue: 40, maximumValue: 100)
-                Text("Water Ratio: \(waterRatio)%")
+                Text("Water Ratio: \(String(format: "%.0f", waterRatio))%")
                 Spacer()
             }
             .frame(height: 40)
@@ -72,8 +72,8 @@ struct MainView: View {
     var saltView: some View {
         VStack {
             HStack {
-                CustomStepperView(value: $saltRatio, stepValue: Int(0.1), minimumValue: 0, maximumValue: 5)
-                Text("Salt Ratio: \(saltRatio)%")
+                CustomStepperView(value: $saltRatio, stepValue: 0.1, minimumValue: 0, maximumValue: 5)
+                Text("Salt Ratio: \(String(format: "%.1f", saltRatio))%")
                 Spacer()
             }
             .frame(height: 40)
@@ -108,10 +108,14 @@ struct MainView: View {
 //        let yeast = calculateYeastWeight(flour: 1000, roomTemp: 12, roomTime: 4, fridgeTemp: 2, fridgeTime: 24)
     }
     
-    func calculateFlourWeight(doughBallWeight: Double, waterRatio: Double) -> (mehl: Double, wasser: Double) {
-        let flour = doughBallWeight / (1.0 + (waterRatio / 100.0))
-        let water = doughBallWeight - flour
-        return (flour, water)
+    func calculateMainIngredients(doughWeightTotal: Double, waterRatio: Double, saltRatio: Double) -> (flour: Double, water: Double, salt: Double) {
+        let totalFactor = 1.0 + (waterRatio / 100.0) + (saltRatio / 100.0)
+        let flour = doughWeightTotal / totalFactor
+        let water = flour * (waterRatio / 100.0)
+        let salt = flour * (saltRatio / 100.0)
+        return (flour, water, salt)
+        
+//        let recipe = calculateMainIngredients(doughWeightTotal: 250.0, waterRatio: 65.0, saltRatio: 3.0)
     }
 }
 
@@ -121,10 +125,10 @@ struct MainView: View {
 
 
 struct CustomStepperView: UIViewRepresentable {
-    @Binding var value: Int
+    @Binding var value: Double
     var stepValue: Double
     var minimumValue: Double
-    var maximumValue: Int
+    var maximumValue: Double
     
     func makeUIView(context: Context) -> UIStepper {
         let stepper = UIStepper()
@@ -154,7 +158,7 @@ struct CustomStepperView: UIViewRepresentable {
         }
         
         @objc func valueChanged(_ sender: UIStepper) {
-            parent.value = Int(sender.value)
+            parent.value = sender.value
         }
     }
 }
