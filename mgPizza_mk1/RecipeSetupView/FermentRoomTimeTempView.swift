@@ -1,0 +1,43 @@
+//
+//  FermentRoomTimeTempView.swift
+//  mgPizza_mk1
+//
+//  Created by Guderjahn Mathias on 04.08.26.
+//
+
+import SwiftUI
+
+struct FermentRoomTimeTempView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    @Bindable var recipeSetupData: RecipeSetupData
+    @Binding var path: NavigationPath
+    
+    var body: some View {
+        Form {
+            Section("Step 2 of 3") {
+                Stepper("Room Time: \(Int(recipeSetupData.roomTime)) h", value: $recipeSetupData.roomTime, in: 0...48)
+                Stepper("Room Temperature: \(Int(recipeSetupData.roomTemp)) °C", value: $recipeSetupData.roomTemp, in: 10...30)
+            }
+        }
+        .navigationTitle("Ferment Room Time & Temp").font(.subheadline)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Cancel", systemImage: "xmark") {
+                    dismiss()
+                }
+            }
+        }
+        
+        Button("Weiter") {
+            path.append(RecipeSetupStep.fermentFridgeTimeTemp)
+        }
+    }
+}
+
+#Preview {
+    let path = Binding.constant(NavigationPath())
+    FermentRoomTimeTempView(recipeSetupData: RecipeSetupData(), path: path)
+        .padding(.horizontal)
+}

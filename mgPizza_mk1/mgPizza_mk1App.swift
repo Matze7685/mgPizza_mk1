@@ -5,14 +5,14 @@
 //  Created by Guderjahn Mathias on 28.07.26.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct mgPizza_mk1App: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            RecipeSetupData.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,8 +25,9 @@ struct mgPizza_mk1App: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
         }
+//        .modelContainer(for: RecipeSetupData.self)
         .modelContainer(sharedModelContainer)
     }
 }
