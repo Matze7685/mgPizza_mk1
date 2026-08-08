@@ -15,7 +15,7 @@
 		C7DC0DC03019FE36003738AA /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DBF3019FE36003738AA /* MainView.swift */; };
 		C7DC0DC23019FE82003738AA /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DC13019FE82003738AA /* ActivityView.swift */; };
 		C7DC0DC43019FEA4003738AA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DC33019FEA4003738AA /* SettingsView.swift */; };
-		C7DC0DC63022775B003738AA /* RecipeSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DC53022775B003738AA /* RecipeSetupView.swift */; };
+		C7DC0DC63022775B003738AA /* RecipeContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DC53022775B003738AA /* RecipeContainerView.swift */; };
 		C7DC0DC83022799A003738AA /* RecipeSetupData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DC73022799A003738AA /* RecipeSetupData.swift */; };
 		C7DC0DCC30227C71003738AA /* DoughSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DCB30227C71003738AA /* DoughSettingsView.swift */; };
 		C7DC0DCE30227CB0003738AA /* FermentRoomTimeTempView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DCD30227CB0003738AA /* FermentRoomTimeTempView.swift */; };
@@ -35,7 +35,7 @@
 		C7DC0DBF3019FE36003738AA /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		C7DC0DC13019FE82003738AA /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		C7DC0DC33019FEA4003738AA /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		C7DC0DC53022775B003738AA /* RecipeSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeSetupView.swift; sourceTree = "<group>"; };
+		C7DC0DC53022775B003738AA /* RecipeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeContainerView.swift; sourceTree = "<group>"; };
 		C7DC0DC73022799A003738AA /* RecipeSetupData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeSetupData.swift; sourceTree = "<group>"; };
 		C7DC0DCB30227C71003738AA /* DoughSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughSettingsView.swift; sourceTree = "<group>"; };
 		C7DC0DCD30227CB0003738AA /* FermentRoomTimeTempView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FermentRoomTimeTempView.swift; sourceTree = "<group>"; };
@@ -84,13 +84,13 @@
 				C7DC0DAE3019FA16003738AA /* CalculateView.swift */,
 				C7DC0DC33019FEA4003738AA /* SettingsView.swift */,
 				C7DC0DC73022799A003738AA /* RecipeSetupData.swift */,
-				C7DC0DC53022775B003738AA /* RecipeSetupView.swift */,
-				C7DC0DD330227CF1003738AA /* RecipeSetupView */,
+				C7DC0DC53022775B003738AA /* RecipeContainerView.swift */,
+				C7DC0DD330227CF1003738AA /* RecipeContainer */,
 			);
 			path = mgPizza_mk1;
 			sourceTree = "<group>";
 		};
-		C7DC0DD330227CF1003738AA /* RecipeSetupView */ = {
+		C7DC0DD330227CF1003738AA /* RecipeContainer */ = {
 			isa = PBXGroup;
 			children = (
 				C7DC0DCB30227C71003738AA /* DoughSettingsView.swift */,
@@ -98,7 +98,7 @@
 				C7DC0DD130227CC9003738AA /* FermentFridgeTimeTempView.swift */,
 				C7DC0DD430227DFC003738AA /* DoughResultView.swift */,
 			);
-			path = RecipeSetupView;
+			path = RecipeContainer;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -182,7 +182,7 @@
 				C7DC0DB73019FA16003738AA /* CalculateView.swift in Sources */,
 				C7DC0DCC30227C71003738AA /* DoughSettingsView.swift in Sources */,
 				C7DC0DCE30227CB0003738AA /* FermentRoomTimeTempView.swift in Sources */,
-				C7DC0DC63022775B003738AA /* RecipeSetupView.swift in Sources */,
+				C7DC0DC63022775B003738AA /* RecipeContainerView.swift in Sources */,
 				C7DC0DC03019FE36003738AA /* MainView.swift in Sources */,
 				C7DC0DC83022799A003738AA /* RecipeSetupData.swift in Sources */,
 				C7DC0DBA3019FA16003738AA /* mgPizza_mk1App.swift in Sources */,

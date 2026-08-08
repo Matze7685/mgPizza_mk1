@@ -5,9 +5,11 @@
 //  Created by Guderjahn Mathias on 29.07.26.
 //
 
+import SwiftData
 import SwiftUI
 
 struct MainView: View {
+    @Query private var recipes: [RecipeSetupData]
     @State private var isShowingNewRecipeView: Bool = false
     
     var body: some View {
@@ -39,7 +41,7 @@ struct MainView: View {
                 }
             }
             .sheet(isPresented: $isShowingNewRecipeView) {
-                RecipeContainerView()
+                RecipeContainerView(recipeSetupData: RecipeSetupData())
             }
         }
     }

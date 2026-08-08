@@ -9,8 +9,14 @@ import SwiftData
 import SwiftUI
 
 struct RecipeContainerView: View {
-    @State private var recipeSetupData = RecipeSetupData()
+    @Environment(\.modelContext) var modelContext
+    
+    @State private var recipeSetupData: RecipeSetupData
     @State private var path = NavigationPath()
+    
+    init(recipeSetupData: RecipeSetupData) {
+        self.recipeSetupData = recipeSetupData
+    }
     
     var body: some View {
         NavigationStack(path: $path) {
@@ -30,5 +36,5 @@ struct RecipeContainerView: View {
 }
 
 #Preview {
-    RecipeContainerView()
+//    RecipeContainerView()
 }

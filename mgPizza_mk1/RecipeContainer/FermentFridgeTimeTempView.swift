@@ -61,7 +61,8 @@ struct FermentFridgeTimeTempView: View {
 }
 
 #Preview {
+    let recipeSetupData = RecipeSetupData(doughBallsCount: 4, doughWeight: 300, waterRatio: 65, saltRatio: 3, yeastSelection: 1, fridgeTimeMode: "MANUAL", roomTemp: 27, roomTime: 12, coolTemp: 4, coolTime: 12, dateSelection: Date())
     let path = Binding.constant(NavigationPath())
-    FermentFridgeTimeTempView(recipeSetupData: RecipeSetupData(), path: path)
+    FermentFridgeTimeTempView(recipeSetupData: recipeSetupData, path: path)
         .padding(.horizontal)
 }

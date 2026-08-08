@@ -5,9 +5,12 @@
 //  Created by Guderjahn Mathias on 04.08.26.
 //
 
+import SwiftData
 import SwiftUI
 
 struct DoughResultView: View {
+    @Environment(\.modelContext) private var modelContext
+    
     var recipeSetupData: RecipeSetupData
     @Binding var path: NavigationPath
     
@@ -108,14 +111,15 @@ struct DoughResultView: View {
         }
         .navigationTitle("Result").font(.subheadline)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         
         HStack {
             Button{
-                
+                saveRecipe()
             } label: {
                 HStack {
                     Spacer()
-                    Text("+ ADD RECIPE")
+                    Text("SAVE RECIPE")
                         .foregroundStyle(Color.black)
                         .bold()
                     Spacer()
@@ -140,6 +144,7 @@ struct DoughResultView: View {
             .background(Color.green)
             .clipShape(.capsule)
         }
+        .padding(.horizontal)
     }
     
     func calculateFridgeHours(date1: Date, date2: Date) -> Double {
@@ -147,10 +152,18 @@ struct DoughResultView: View {
         let roomTime = recipeSetupData.roomTime
         return (diffInSeconds / 3600.0) - roomTime
     }
+    
+    private func saveRecipe() {
+        let newRecipe = RecipeSetupData(doughBallsCount: recipeSetupData.doughBallsCount, doughWeight: recipeSetupData.doughWeight, waterRatio: recipeSetupData.waterRatio, saltRatio: recipeSetupData.saltRatio, yeastSelection: recipeSetupData.yeastSelection, fridgeTimeMode: recipeSetupData.fridgeTimeMode, roomTemp: recipeSetupData.roomTemp, roomTime: recipeSetupData.roomTime, coolTemp: recipeSetupData.coolTemp, coolTime: recipeSetupData.coolTime, dateSelection: recipeSetupData.dateSelection)
+        modelContext.insert(newRecipe)
+    }
+    
+    
 }
 
 #Preview {
+    let recipeSetupData = RecipeSetupData(doughBallsCount: 4, doughWeight: 300, waterRatio: 65, saltRatio: 3, yeastSelection: 1, fridgeTimeMode: "MANUAL", roomTemp: 27, roomTime: 12, coolTemp: 4, coolTime: 12, dateSelection: Date())
     let path = Binding.constant(NavigationPath())
-    DoughResultView(recipeSetupData: RecipeSetupData(), path: path)
+    DoughResultView(recipeSetupData: recipeSetupData, path: path)
         .padding(.horizontal)
 }

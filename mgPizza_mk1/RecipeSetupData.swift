@@ -10,19 +10,29 @@ import SwiftData
 
 @Model
 class RecipeSetupData {
-    var doughBallsCount: Double = 1.0
-    var doughWeight: Double = 250.0
-    var waterRatio: Double = 65.0
-    var saltRatio: Double = 3.0
-    var yeastSelection: Int = 0
-    var fridgeTimeMode: String = "AUTO"
-    var roomTemp: Double = 20.0
-    var roomTime: Double = 4.0
-    var coolTemp: Double = 4.0
-    var coolTime: Double = 12.0
-    var dateSelection: Date = Date()
+    var doughBallsCount: Double
+    var doughWeight: Double
+    var waterRatio: Double
+    var saltRatio: Double
+    var yeastSelection: Int
+    var fridgeTimeMode: String
+    var roomTemp: Double
+    var roomTime: Double
+    var coolTemp: Double
+    var coolTime: Double
+    var dateSelection: Date
     
-    init(doughBallsCount: Double, doughWeight: Double, waterRatio: Double, saltRatio: Double, yeastSelection: Int, fridgeTimeMode: String, roomTemp: Double, roomTime: Double, coolTemp: Double, coolTime: Double, dateSelection: Date) {
+    init(doughBallsCount: Double = 1.0,
+         doughWeight: Double = 250.0,
+         waterRatio: Double = 65.0,
+         saltRatio: Double = 3.0,
+         yeastSelection: Int = 0,
+         fridgeTimeMode: String = "AUTO",
+         roomTemp: Double = 20.0,
+         roomTime: Double = 4.0,
+         coolTemp: Double = 4.0,
+         coolTime: Double = 12.0,
+         dateSelection: Date = Date()) {
         self.doughBallsCount = doughBallsCount
         self.doughWeight = doughWeight
         self.waterRatio = waterRatio
