@@ -41,85 +41,98 @@ struct DoughResultView: View {
     
     var body: some View {
         Form {
-            Section(header: Text("")) {
-                HStack {
-                    Text("Flour")
-                    Spacer()
-                    Text("\(flour, specifier: "%.0f") g").bold()
-                }
-                HStack {
-                    Text("Water")
-                    Spacer()
-                    Text("\(water, specifier: "%.0f") g").bold()
-                }
-                HStack {
-                    Text("Salt")
-                    Spacer()
-                    Text("\(salt, specifier: "%.1f") g").bold()
-                }
-                HStack {
-                    Text("\(yeastTypes[recipeSetupData.yeastSelection])")
-                    Spacer()
-                    Text("\(yeast, specifier: "%.2f") g").bold().foregroundColor(.orange)
-                }
-            }
-            .listSectionSpacing(0)
-            Section(header: Text("")) {
-                HStack {
-                    Text("Dough Balls")
-                    Spacer()
-                    Text("\(recipeSetupData.doughBallsCount, specifier: "%.0f")").bold()
-                }
-                HStack {
-                    Text("Dough Balls Weight")
-                    Spacer()
-                    Text("\(recipeSetupData.doughWeight, specifier: "%.0f") g").bold()
-                }
-            }
-            .listSectionSpacing(0)
-            Section("") {
-                HStack {
-                    Text("Room Time")
-                    Spacer()
-                    Text("\(recipeSetupData.roomTime, specifier: "%.0f") h").bold()
-                }
-                HStack {
-                    Text("Room Temperature")
-                    Spacer()
-                    Text("\(recipeSetupData.roomTemp, specifier: "%.0f") °C").bold()
-                }
-                if recipeSetupData.fridgeTimeMode == "MANUAL" {
-                    HStack {
-                        Text("Fridge Time")
-                        Spacer()
-                        Text("\(recipeSetupData.coolTime, specifier: "%.0f") h").bold()
-                    }
-                } else {
-                    HStack {
-                        Text("Fridge Time")
-                        Spacer()
-                        Text("\(calculateFridgeHours(date1: Date(), date2: recipeSetupData.dateSelection), specifier: "%.0f") h").bold()
-                    }
-                }
-                HStack {
-                    Text("Fridge Temperature")
-                    Spacer()
-                    Text("\(recipeSetupData.coolTemp, specifier: "%.0f") °C").bold()
-                }
-            }
-            .listSectionSpacing(0)
+            ingredientsSection
+            doughSection
+            fermentSection
         }
         .navigationTitle("Result").font(.subheadline)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         
+        saveAndStartButton
+    }
+    
+    var ingredientsSection: some View {
+        Section(header: Text("")) {
+            HStack {
+                Text("Flour")
+                Spacer()
+                Text("\(flour, specifier: "%.0f") g").bold()
+            }
+            HStack {
+                Text("Water")
+                Spacer()
+                Text("\(water, specifier: "%.0f") g").bold()
+            }
+            HStack {
+                Text("Salt")
+                Spacer()
+                Text("\(salt, specifier: "%.1f") g").bold()
+            }
+            HStack {
+                Text("\(yeastTypes[recipeSetupData.yeastSelection])")
+                Spacer()
+                Text("\(yeast, specifier: "%.2f") g").bold().foregroundColor(.orange)
+            }
+        }
+        .listSectionSpacing(0)
+    }
+    var doughSection: some View {
+        Section(header: Text("")) {
+            HStack {
+                Text("Dough Balls")
+                Spacer()
+                Text("\(recipeSetupData.doughBallsCount, specifier: "%.0f")").bold()
+            }
+            HStack {
+                Text("Dough Balls Weight")
+                Spacer()
+                Text("\(recipeSetupData.doughWeight, specifier: "%.0f") g").bold()
+            }
+        }
+        .listSectionSpacing(0)
+    }
+    var fermentSection: some View {
+        Section("") {
+            HStack {
+                Text("Room Time")
+                Spacer()
+                Text("\(recipeSetupData.roomTime, specifier: "%.0f") h").bold()
+            }
+            HStack {
+                Text("Room Temperature")
+                Spacer()
+                Text("\(recipeSetupData.roomTemp, specifier: "%.0f") °C").bold()
+            }
+            if recipeSetupData.fridgeTimeMode == "MANUAL" {
+                HStack {
+                    Text("Fridge Time")
+                    Spacer()
+                    Text("\(recipeSetupData.coolTime, specifier: "%.0f") h").bold()
+                }
+            } else {
+                HStack {
+                    Text("Fridge Time")
+                    Spacer()
+                    Text("\(calculateFridgeHours(date1: Date(), date2: recipeSetupData.dateSelection), specifier: "%.0f") h").bold()
+                }
+            }
+            HStack {
+                Text("Fridge Temperature")
+                Spacer()
+                Text("\(recipeSetupData.coolTemp, specifier: "%.0f") °C").bold()
+            }
+        }
+        .listSectionSpacing(0)
+    }
+    var saveAndStartButton: some View {
         HStack {
             Button{
                 saveRecipe()
             } label: {
                 HStack {
                     Spacer()
-                    Text("SAVE RECIPE")
+                    Text("SAVE")
                         .foregroundStyle(Color.black)
                         .bold()
                     Spacer()
@@ -134,7 +147,7 @@ struct DoughResultView: View {
             } label: {
                 HStack {
                     Spacer()
-                    Text("START RECIPE")
+                    Text("START")
                         .foregroundStyle(Color.black)
                         .bold()
                     Spacer()
