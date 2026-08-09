@@ -41,7 +41,7 @@ struct FermentFridgeTimeTempView: View {
             }
         }
         
-        Button("Weiter") {
+        Button("Continue") {
             path.append(RecipeSetupStep.doughResult)
         }
     }

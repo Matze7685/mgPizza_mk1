@@ -30,7 +30,7 @@ struct FermentRoomTimeTempView: View {
             }
         }
         
-        Button("Weiter") {
+        Button("Continue") {
             path.append(RecipeSetupStep.fermentFridgeTimeTemp)
         }
     }

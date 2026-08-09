@@ -32,6 +32,18 @@ struct DoughSettingsView: View {
                     Slider(value: $recipeSetupData.saltRatio, in: 1.0...4.0, step: 0.1)
                 }
             }
+            Section("Yeast") {
+                HStack {
+                    VStack {
+                        Picker("Yeast Type", selection: $recipeSetupData.yeastSelection) {
+                            Text("Fresh").tag(0)
+                            Text("Dry").tag(1)
+                            Text("Instant Dry").tag(2)
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                }
+            }
         }
         .navigationTitle("Dough Settings").font(.subheadline)
         .navigationBarTitleDisplayMode(.inline)
@@ -43,7 +55,7 @@ struct DoughSettingsView: View {
             }
         }
         
-        Button("Weiter") {
+        Button("Continue") {
             path.append(RecipeSetupStep.fermentRoomTimeTemp)
         }
     }

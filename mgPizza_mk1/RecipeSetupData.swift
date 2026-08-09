@@ -15,6 +15,8 @@ class RecipeSetupData {
     var waterRatio: Double
     var saltRatio: Double
     var yeastSelection: Int
+    var yeastTypes: [String]
+    var yeastRatio: [Double]
     var fridgeTimeMode: String
     var roomTemp: Double
     var roomTime: Double
@@ -27,6 +29,8 @@ class RecipeSetupData {
          waterRatio: Double = 65.0,
          saltRatio: Double = 3.0,
          yeastSelection: Int = 0,
+         yeastTypes: [String] = ["Frische Hefe", "Trockenhefe", "Instant Trockenhefe"],
+         yeastRatio: [Double] = [3.0, 1.5, 1.0],
          fridgeTimeMode: String = "AUTO",
          roomTemp: Double = 20.0,
          roomTime: Double = 4.0,
@@ -38,6 +42,8 @@ class RecipeSetupData {
         self.waterRatio = waterRatio
         self.saltRatio = saltRatio
         self.yeastSelection = yeastSelection
+        self.yeastTypes = yeastTypes
+        self.yeastRatio = yeastRatio
         self.fridgeTimeMode = fridgeTimeMode
         self.roomTemp = roomTemp
         self.roomTime = roomTime
