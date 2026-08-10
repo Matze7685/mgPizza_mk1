@@ -13,6 +13,8 @@ struct ActivityView: View {
     @Environment(\.modelContext) var modelContext
     @Query private var recipeSetupData: [RecipeSetupData]
     
+    @State private var showSetup: Bool = false
+    
     var body: some View {
         VStack {
             Section(header: Text("Timer").font(.largeTitle)) {
@@ -55,9 +57,9 @@ struct ActivityView: View {
 }
 
 //MARK:- PREVIEW
-struct ActivityView_Previews: PreviewProvider {
-    static var previews: some View {
-        ActivityView()
-            .environmentObject(TimerLogic())
-    }
-}
+//struct ActivityView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        ActivityView()
+//            .environmentObject(TimerLogic())
+//    }
+//}

@@ -12,6 +12,7 @@ struct FermentRoomTimeTempView: View {
     
     @Bindable var recipeSetupData: RecipeSetupData
     @Binding var path: NavigationPath
+    @Binding var isShowingNewRecipeView: Bool
     
     var body: some View {
         Form {
@@ -25,7 +26,7 @@ struct FermentRoomTimeTempView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Cancel", systemImage: "xmark") {
-                    dismiss()
+                    isShowingNewRecipeView = false
                 }
             }
         }
@@ -39,6 +40,6 @@ struct FermentRoomTimeTempView: View {
 #Preview {
     let recipeSetupData = RecipeSetupData(doughBallsCount: 4, doughWeight: 300, waterRatio: 65, saltRatio: 3, yeastSelection: 1, fridgeTimeMode: "MANUAL", roomTemp: 27, roomTime: 12, coolTemp: 4, coolTime: 12, dateSelection: Date())
     let path = Binding.constant(NavigationPath())
-    FermentRoomTimeTempView(recipeSetupData: recipeSetupData, path: path)
+    FermentRoomTimeTempView(recipeSetupData: recipeSetupData, path: path, isShowingNewRecipeView: .constant(false))
         .padding(.horizontal)
 }

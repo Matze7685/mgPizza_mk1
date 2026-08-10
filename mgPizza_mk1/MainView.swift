@@ -11,6 +11,7 @@ import SwiftUI
 struct MainView: View {
     @Query private var recipes: [RecipeSetupData]
     @State private var isShowingNewRecipeView: Bool = false
+    @State private var isShowingRecipe: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -41,7 +42,7 @@ struct MainView: View {
                 }
             }
             .sheet(isPresented: $isShowingNewRecipeView) {
-                RecipeContainerView(recipeSetupData: RecipeSetupData())
+                RecipeContainerView(recipeSetupData: RecipeSetupData(), isShowingNewRecipeView: $isShowingNewRecipeView)
             }
         }
     }

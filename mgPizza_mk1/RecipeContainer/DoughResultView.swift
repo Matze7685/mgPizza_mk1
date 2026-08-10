@@ -14,6 +14,7 @@ struct DoughResultView: View {
     
     var recipeSetupData: RecipeSetupData
     @Binding var path: NavigationPath
+    @Binding var isShowingNewRecipeView: Bool
     
     var yeastTypes = ["Frische Hefe", "Trockenhefe", "Instant Trockenhefe"]
     var yeastRatio = [3.0, 1.5, 1.0]
@@ -49,6 +50,13 @@ struct DoughResultView: View {
         .navigationTitle("Result").font(.subheadline)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Cancel", systemImage: "xmark") {
+                    isShowingNewRecipeView = false
+                }
+            }
+        }
         
         saveAndStartButton
     }
@@ -145,7 +153,7 @@ struct DoughResultView: View {
             
             Button{
                 saveRecipe()
-                dismiss()
+                isShowingNewRecipeView = false
             } label: {
                 HStack {
                     Spacer()
@@ -179,6 +187,6 @@ struct DoughResultView: View {
 #Preview {
     let recipeSetupData = RecipeSetupData(doughBallsCount: 4, doughWeight: 300, waterRatio: 65, saltRatio: 3, yeastSelection: 1, fridgeTimeMode: "MANUAL", roomTemp: 27, roomTime: 12, coolTemp: 4, coolTime: 12, dateSelection: Date())
     let path = Binding.constant(NavigationPath())
-    DoughResultView(recipeSetupData: recipeSetupData, path: path)
+    DoughResultView(recipeSetupData: recipeSetupData, path: path, isShowingNewRecipeView: .constant(false))
         .padding(.horizontal)
 }
