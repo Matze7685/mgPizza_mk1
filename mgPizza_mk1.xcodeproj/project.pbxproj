@@ -21,6 +21,11 @@
 		C7DC0DCE30227CB0003738AA /* FermentRoomTimeTempView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DCD30227CB0003738AA /* FermentRoomTimeTempView.swift */; };
 		C7DC0DD230227CC9003738AA /* FermentFridgeTimeTempView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DD130227CC9003738AA /* FermentFridgeTimeTempView.swift */; };
 		C7DC0DD530227DFC003738AA /* DoughResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DD430227DFC003738AA /* DoughResultView.swift */; };
+		C7DC0DD93029E729003738AA /* TimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DD83029E729003738AA /* TimerView.swift */; };
+		C7DC0DDB3029E811003738AA /* DigitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DDA3029E811003738AA /* DigitView.swift */; };
+		C7DC0DDD3029E85F003738AA /* TimerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DDC3029E85F003738AA /* TimerLogic.swift */; };
+		C7DC0DDF3029EE77003738AA /* DatePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DDE3029EE77003738AA /* DatePickerView.swift */; };
+		C7DC0DE13029EEC0003738AA /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DE03029EEC0003738AA /* ButtonView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +46,11 @@
 		C7DC0DCD30227CB0003738AA /* FermentRoomTimeTempView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FermentRoomTimeTempView.swift; sourceTree = "<group>"; };
 		C7DC0DD130227CC9003738AA /* FermentFridgeTimeTempView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FermentFridgeTimeTempView.swift; sourceTree = "<group>"; };
 		C7DC0DD430227DFC003738AA /* DoughResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughResultView.swift; sourceTree = "<group>"; };
+		C7DC0DD83029E729003738AA /* TimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
+		C7DC0DDA3029E811003738AA /* DigitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DigitView.swift; sourceTree = "<group>"; };
+		C7DC0DDC3029E85F003738AA /* TimerLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerLogic.swift; sourceTree = "<group>"; };
+		C7DC0DDE3029EE77003738AA /* DatePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatePickerView.swift; sourceTree = "<group>"; };
+		C7DC0DE03029EEC0003738AA /* ButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +95,11 @@
 				C7DC0DC33019FEA4003738AA /* SettingsView.swift */,
 				C7DC0DC73022799A003738AA /* RecipeSetupData.swift */,
 				C7DC0DC53022775B003738AA /* RecipeContainerView.swift */,
+				C7DC0DD83029E729003738AA /* TimerView.swift */,
+				C7DC0DDA3029E811003738AA /* DigitView.swift */,
+				C7DC0DDC3029E85F003738AA /* TimerLogic.swift */,
+				C7DC0DDE3029EE77003738AA /* DatePickerView.swift */,
+				C7DC0DE03029EEC0003738AA /* ButtonView.swift */,
 				C7DC0DD330227CF1003738AA /* RecipeContainer */,
 			);
 			path = mgPizza_mk1;
@@ -178,14 +193,19 @@
 			files = (
 				C7DC0DC43019FEA4003738AA /* SettingsView.swift in Sources */,
 				C7DC0DD530227DFC003738AA /* DoughResultView.swift in Sources */,
+				C7DC0DE13029EEC0003738AA /* ButtonView.swift in Sources */,
 				C7DC0DD230227CC9003738AA /* FermentFridgeTimeTempView.swift in Sources */,
 				C7DC0DB73019FA16003738AA /* CalculateView.swift in Sources */,
 				C7DC0DCC30227C71003738AA /* DoughSettingsView.swift in Sources */,
+				C7DC0DDB3029E811003738AA /* DigitView.swift in Sources */,
+				C7DC0DDF3029EE77003738AA /* DatePickerView.swift in Sources */,
 				C7DC0DCE30227CB0003738AA /* FermentRoomTimeTempView.swift in Sources */,
+				C7DC0DD93029E729003738AA /* TimerView.swift in Sources */,
 				C7DC0DC63022775B003738AA /* RecipeContainerView.swift in Sources */,
 				C7DC0DC03019FE36003738AA /* MainView.swift in Sources */,
 				C7DC0DC83022799A003738AA /* RecipeSetupData.swift in Sources */,
 				C7DC0DBA3019FA16003738AA /* mgPizza_mk1App.swift in Sources */,
+				C7DC0DDD3029E85F003738AA /* TimerLogic.swift in Sources */,
 				C7DC0DC23019FE82003738AA /* ActivityView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

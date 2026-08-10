@@ -26,6 +26,7 @@ struct mgPizza_mk1App: App {
     var body: some Scene {
         WindowGroup {
             MainView()
+                .environmentObject(TimerLogic())
         }
 //        .modelContainer(for: RecipeSetupData.self)
         .modelContainer(sharedModelContainer)
