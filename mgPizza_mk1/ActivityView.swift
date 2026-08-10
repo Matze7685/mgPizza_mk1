@@ -22,7 +22,7 @@ struct ActivityView: View {
                     ForEach(recipeSetupData) { data in
                         VStack {
                             TimerView(dateEnd: data.dateSelection)
-                            Text("Date: \(data.dateSelection)")
+                                .environmentObject(TimerLogic())
                         }
                     }
                     .onDelete(perform: deleteRecipe)
@@ -57,9 +57,9 @@ struct ActivityView: View {
 }
 
 //MARK:- PREVIEW
-//struct ActivityView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        ActivityView()
-//            .environmentObject(TimerLogic())
-//    }
-//}
+struct ActivityView_Previews: PreviewProvider {
+    static var previews: some View {
+        ActivityView()
+            .environmentObject(TimerLogic())
+    }
+}

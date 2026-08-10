@@ -11,6 +11,7 @@ import SwiftUI
 struct DoughResultView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var logic: TimerLogic
     
     var recipeSetupData: RecipeSetupData
     @Binding var path: NavigationPath
@@ -154,6 +155,7 @@ struct DoughResultView: View {
             Button{
                 saveRecipe()
                 isShowingNewRecipeView = false
+                logic.isTimerRunning = true
             } label: {
                 HStack {
                     Spacer()

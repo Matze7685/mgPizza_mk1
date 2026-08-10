@@ -18,12 +18,10 @@ class TimerLogic: ObservableObject {
     var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @AppStorage("isTimerRunning") var isTimerRunning: Bool = false
     @AppStorage("endDate") var endDate = Date()
-
     
     func getTime(from date: Date, untill nowDate: Date) -> (Int, Int, Int, Int) {
         let calendar = Calendar(identifier: .gregorian)
         let components = calendar.dateComponents([.day, .hour, .minute, .second], from: date, to: nowDate)
-        
         return (
             components.day ?? 0,
             components.hour ?? 0,

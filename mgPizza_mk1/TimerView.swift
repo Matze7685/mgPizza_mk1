@@ -34,8 +34,10 @@ struct TimerView: View {
                 logic.seconds = s
             }
             
-            if logic.currentDate == logic.endDate {
+            if logic.currentDate == dateEnd {
                 logic.isTimerRunning = false
+            } else {
+                logic.isTimerRunning = true
             }
             
             logic.isTimerRunning ? timer.fire() : timer.invalidate()
