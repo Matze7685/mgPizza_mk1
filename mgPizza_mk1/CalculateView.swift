@@ -162,6 +162,16 @@ struct FridgeTimeDatePicker: UIViewRepresentable {
         datePicker.minuteInterval = 30
         datePicker.roundsToMinuteInterval = true
         
+        var diff: Int
+        let calendar = Calendar.current
+        let minute = calendar.component(.minute, from: Date.now)
+        if minute >= 30 {
+            diff = 60 - minute
+        } else {
+            diff = 30 - minute
+        }
+        datePicker.minimumDate = Date.now.addingTimeInterval(TimeInterval(diff * 60))
+        
         datePicker.addTarget(
             context.coordinator,
             action: #selector(Coordinator.dateChanged(_:)),

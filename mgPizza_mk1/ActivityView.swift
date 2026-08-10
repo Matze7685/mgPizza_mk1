@@ -13,37 +13,43 @@ struct ActivityView: View {
     @Environment(\.modelContext) var modelContext
     @Query private var recipeSetupData: [RecipeSetupData]
     
+    @State private var selectedRecipe: RecipeSetupData?
+    
     @State private var showSetup: Bool = false
+    @State private var showDetail: Bool = false
+    
+    @State var count = 0
     
     var body: some View {
         VStack {
             Section(header: Text("Timer").font(.largeTitle)) {
                 List {
                     ForEach(recipeSetupData) { data in
-                        VStack {
-                            TimerView(dateEnd: data.dateSelection)
-                                .environmentObject(TimerLogic())
+                        Button {
+                            
+                        } label: {
+                            HStack {
+                                TimerView(dateEnd: data.dateSelection)
+                                    .environmentObject(TimerLogic())
+                                Spacer()
+                                Divider()
+                                VStack {
+                                    Text("\(data.dateSelection, format: .dateTime.weekday().day().month() )")
+                                        .font(.caption)
+                                    Text(data.dateSelection, format: .dateTime.hour().minute())
+                                        .font(.title)
+                                }
+                            }
                         }
                     }
                     .onDelete(perform: deleteRecipe)
                 }
+                .sheet(item: $selectedRecipe) { recipe in
+                    RecipeDetailView(recipeData: recipe)
+                }
             }
             Spacer()
         }
-        
-//        VStack {
-            //TIMERVIEW
-//            TimerView()
-//            Spacer()
-            
-            //TIMEPICKERVIEW
-//            DatePickerView()
-//                .padding(.horizontal, 30)
-            
-            //BUTTONVIEW
-//            ButtonView()
-//                .padding(30)
-//        }
     }
     
     func deleteRecipe(at offsets: IndexSet) {

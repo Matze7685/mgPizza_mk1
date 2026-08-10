@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C7B149563066CFD20021AA7E /* RecipeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B149553066CFD20021AA7E /* RecipeDetailView.swift */; };
 		C7DC0DB73019FA16003738AA /* CalculateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DAE3019FA16003738AA /* CalculateView.swift */; };
 		C7DC0DBA3019FA16003738AA /* mgPizza_mk1App.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DB53019FA16003738AA /* mgPizza_mk1App.swift */; };
 		C7DC0DBB3019FA16003738AA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C7DC0DAD3019FA16003738AA /* Assets.xcassets */; };
@@ -24,11 +25,14 @@
 		C7DC0DD93029E729003738AA /* TimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DD83029E729003738AA /* TimerView.swift */; };
 		C7DC0DDB3029E811003738AA /* DigitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DDA3029E811003738AA /* DigitView.swift */; };
 		C7DC0DDD3029E85F003738AA /* TimerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DDC3029E85F003738AA /* TimerLogic.swift */; };
-		C7DC0DDF3029EE77003738AA /* DatePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DDE3029EE77003738AA /* DatePickerView.swift */; };
-		C7DC0DE13029EEC0003738AA /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DE03029EEC0003738AA /* ButtonView.swift */; };
+		C7DC0DE6302E57E5003738AA /* NotificationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DE5302E57E5003738AA /* NotificationModel.swift */; };
+		C7DC0DE8302E5829003738AA /* NotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DE7302E5829003738AA /* NotificationView.swift */; };
+		C7DC0DEC302EE693003738AA /* CustomPrimaryButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DEB302EE693003738AA /* CustomPrimaryButtonStyle.swift */; };
+		C7DC0E9230389891003738AA /* PizzaDoughRecipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0E9130389891003738AA /* PizzaDoughRecipe.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C7B149553066CFD20021AA7E /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
 		C7DC0D8A3018C5A1003738AA /* mgPizza_mk1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mgPizza_mk1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7DC0DAD3019FA16003738AA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C7DC0DAE3019FA16003738AA /* CalculateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculateView.swift; sourceTree = "<group>"; };
@@ -49,8 +53,10 @@
 		C7DC0DD83029E729003738AA /* TimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
 		C7DC0DDA3029E811003738AA /* DigitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DigitView.swift; sourceTree = "<group>"; };
 		C7DC0DDC3029E85F003738AA /* TimerLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerLogic.swift; sourceTree = "<group>"; };
-		C7DC0DDE3029EE77003738AA /* DatePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatePickerView.swift; sourceTree = "<group>"; };
-		C7DC0DE03029EEC0003738AA /* ButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonView.swift; sourceTree = "<group>"; };
+		C7DC0DE5302E57E5003738AA /* NotificationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationModel.swift; sourceTree = "<group>"; };
+		C7DC0DE7302E5829003738AA /* NotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationView.swift; sourceTree = "<group>"; };
+		C7DC0DEB302EE693003738AA /* CustomPrimaryButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPrimaryButtonStyle.swift; sourceTree = "<group>"; };
+		C7DC0E9130389891003738AA /* PizzaDoughRecipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PizzaDoughRecipe.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +70,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C7B149573066D0150021AA7E /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C7DC0DC73022799A003738AA /* RecipeSetupData.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
 		C7DC0D813018C5A1003738AA = {
 			isa = PBXGroup;
 			children = (
@@ -92,15 +106,16 @@
 				C7DC0DBF3019FE36003738AA /* MainView.swift */,
 				C7DC0DC13019FE82003738AA /* ActivityView.swift */,
 				C7DC0DAE3019FA16003738AA /* CalculateView.swift */,
+				C7B149553066CFD20021AA7E /* RecipeDetailView.swift */,
 				C7DC0DC33019FEA4003738AA /* SettingsView.swift */,
-				C7DC0DC73022799A003738AA /* RecipeSetupData.swift */,
+				C7B149573066D0150021AA7E /* Model */,
+				C7DC0E9130389891003738AA /* PizzaDoughRecipe.swift */,
 				C7DC0DC53022775B003738AA /* RecipeContainerView.swift */,
-				C7DC0DD83029E729003738AA /* TimerView.swift */,
-				C7DC0DDA3029E811003738AA /* DigitView.swift */,
-				C7DC0DDC3029E85F003738AA /* TimerLogic.swift */,
-				C7DC0DDE3029EE77003738AA /* DatePickerView.swift */,
-				C7DC0DE03029EEC0003738AA /* ButtonView.swift */,
+				C7DC0DE5302E57E5003738AA /* NotificationModel.swift */,
+				C7DC0DE7302E5829003738AA /* NotificationView.swift */,
+				C7DC0DE9302EE684003738AA /* Styles */,
 				C7DC0DD330227CF1003738AA /* RecipeContainer */,
+				C7DC0DE4302A66A5003738AA /* TimerView */,
 			);
 			path = mgPizza_mk1;
 			sourceTree = "<group>";
@@ -114,6 +129,32 @@
 				C7DC0DD430227DFC003738AA /* DoughResultView.swift */,
 			);
 			path = RecipeContainer;
+			sourceTree = "<group>";
+		};
+		C7DC0DE4302A66A5003738AA /* TimerView */ = {
+			isa = PBXGroup;
+			children = (
+				C7DC0DD83029E729003738AA /* TimerView.swift */,
+				C7DC0DDA3029E811003738AA /* DigitView.swift */,
+				C7DC0DDC3029E85F003738AA /* TimerLogic.swift */,
+			);
+			path = TimerView;
+			sourceTree = "<group>";
+		};
+		C7DC0DE9302EE684003738AA /* Styles */ = {
+			isa = PBXGroup;
+			children = (
+				C7DC0DEA302EE68C003738AA /* Buttons */,
+			);
+			path = Styles;
+			sourceTree = "<group>";
+		};
+		C7DC0DEA302EE68C003738AA /* Buttons */ = {
+			isa = PBXGroup;
+			children = (
+				C7DC0DEB302EE693003738AA /* CustomPrimaryButtonStyle.swift */,
+			);
+			path = Buttons;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -193,19 +234,22 @@
 			files = (
 				C7DC0DC43019FEA4003738AA /* SettingsView.swift in Sources */,
 				C7DC0DD530227DFC003738AA /* DoughResultView.swift in Sources */,
-				C7DC0DE13029EEC0003738AA /* ButtonView.swift in Sources */,
 				C7DC0DD230227CC9003738AA /* FermentFridgeTimeTempView.swift in Sources */,
 				C7DC0DB73019FA16003738AA /* CalculateView.swift in Sources */,
 				C7DC0DCC30227C71003738AA /* DoughSettingsView.swift in Sources */,
 				C7DC0DDB3029E811003738AA /* DigitView.swift in Sources */,
-				C7DC0DDF3029EE77003738AA /* DatePickerView.swift in Sources */,
+				C7DC0DE8302E5829003738AA /* NotificationView.swift in Sources */,
+				C7DC0DEC302EE693003738AA /* CustomPrimaryButtonStyle.swift in Sources */,
 				C7DC0DCE30227CB0003738AA /* FermentRoomTimeTempView.swift in Sources */,
 				C7DC0DD93029E729003738AA /* TimerView.swift in Sources */,
+				C7DC0E9230389891003738AA /* PizzaDoughRecipe.swift in Sources */,
 				C7DC0DC63022775B003738AA /* RecipeContainerView.swift in Sources */,
 				C7DC0DC03019FE36003738AA /* MainView.swift in Sources */,
 				C7DC0DC83022799A003738AA /* RecipeSetupData.swift in Sources */,
 				C7DC0DBA3019FA16003738AA /* mgPizza_mk1App.swift in Sources */,
+				C7DC0DE6302E57E5003738AA /* NotificationModel.swift in Sources */,
 				C7DC0DDD3029E85F003738AA /* TimerLogic.swift in Sources */,
+				C7B149563066CFD20021AA7E /* RecipeDetailView.swift in Sources */,
 				C7DC0DC23019FE82003738AA /* ActivityView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

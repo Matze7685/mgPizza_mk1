@@ -31,7 +31,7 @@ class RecipeSetupData {
          yeastSelection: Int = 0,
          yeastTypes: [String] = ["Frische Hefe", "Trockenhefe", "Instant Trockenhefe"],
          yeastRatio: [Double] = [3.0, 1.5, 1.0],
-         fridgeTimeMode: String = "AUTO",
+         fridgeTimeMode: String = "MAN",
          roomTemp: Double = 20.0,
          roomTime: Double = 4.0,
          coolTemp: Double = 4.0,

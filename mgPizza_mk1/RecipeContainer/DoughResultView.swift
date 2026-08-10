@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import UserNotifications
 
 struct DoughResultView: View {
     @Environment(\.modelContext) private var modelContext
@@ -153,9 +154,7 @@ struct DoughResultView: View {
             .clipShape(.capsule)
             
             Button{
-                saveRecipe()
-                isShowingNewRecipeView = false
-                logic.isTimerRunning = true
+                startButtonProcess()
             } label: {
                 HStack {
                     Spacer()
@@ -176,6 +175,18 @@ struct DoughResultView: View {
         let diffInSeconds = date2.timeIntervalSince(date1)
         let roomTime = recipeSetupData.roomTime
         return (diffInSeconds / 3600.0) - roomTime
+    }
+    
+    func startButtonProcess() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if granted {
+                saveRecipe()
+                isShowingNewRecipeView = false
+                logic.isTimerRunning = true
+            } else if let error = error {
+                print("Fehler: \(error.localizedDescription)")
+            }
+        }
     }
     
     private func saveRecipe() {
