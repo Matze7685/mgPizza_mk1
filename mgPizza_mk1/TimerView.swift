@@ -14,6 +14,7 @@ struct TimerView: View {
     
     @State var timeRemaining = 10
     @State private var dateNow = Date()
+    @State var dateEnd: Date
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -26,7 +27,7 @@ struct TimerView: View {
         }.onReceive(logic.timer, perform: { _ in
             let timer = Timer(timeInterval: 1, repeats: true) { Timer in
                 logic.currentDate = Date()
-                let (d,h,m,s) = logic.getTime(from: logic.currentDate, untill: logic.endDate)
+                let (d,h,m,s) = logic.getTime(from: logic.currentDate, untill: dateEnd)
                 logic.days = d
                 logic.hours = h
                 logic.minutes = m
@@ -42,15 +43,18 @@ struct TimerView: View {
     }
 }
 
-//#Preview {
-//    ActivityView()
-//}
-
-struct TimerView_Previews: PreviewProvider {
-    static var previews: some View {
-        TimerView()
-            .previewLayout(.sizeThatFits)
-            .padding()
-            .environmentObject(TimerLogic())
-    }
+#Preview {
+    var dateEnd: Date = Date(timeIntervalSince1970: TimeInterval(1787088000))
+    TimerView(dateEnd: dateEnd)
+        .environmentObject(TimerLogic())
 }
+
+//struct TimerView_Previews: PreviewProvider {
+//    var dateEnd: Date
+//    static var previews: some View {
+//        TimerView(dateEnd: dateEnd)
+//            .previewLayout(.sizeThatFits)
+//            .padding()
+//            .environmentObject(TimerLogic())
+//    }
+//}

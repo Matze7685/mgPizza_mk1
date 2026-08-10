@@ -10,6 +10,7 @@ import SwiftUI
 
 struct DoughResultView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     
     var recipeSetupData: RecipeSetupData
     @Binding var path: NavigationPath
@@ -143,7 +144,8 @@ struct DoughResultView: View {
             .clipShape(.capsule)
             
             Button{
-                
+                saveRecipe()
+                dismiss()
             } label: {
                 HStack {
                     Spacer()
