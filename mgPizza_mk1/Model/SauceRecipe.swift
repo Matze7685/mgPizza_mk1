@@ -6,11 +6,37 @@
 import Foundation
 import SwiftData
 
-/// Eine Zutat der Sauce in Prozent bezogen auf die Tomatenmenge (Tomate = 100 %).
+enum SauceUnit: String, Codable, CaseIterable, Identifiable {
+    case percent = "%"
+    case gram = "g"
+    case milliliter = "ml"
+    case piece = "pcs"
+    var id: String { rawValue }
+}
+
+/// Eine Zutat der Sauce.
+/// - Einheit `%`: `percent` ist der Anteil bezogen auf die Tomatenmenge (Tomate = 100 %).
+/// - Einheit g / ml / Stück: `percent` ist die Menge pro Pizza und wird mit der Pizza-Anzahl skaliert.
 struct SauceIngredient: Codable, Hashable, Identifiable {
     var id = UUID()
     var name: String
     var percent: Double
+    var unit: SauceUnit = .percent
+
+    init(name: String, percent: Double, unit: SauceUnit = .percent) {
+        self.name = name
+        self.percent = percent
+        self.unit = unit
+    }
+
+    // Ältere gespeicherte Zutaten haben noch keine Einheit
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        name = try container.decode(String.self, forKey: .name)
+        percent = try container.decode(Double.self, forKey: .percent)
+        unit = try container.decodeIfPresent(SauceUnit.self, forKey: .unit) ?? .percent
+    }
 }
 
 @Model
@@ -41,6 +67,7 @@ class SauceRecipe {
         SauceIngredient(name: "Fresh Basil", percent: 0.8),
         SauceIngredient(name: "Dried Oregano", percent: 0.2),
         SauceIngredient(name: "Garlic", percent: 0.0),
+        SauceIngredient(name: "Onion", percent: 0.0, unit: .piece),
         SauceIngredient(name: "Sugar", percent: 0.0),
     ]
 
@@ -51,16 +78,29 @@ class SauceRecipe {
     var totalWeight: Double { pizzaCount * gramsPerPizza }
 
     var tomatoWeight: Double {
-        let factor = 1.0 + ingredients.reduce(0) { $0 + $1.percent } / 100.0
+        let factor = 1.0 + ingredients.filter { $0.unit == .percent }.reduce(0) { $0 + $1.percent } / 100.0
         return totalWeight / factor
     }
 
+    /// Menge für die aktuelle Pizza-Anzahl (in g bei %, sonst in der Einheit der Zutat)
     func amount(of ingredient: SauceIngredient) -> Double {
-        tomatoWeight * ingredient.percent / 100.0
+        switch ingredient.unit {
+        case .percent: return tomatoWeight * ingredient.percent / 100.0
+        default: return ingredient.percent * pizzaCount
+        }
+    }
+
+    func formattedAmount(of ingredient: SauceIngredient) -> String {
+        let value = amount(of: ingredient)
+        switch ingredient.unit {
+        case .percent, .gram: return String(format: "%.1f g", value)
+        case .milliliter: return String(format: "%.0f ml", value)
+        case .piece: return String(format: "%g %@", (value * 4).rounded() / 4, String(localized: "pcs"))
+        }
     }
 
     var shoppingItems: [(String, String)] {
         [(tomatoName, String(format: "%.0f g", tomatoWeight))]
-        + ingredients.filter { $0.percent > 0 }.map { ($0.name, String(format: "%.1f g", amount(of: $0))) }
+        + ingredients.filter { $0.percent > 0 }.map { ($0.name, formattedAmount(of: $0)) }
     }
 }

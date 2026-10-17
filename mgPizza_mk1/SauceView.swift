@@ -39,7 +39,7 @@ struct SauceListView: View {
                     Button("Duplicate", systemImage: "doc.on.doc") {
                         let copy = SauceRecipe(name: sauce.name, pizzaCount: sauce.pizzaCount,
                                                gramsPerPizza: sauce.gramsPerPizza, tomatoName: sauce.tomatoName,
-                                               ingredients: sauce.ingredients.map { SauceIngredient(name: $0.name, percent: $0.percent) })
+                                               ingredients: sauce.ingredients.map { SauceIngredient(name: $0.name, percent: $0.percent, unit: $0.unit) })
                         modelContext.insert(copy)
                     }
                     .tint(.blue)
@@ -79,19 +79,28 @@ struct SauceDetailView: View {
                     HStack {
                         Text(LocalizedStringKey(ingredient.name))
                         Spacer()
-                        Text("\(sauce.amount(of: ingredient), specifier: "%.1f") g").bold()
+                        Text(sauce.formattedAmount(of: ingredient)).bold()
                     }
                 }
             }
 
-            Section(header: Text("Ingredients (% of tomatoes)"),
-                    footer: Text("Tip: Neapolitan style uses only crushed raw tomatoes + ~1.5–2% salt; basil and oil go on the pizza.")) {
+            Section(header: Text("Ingredients"),
+                    footer: Text("% = share of the tomato weight. g / ml / pcs = amount for all \(Int(sauce.pizzaCount)) pizzas, scales when you change the pizza count. Tip: Neapolitan style uses only crushed raw tomatoes + ~1.5–2% salt; basil and oil go on the pizza.")) {
                 TextField("Tomatoes", text: $sauce.tomatoName)
                 ForEach($sauce.ingredients) { $ingredient in
                     HStack {
                         TextField("Ingredient", text: $ingredient.name)
-                        Stepper("\(ingredient.percent, specifier: "%.1f") %", value: $ingredient.percent, in: 0...20, step: 0.1)
-                            .fixedSize()
+                        TextField("Amount", value: amountBinding($ingredient), format: .number.precision(.fractionLength(0...2)))
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 70)
+                        Picker("Unit", selection: $ingredient.unit) {
+                            ForEach(SauceUnit.allCases) { unit in
+                                Text(LocalizedStringKey(unit.rawValue)).tag(unit)
+                            }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
                     }
                 }
                 .onDelete { sauce.ingredients.remove(atOffsets: $0) }
@@ -119,6 +128,17 @@ struct SauceDetailView: View {
         }
         .navigationTitle(sauce.displayName)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// % wird direkt bearbeitet; g / ml / Stück werden als Gesamtmenge angezeigt und pro Pizza gespeichert.
+    private func amountBinding(_ ingredient: Binding<SauceIngredient>) -> Binding<Double> {
+        Binding {
+            let item = ingredient.wrappedValue
+            return item.unit == .percent ? item.percent : item.percent * sauce.pizzaCount
+        } set: { newValue in
+            let value = max(0, newValue)
+            ingredient.wrappedValue.percent = ingredient.wrappedValue.unit == .percent ? value : value / max(sauce.pizzaCount, 1)
+        }
     }
 }
 
