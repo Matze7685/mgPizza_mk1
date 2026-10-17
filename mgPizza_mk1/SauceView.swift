@@ -56,7 +56,7 @@ struct SauceListView: View {
 struct SauceDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var sauce: SauceRecipe
-    @State private var addedToShopping = false
+    @State private var isShowingShoppingPicker = false
 
     var body: some View {
         Form {
@@ -69,7 +69,7 @@ struct SauceDetailView: View {
                 }
             }
 
-            Section(header: Text("Result"), footer: Text("Total: \(sauce.totalWeight, specifier: "%.0f") g")) {
+            Section(header: Text("Result")) {
                 HStack {
                     Text(sauce.tomatoName)
                     Spacer()
@@ -85,7 +85,7 @@ struct SauceDetailView: View {
             }
 
             Section(header: Text("Ingredients"),
-                    footer: Text("% = share of the tomato weight. g / ml / pcs = amount for all \(Int(sauce.pizzaCount)) pizzas, scales when you change the pizza count. Tip: Neapolitan style uses only crushed raw tomatoes + ~1.5–2% salt; basil and oil go on the pizza.")) {
+                    footer: Text("% = share of the tomato weight. g / ml / pcs / tsp = amount for all \(Int(sauce.pizzaCount)) pizzas, scales when you change the pizza count. Tip: Neapolitan style uses only crushed raw tomatoes + ~1.5–2% salt; basil and oil go on the pizza.")) {
                 TextField("Tomatoes", text: $sauce.tomatoName)
                 ForEach($sauce.ingredients) { $ingredient in
                     HStack {
@@ -110,12 +110,8 @@ struct SauceDetailView: View {
             }
 
             Section {
-                Button {
-                    ShoppingItem.add(sauce.shoppingItems, source: sauce.displayName, to: modelContext)
-                    addedToShopping = true
-                } label: {
-                    Label(addedToShopping ? "Added to shopping list" : "Add to shopping list",
-                          systemImage: addedToShopping ? "checkmark" : "cart.badge.plus")
+                Button("Add to shopping list", systemImage: "cart.badge.plus") {
+                    isShowingShoppingPicker = true
                 }
             }
 
@@ -128,6 +124,9 @@ struct SauceDetailView: View {
         }
         .navigationTitle(sauce.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $isShowingShoppingPicker) {
+            ShoppingPickerSheet(items: sauce.shoppingItems, source: sauce.displayName)
+        }
     }
 
     /// % wird direkt bearbeitet; g / ml / Stück werden als Gesamtmenge angezeigt und pro Pizza gespeichert.

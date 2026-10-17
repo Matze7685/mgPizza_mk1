@@ -13,7 +13,7 @@ struct RecipeDetailView: View {
     @Bindable var recipeData: RecipeSetupData
     @State private var isShowingTemplate = false
     @State private var templateRecipe: RecipeSetupData?
-    @State private var addedToShopping = false
+    @State private var isShowingShoppingPicker = false
     
     var body: some View {
         Form {
@@ -39,12 +39,8 @@ struct RecipeDetailView: View {
                 } label: {
                     Label("Knead Timer", systemImage: "timer")
                 }
-                Button {
-                    ShoppingItem.add(recipeData.shoppingItems, source: recipeData.displayName, to: modelContext)
-                    addedToShopping = true
-                } label: {
-                    Label(addedToShopping ? "Added to shopping list" : "Add to shopping list",
-                          systemImage: addedToShopping ? "checkmark" : "cart.badge.plus")
+                Button("Add to shopping list", systemImage: "cart.badge.plus") {
+                    isShowingShoppingPicker = true
                 }
                 Button {
                     templateRecipe = recipeData.copyAsTemplate()
@@ -57,6 +53,9 @@ struct RecipeDetailView: View {
         }
         .navigationTitle(recipeData.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $isShowingShoppingPicker) {
+            ShoppingPickerSheet(items: recipeData.shoppingItems, source: recipeData.displayName)
+        }
         .sheet(isPresented: $isShowingTemplate) {
             if let templateRecipe {
                 RecipeContainerView(recipeSetupData: templateRecipe, isShowingNewRecipeView: $isShowingTemplate)

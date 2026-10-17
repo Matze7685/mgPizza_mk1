@@ -70,6 +70,68 @@ struct ShoppingListView: View {
     }
 }
 
+/// Auswahl, welche Zutaten (und welche Mengen) auf die Einkaufsliste kommen.
+struct ShoppingPickerSheet: View {
+    struct Entry: Identifiable {
+        let id = UUID()
+        var name: String
+        var amount: String
+        var isSelected = false
+    }
+
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @State private var entries: [Entry]
+    let source: String
+
+    init(items: [(String, String)], source: String) {
+        _entries = State(initialValue: items.map { Entry(name: $0.0, amount: $0.1) })
+        self.source = source
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section(footer: Text("Select what you need to buy. You can change the amount, e.g. to a package size.")) {
+                    ForEach($entries) { $entry in
+                        HStack {
+                            Button {
+                                entry.isSelected.toggle()
+                            } label: {
+                                Image(systemName: entry.isSelected ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(entry.isSelected ? .green : .gray)
+                            }
+                            .buttonStyle(.plain)
+                            Text(LocalizedStringKey(entry.name))
+                            Spacer()
+                            TextField("Amount", text: $entry.amount)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 100)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Add to shopping list")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add") {
+                        let selected = entries.filter(\.isSelected).map { ($0.name, $0.amount) }
+                        ShoppingItem.add(selected, source: source, to: modelContext)
+                        dismiss()
+                    }
+                    .disabled(!entries.contains(where: \.isSelected))
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}
+
 #Preview {
     ShoppingListView()
 }

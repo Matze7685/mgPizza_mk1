@@ -11,12 +11,13 @@ enum SauceUnit: String, Codable, CaseIterable, Identifiable {
     case gram = "g"
     case milliliter = "ml"
     case piece = "pcs"
+    case teaspoon = "tsp"
     var id: String { rawValue }
 }
 
 /// Eine Zutat der Sauce.
 /// - Einheit `%`: `percent` ist der Anteil bezogen auf die Tomatenmenge (Tomate = 100 %).
-/// - Einheit g / ml / Stück: `percent` ist die Menge pro Pizza und wird mit der Pizza-Anzahl skaliert.
+/// - Einheit g / ml / Stück / TL: `percent` ist die Menge pro Pizza und wird mit der Pizza-Anzahl skaliert.
 struct SauceIngredient: Codable, Hashable, Identifiable {
     var id = UUID()
     var name: String
@@ -96,6 +97,7 @@ class SauceRecipe {
         case .percent, .gram: return String(format: "%.1f g", value)
         case .milliliter: return String(format: "%.0f ml", value)
         case .piece: return String(format: "%g %@", (value * 4).rounded() / 4, String(localized: "pcs"))
+        case .teaspoon: return String(format: "%g %@", (value * 4).rounded() / 4, String(localized: "tsp"))
         }
     }
 
