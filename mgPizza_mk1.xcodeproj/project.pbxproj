@@ -38,6 +38,8 @@
 		A1B2C3D4000000070000AA02 /* KneadTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000070000AA01 /* KneadTimerView.swift */; };
 		B1B2C3D4000000010000BB02 /* BLEScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000010000BB01 /* BLEScanner.swift */; };
 		B1B2C3D4000000020000BB02 /* BLEDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000020000BB01 /* BLEDebugView.swift */; };
+		B1B2C3D4000000030000BB02 /* OvenMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000030000BB01 /* OvenMonitor.swift */; };
+		B1B2C3D4000000040000BB02 /* OvenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000040000BB01 /* OvenView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +77,8 @@
 		A1B2C3D4000000070000AA01 /* KneadTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KneadTimerView.swift; sourceTree = "<group>"; };
 		B1B2C3D4000000010000BB01 /* BLEScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScanner.swift; sourceTree = "<group>"; };
 		B1B2C3D4000000020000BB01 /* BLEDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEDebugView.swift; sourceTree = "<group>"; };
+		B1B2C3D4000000030000BB01 /* OvenMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenMonitor.swift; sourceTree = "<group>"; };
+		B1B2C3D4000000040000BB01 /* OvenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +95,8 @@
 		B1B2C3D400000001000BB000 /* Bluetooth */ = {
 			isa = PBXGroup;
 			children = (
+				B1B2C3D4000000040000BB01 /* OvenView.swift */,
+				B1B2C3D4000000030000BB01 /* OvenMonitor.swift */,
 				B1B2C3D4000000010000BB01 /* BLEScanner.swift */,
 				B1B2C3D4000000020000BB01 /* BLEDebugView.swift */,
 			);
@@ -267,6 +273,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1B2C3D4000000040000BB02 /* OvenView.swift in Sources */,
+				B1B2C3D4000000030000BB02 /* OvenMonitor.swift in Sources */,
 				B1B2C3D4000000020000BB02 /* BLEDebugView.swift in Sources */,
 				B1B2C3D4000000010000BB02 /* BLEScanner.swift in Sources */,
 				A1B2C3D4000000070000AA02 /* KneadTimerView.swift in Sources */,

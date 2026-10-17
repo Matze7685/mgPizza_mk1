@@ -131,6 +131,10 @@ struct CharacteristicRow: View {
                 if let text = String(data: value, encoding: .utf8), text.allSatisfy({ !$0.isASCII || $0.isLetter || $0.isNumber || $0.isPunctuation || $0 == " " }) {
                     Text("Text: \(text)").font(.caption2)
                 }
+                if value.count >= 2 {
+                    Text("LE int: " + value.int16LittleEndian.map(String.init).joined(separator: " | "))
+                        .font(.system(.caption2, design: .monospaced))
+                }
                 let guesses = value.temperatureGuesses
                 if !guesses.littleEndian.isEmpty {
                     Text("LE/10: " + guesses.littleEndian.map { String(format: "%.1f", $0) }.joined(separator: " | "))

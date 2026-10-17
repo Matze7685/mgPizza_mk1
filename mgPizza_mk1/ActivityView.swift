@@ -13,8 +13,25 @@ struct ActivityView: View {
     @Query(filter: #Predicate<RecipeSetupData> { $0.isStarted == true },
            sort: \RecipeSetupData.dateSelection) private var activeRecipes: [RecipeSetupData]
     
+    @EnvironmentObject var ovenMonitor: OvenMonitor
+
     var body: some View {
         List {
+            Section {
+                NavigationLink {
+                    OvenView()
+                } label: {
+                    HStack {
+                        Label("Oven", systemImage: "thermometer.high")
+                        Spacer()
+                        if let temp = ovenMonitor.temperatures.compactMap({ $0 }).first {
+                            Text("\(Int(temp)) °C").bold().monospacedDigit()
+                        } else {
+                            Text(ovenMonitor.isActive ? "…" : "Off").foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
             if activeRecipes.isEmpty {
                 ContentUnavailableView("No dough running", systemImage: "timer",
                                        description: Text("Press START on a new recipe or “Start dough timer” on a saved one."))
@@ -82,4 +99,5 @@ struct ActiveDoughRow: View {
 
 #Preview {
     NavigationStack { ActivityView() }
+        .environmentObject(OvenMonitor())
 }

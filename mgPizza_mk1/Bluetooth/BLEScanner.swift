@@ -188,6 +188,14 @@ extension Data {
     }
 
     /// Mögliche Temperaturen: jeweils 2 Bytes als UInt16 (Little/Big Endian) geteilt durch 10
+    /// Jeweils 2 Bytes als Int16 Little Endian (Format des Ooni-Hubs, ganze °C)
+    var int16LittleEndian: [Int] {
+        let bytes = [UInt8](self)
+        return stride(from: 0, to: bytes.count - 1, by: 2).map {
+            Int(Int16(bitPattern: UInt16(bytes[$0]) | UInt16(bytes[$0 + 1]) << 8))
+        }
+    }
+
     var temperatureGuesses: (littleEndian: [Double], bigEndian: [Double]) {
         let bytes = [UInt8](self)
         var le: [Double] = [], be: [Double] = []

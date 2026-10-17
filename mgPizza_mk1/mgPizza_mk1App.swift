@@ -27,6 +27,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 @main
 struct mgPizza_mk1App: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var ovenMonitor = OvenMonitor()
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -47,6 +48,7 @@ struct mgPizza_mk1App: App {
         WindowGroup {
             MainView()
                 .environmentObject(TimerLogic())
+                .environmentObject(ovenMonitor)
         }
 //        .modelContainer(for: RecipeSetupData.self)
         .modelContainer(sharedModelContainer)

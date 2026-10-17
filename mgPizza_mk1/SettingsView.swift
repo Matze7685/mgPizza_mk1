@@ -12,6 +12,11 @@ struct SettingsView: View {
         List {
             Section("Oven") {
                 NavigationLink {
+                    OvenView()
+                } label: {
+                    Label("Oven Temperature", systemImage: "thermometer.high")
+                }
+                NavigationLink {
                     BLEDebugView()
                 } label: {
                     Label("Bluetooth Test (Ooni Hub)", systemImage: "antenna.radiowaves.left.and.right")
