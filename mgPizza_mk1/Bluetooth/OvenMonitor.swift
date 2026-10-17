@@ -21,6 +21,7 @@ enum OoniHub {
     static let serviceUUID = CBUUID(string: "69400001-B5A3-F393-E0A9-E50E24DCCA99")
     static let temperatureUUID = CBUUID(string: "69400002-B5A3-F393-E0A9-E50E24DCCA99")
     static let probeCount = 2
+    static let namePrefix = "Ooni"
 
     /// nil = Fühler nicht eingesteckt
     static func parse(_ data: Data) -> [Double?] {
@@ -51,6 +52,9 @@ class OvenMonitor: NSObject, ObservableObject {
     /// Hysterese: erneut melden erst, wenn die Temperatur wieder so weit unter das Ziel gefallen ist
     private let rearmDelta: Double = 20
     private var alarmFired: [Bool] = Array(repeating: false, count: OoniHub.probeCount)
+
+    /// Zuletzt verbundener Hub, damit er direkt (auch im Hintergrund) wieder verbunden werden kann
+    @AppStorage("ovenHubID") private var savedHubID: String = ""
 
     private var central: CBCentralManager?
     private var hub: CBPeripheral?
@@ -86,12 +90,19 @@ class OvenMonitor: NSObject, ObservableObject {
             connect(known)
             return
         }
+        // Bekannten Hub direkt verbinden – iOS verbindet, sobald er in Reichweite ist
+        if let id = UUID(uuidString: savedHubID),
+           let known = central.retrievePeripherals(withIdentifiers: [id]).first {
+            connect(known)
+        }
+        // Der Hub sendet seine Service-UUID nicht in der Werbung mit, daher ohne Filter suchen
+        // und nach dem Namen ("Ooni_DT_Hub") auswählen
         status = String(localized: "Searching for Ooni hub …")
-        central.scanForPeripherals(withServices: [OoniHub.serviceUUID])
+        central.scanForPeripherals(withServices: nil)
     }
 
     private func connect(_ peripheral: CBPeripheral) {
-        central?.stopScan()
+        guard hub?.identifier != peripheral.identifier || peripheral.state == .disconnected else { return }
         hub = peripheral
         peripheral.delegate = self
         status = String(localized: "Connecting …")
@@ -142,10 +153,15 @@ extension OvenMonitor: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral,
                         advertisementData: [String: Any], rssi RSSI: NSNumber) {
+        let name = peripheral.name ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? ""
+        let services = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? []
+        guard name.hasPrefix(OoniHub.namePrefix) || services.contains(OoniHub.serviceUUID) else { return }
         connect(peripheral)
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        central.stopScan()
+        savedHubID = peripheral.identifier.uuidString
         status = String(localized: "Connected")
         peripheral.discoverServices([OoniHub.serviceUUID])
     }
