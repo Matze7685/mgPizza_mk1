@@ -30,3 +30,65 @@ class NotificationModel {
         }
     }
 }
+
+/// Erinnerungen für Teig raus / Servierzeit und die Knet-Timer.
+enum DoughNotifications {
+    static let fridgeWarningLead: TimeInterval = 3600   // 1 Std. vorher erinnern
+
+    static func requestAuthorization() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
+            if let error = error {
+                print("Fehler: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    static func schedule(for recipe: RecipeSetupData) {
+        cancel(for: recipe)
+        let id = recipe.uid.uuidString
+        let name = recipe.displayName
+        if let out = recipe.fridgeOutDate, recipe.coolTime > 0 {
+            add(id: "\(id)-fridge-warn", at: out.addingTimeInterval(-fridgeWarningLead),
+                title: String(localized: "Dough out in 1 hour"),
+                body: String(localized: "\(name): get ready to take the dough out of the fridge."))
+            add(id: "\(id)-fridge", at: out,
+                title: String(localized: "Take the dough out!"),
+                body: String(localized: "\(name): take the dough out of the fridge and portion it into balls."))
+        }
+        if let serving = recipe.servingDate {
+            add(id: "\(id)-serving", at: serving,
+                title: String(localized: "Pizza time 🍕"),
+                body: String(localized: "\(name): the dough is ready – heat the oven and start baking."))
+        }
+    }
+
+    static func cancel(for recipe: RecipeSetupData) {
+        let id = recipe.uid.uuidString
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: ["\(id)-fridge-warn", "\(id)-fridge", "\(id)-serving"])
+    }
+
+    static func scheduleKneadStep(title: String, at date: Date) {
+        add(id: "knead-step", at: date, title: String(localized: "Knead step done"),
+            body: String(localized: "\(title) is finished – start the next step."))
+    }
+
+    static func cancelKneadStep() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["knead-step"])
+    }
+
+    private static func add(id: String, at date: Date, title: String, body: String) {
+        let interval = date.timeIntervalSinceNow
+        guard interval > 1 else { return }
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
+            if let error = error {
+                print("Fehler beim Planen: \(error.localizedDescription)")
+            }
+        }
+    }
+}

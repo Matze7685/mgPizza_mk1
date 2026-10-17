@@ -29,6 +29,13 @@
 		C7DC0DE8302E5829003738AA /* NotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DE7302E5829003738AA /* NotificationView.swift */; };
 		C7DC0DEC302EE693003738AA /* CustomPrimaryButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DEB302EE693003738AA /* CustomPrimaryButtonStyle.swift */; };
 		C7DC0E9230389891003738AA /* PizzaDoughRecipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0E9130389891003738AA /* PizzaDoughRecipe.swift */; };
+		A1B2C3D4000000010000AA02 /* KneadStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000010000AA01 /* KneadStep.swift */; };
+		A1B2C3D4000000020000AA02 /* SauceRecipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000020000AA01 /* SauceRecipe.swift */; };
+		A1B2C3D4000000030000AA02 /* ShoppingItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000030000AA01 /* ShoppingItem.swift */; };
+		A1B2C3D4000000040000AA02 /* RecipesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000040000AA01 /* RecipesView.swift */; };
+		A1B2C3D4000000050000AA02 /* SauceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000050000AA01 /* SauceView.swift */; };
+		A1B2C3D4000000060000AA02 /* ShoppingListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000060000AA01 /* ShoppingListView.swift */; };
+		A1B2C3D4000000070000AA02 /* KneadTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000070000AA01 /* KneadTimerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -57,6 +64,13 @@
 		C7DC0DE7302E5829003738AA /* NotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationView.swift; sourceTree = "<group>"; };
 		C7DC0DEB302EE693003738AA /* CustomPrimaryButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPrimaryButtonStyle.swift; sourceTree = "<group>"; };
 		C7DC0E9130389891003738AA /* PizzaDoughRecipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PizzaDoughRecipe.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000010000AA01 /* KneadStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KneadStep.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000020000AA01 /* SauceRecipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SauceRecipe.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000030000AA01 /* ShoppingItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingItem.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000040000AA01 /* RecipesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipesView.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000050000AA01 /* SauceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SauceView.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000060000AA01 /* ShoppingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingListView.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000070000AA01 /* KneadTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KneadTimerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +87,9 @@
 		C7B149573066D0150021AA7E /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4000000030000AA01 /* ShoppingItem.swift */,
+				A1B2C3D4000000020000AA01 /* SauceRecipe.swift */,
+				A1B2C3D4000000010000AA01 /* KneadStep.swift */,
 				C7DC0DC73022799A003738AA /* RecipeSetupData.swift */,
 			);
 			path = Model;
@@ -97,6 +114,9 @@
 		C7DC0DB63019FA16003738AA /* mgPizza_mk1 */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4000000060000AA01 /* ShoppingListView.swift */,
+				A1B2C3D4000000050000AA01 /* SauceView.swift */,
+				A1B2C3D4000000040000AA01 /* RecipesView.swift */,
 				C7DC0DB13019FA16003738AA /* Info.plist */,
 				C7DC0DAD3019FA16003738AA /* Assets.xcassets */,
 				C7DC0DB33019FA16003738AA /* Localizable.xcstrings */,
@@ -134,6 +154,7 @@
 		C7DC0DE4302A66A5003738AA /* TimerView */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4000000070000AA01 /* KneadTimerView.swift */,
 				C7DC0DD83029E729003738AA /* TimerView.swift */,
 				C7DC0DDA3029E811003738AA /* DigitView.swift */,
 				C7DC0DDC3029E85F003738AA /* TimerLogic.swift */,
@@ -232,6 +253,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D4000000070000AA02 /* KneadTimerView.swift in Sources */,
+				A1B2C3D4000000060000AA02 /* ShoppingListView.swift in Sources */,
+				A1B2C3D4000000050000AA02 /* SauceView.swift in Sources */,
+				A1B2C3D4000000040000AA02 /* RecipesView.swift in Sources */,
+				A1B2C3D4000000030000AA02 /* ShoppingItem.swift in Sources */,
+				A1B2C3D4000000020000AA02 /* SauceRecipe.swift in Sources */,
+				A1B2C3D4000000010000AA02 /* KneadStep.swift in Sources */,
 				C7DC0DC43019FEA4003738AA /* SettingsView.swift in Sources */,
 				C7DC0DD530227DFC003738AA /* DoughResultView.swift in Sources */,
 				C7DC0DD230227CC9003738AA /* FermentFridgeTimeTempView.swift in Sources */,

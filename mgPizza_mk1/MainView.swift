@@ -8,26 +8,42 @@
 import SwiftData
 import SwiftUI
 
+enum MainTab: Hashable {
+    case activity, recipes, sauce, shopping, settings
+}
+
 struct MainView: View {
-    @Query private var recipes: [RecipeSetupData]
     @State private var isShowingNewRecipeView: Bool = false
-    @State private var isShowingRecipe: Bool = false
+    @State private var selectedTab: MainTab = .activity
     
     var body: some View {
         NavigationStack {
-            TabView {
+            TabView(selection: $selectedTab) {
                 ActivityView()
                     .tabItem {
                         Label("Activity", systemImage: "house")
                     }
-//                CalculateView()
-//                    .tabItem {
-//                        Label("Calculator", systemImage: "pizza")
-//                    }
+                    .tag(MainTab.activity)
+                RecipesView()
+                    .tabItem {
+                        Label("Dough", systemImage: "book")
+                    }
+                    .tag(MainTab.recipes)
+                SauceListView()
+                    .tabItem {
+                        Label("Sauce", systemImage: "drop")
+                    }
+                    .tag(MainTab.sauce)
+                ShoppingListView()
+                    .tabItem {
+                        Label("Shopping", systemImage: "cart")
+                    }
+                    .tag(MainTab.shopping)
                 SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
+                    .tag(MainTab.settings)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -36,7 +52,7 @@ struct MainView: View {
                             isShowingNewRecipeView.toggle()
                         }
                         Button("Open Recipe", systemImage: "folder") {
-                            print("New")
+                            selectedTab = .recipes
                         }
                     }
                 }

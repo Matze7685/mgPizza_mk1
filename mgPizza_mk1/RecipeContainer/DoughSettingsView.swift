@@ -10,8 +10,6 @@ import SwiftUI
 struct DoughSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @State private var yeastSelection: Int = 0
-    
     @Bindable var recipeSetupData: RecipeSetupData
     @Binding var path: NavigationPath
     @Binding var isShowingNewRecipeView: Bool
@@ -19,6 +17,7 @@ struct DoughSettingsView: View {
     var body: some View {
         Form {
             Section("Step 1 of 3") {
+                TextField("Name (e.g. Neapolitan)", text: $recipeSetupData.name)
                 Stepper("Dough Balls: \(Int(recipeSetupData.doughBallsCount))", value: $recipeSetupData.doughBallsCount, in: 1...60)
                 VStack(alignment: .leading) {
                     Text("Dough Weight: \(Int(recipeSetupData.doughWeight)) g")
@@ -33,6 +32,16 @@ struct DoughSettingsView: View {
                     Slider(value: $recipeSetupData.saltRatio, in: 1.0...4.0, step: 0.1)
                 }
             }
+            Section(header: Text("Optional"), footer: Text("Oil and sugar help browning in home ovens / gas grills below ~400 °C. Leave at 0 for Neapolitan style.")) {
+                VStack(alignment: .leading) {
+                    Text("Olive Oil: \(recipeSetupData.oilRatio, specifier: "%.1f") %")
+                    Slider(value: $recipeSetupData.oilRatio, in: 0...5, step: 0.5)
+                }
+                VStack(alignment: .leading) {
+                    Text("Sugar: \(recipeSetupData.sugarRatio, specifier: "%.1f") %")
+                    Slider(value: $recipeSetupData.sugarRatio, in: 0...3, step: 0.5)
+                }
+            }
             Section("Yeast") {
                 HStack {
                     VStack {
@@ -43,6 +52,13 @@ struct DoughSettingsView: View {
                         }
                         .pickerStyle(.segmented)
                     }
+                }
+                VStack(alignment: .leading) {
+                    Text("Yeast Correction: \(Int(recipeSetupData.yeastCorrection)) %")
+                    Slider(value: $recipeSetupData.yeastCorrection, in: 25...200, step: 5)
+                    Text("Lower it if your dough over-proofs, raise it if it stays too flat.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
