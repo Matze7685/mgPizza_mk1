@@ -40,6 +40,7 @@
 		B1B2C3D4000000020000BB02 /* BLEDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000020000BB01 /* BLEDebugView.swift */; };
 		B1B2C3D4000000030000BB02 /* OvenMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000030000BB01 /* OvenMonitor.swift */; };
 		B1B2C3D4000000040000BB02 /* OvenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000040000BB01 /* OvenView.swift */; };
+		B1B2C3D4000000050000BB02 /* OvenSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000050000BB01 /* OvenSpeaker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -79,6 +80,7 @@
 		B1B2C3D4000000020000BB01 /* BLEDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEDebugView.swift; sourceTree = "<group>"; };
 		B1B2C3D4000000030000BB01 /* OvenMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenMonitor.swift; sourceTree = "<group>"; };
 		B1B2C3D4000000040000BB01 /* OvenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenView.swift; sourceTree = "<group>"; };
+		B1B2C3D4000000050000BB01 /* OvenSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenSpeaker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +97,7 @@
 		B1B2C3D400000001000BB000 /* Bluetooth */ = {
 			isa = PBXGroup;
 			children = (
+				B1B2C3D4000000050000BB01 /* OvenSpeaker.swift */,
 				B1B2C3D4000000040000BB01 /* OvenView.swift */,
 				B1B2C3D4000000030000BB01 /* OvenMonitor.swift */,
 				B1B2C3D4000000010000BB01 /* BLEScanner.swift */,
@@ -273,6 +276,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1B2C3D4000000050000BB02 /* OvenSpeaker.swift in Sources */,
 				B1B2C3D4000000040000BB02 /* OvenView.swift in Sources */,
 				B1B2C3D4000000030000BB02 /* OvenMonitor.swift in Sources */,
 				B1B2C3D4000000020000BB02 /* BLEDebugView.swift in Sources */,

@@ -28,12 +28,38 @@ struct OvenView: View {
                 Text("Close the Ooni app first – the hub accepts only one connection. Keep this app running in the background to get the alarm.")
             }
 
+            // Fühler 1 immer, weitere nur wenn eingesteckt
             ForEach(0..<OoniHub.probeCount, id: \.self) { probe in
-                probeSection(probe)
+                if probe == 0 || monitor.temperatures[probe] != nil {
+                    probeSection(probe)
+                }
             }
+
+            speakerSection
         }
         .navigationTitle("Oven Temperature")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    var speakerSection: some View {
+        Section {
+            Toggle("Announce alarm on speaker", isOn: $monitor.speakAlarm)
+            if monitor.speakAlarm {
+                HStack {
+                    Text("Output")
+                    Spacer()
+                    AirPlayPicker()
+                        .frame(width: 44, height: 44)
+                }
+                Button("Test announcement", systemImage: "speaker.wave.2") {
+                    OvenSpeaker.shared.announce(String(localized: "Test: the pizza oven alarm works."), repeats: 1)
+                }
+            }
+        } header: {
+            Text("HomePod")
+        } footer: {
+            Text("Tap the AirPlay icon and choose your HomePod. The app must stay connected to the hub (running in the background) for the announcement.")
+        }
     }
 
     @ViewBuilder

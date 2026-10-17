@@ -46,6 +46,7 @@ class OvenMonitor: NSObject, ObservableObject {
     @AppStorage("ovenTarget1") var target1: Double = 450 { willSet { objectWillChange.send() } }
     @AppStorage("ovenAlarm0") var alarm0: Bool = true { willSet { objectWillChange.send() } }
     @AppStorage("ovenAlarm1") var alarm1: Bool = false { willSet { objectWillChange.send() } }
+    @AppStorage("ovenSpeakAlarm") var speakAlarm: Bool = false { willSet { objectWillChange.send() } }
 
     /// Hysterese: erneut melden erst, wenn die Temperatur wieder so weit unter das Ziel gefallen ist
     private let rearmDelta: Double = 20
@@ -61,6 +62,7 @@ class OvenMonitor: NSObject, ObservableObject {
         isActive = true
         alarmFired = Array(repeating: false, count: OoniHub.probeCount)
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        if speakAlarm { OvenSpeaker.shared.activateSession() }
         if central == nil {
             central = CBCentralManager(delegate: self, queue: .main)
         } else {
@@ -122,6 +124,9 @@ class OvenMonitor: NSObject, ObservableObject {
         content.sound = .default
         content.interruptionLevel = .timeSensitive
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "oven-\(probe)", content: content, trigger: nil))
+        if speakAlarm {
+            OvenSpeaker.shared.announce(String(localized: "Attention: the pizza oven has reached \(Int(temperature)) degrees."))
+        }
     }
 }
 

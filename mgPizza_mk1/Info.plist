@@ -6,6 +6,7 @@
 	<array>
 		<string>remote-notification</string>
 		<string>bluetooth-central</string>
+		<string>audio</string>
 	</array>
 </dict>
 </plist>
