@@ -169,12 +169,14 @@ extension BLEScanner: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard let service = characteristic.service, let data = characteristic.value else { return }
         let key = "\(service.uuid.uuidString)/\(characteristic.uuid.uuidString)"
-        var info = characteristics[key]
-        info?.previousValue = info?.value
-        info?.value = data
-        info?.updateCount += 1
-        info?.lastUpdate = Date()
-        characteristics[key] = info
+        if var info = characteristics[key] {
+            let oldValue = info.value
+            info.previousValue = oldValue
+            info.value = data
+            info.updateCount += 1
+            info.lastUpdate = Date()
+            characteristics[key] = info
+        }
         log.insert(LogEntry(date: Date(), characteristic: characteristic.uuid.uuidString, data: data), at: 0)
         if log.count > 500 { log.removeLast(log.count - 500) }
     }
