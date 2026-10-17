@@ -36,6 +36,8 @@
 		A1B2C3D4000000050000AA02 /* SauceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000050000AA01 /* SauceView.swift */; };
 		A1B2C3D4000000060000AA02 /* ShoppingListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000060000AA01 /* ShoppingListView.swift */; };
 		A1B2C3D4000000070000AA02 /* KneadTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000070000AA01 /* KneadTimerView.swift */; };
+		B1B2C3D4000000010000BB02 /* BLEScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000010000BB01 /* BLEScanner.swift */; };
+		B1B2C3D4000000020000BB02 /* BLEDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000020000BB01 /* BLEDebugView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -71,6 +73,8 @@
 		A1B2C3D4000000050000AA01 /* SauceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SauceView.swift; sourceTree = "<group>"; };
 		A1B2C3D4000000060000AA01 /* ShoppingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingListView.swift; sourceTree = "<group>"; };
 		A1B2C3D4000000070000AA01 /* KneadTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KneadTimerView.swift; sourceTree = "<group>"; };
+		B1B2C3D4000000010000BB01 /* BLEScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScanner.swift; sourceTree = "<group>"; };
+		B1B2C3D4000000020000BB01 /* BLEDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEDebugView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +88,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B1B2C3D400000001000BB000 /* Bluetooth */ = {
+			isa = PBXGroup;
+			children = (
+				B1B2C3D4000000010000BB01 /* BLEScanner.swift */,
+				B1B2C3D4000000020000BB01 /* BLEDebugView.swift */,
+			);
+			path = Bluetooth;
+			sourceTree = "<group>";
+		};
 		C7B149573066D0150021AA7E /* Model */ = {
 			isa = PBXGroup;
 			children = (
@@ -114,6 +127,7 @@
 		C7DC0DB63019FA16003738AA /* mgPizza_mk1 */ = {
 			isa = PBXGroup;
 			children = (
+				B1B2C3D400000001000BB000 /* Bluetooth */,
 				A1B2C3D4000000060000AA01 /* ShoppingListView.swift */,
 				A1B2C3D4000000050000AA01 /* SauceView.swift */,
 				A1B2C3D4000000040000AA01 /* RecipesView.swift */,
@@ -253,6 +267,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1B2C3D4000000020000BB02 /* BLEDebugView.swift in Sources */,
+				B1B2C3D4000000010000BB02 /* BLEScanner.swift in Sources */,
 				A1B2C3D4000000070000AA02 /* KneadTimerView.swift in Sources */,
 				A1B2C3D4000000060000AA02 /* ShoppingListView.swift in Sources */,
 				A1B2C3D4000000050000AA02 /* SauceView.swift in Sources */,
@@ -299,6 +315,7 @@
 				INFOPLIST_FILE = mgPizza_mk1/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Reads the temperature of your pizza oven thermometer.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -333,6 +350,7 @@
 				INFOPLIST_FILE = mgPizza_mk1/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Reads the temperature of your pizza oven thermometer.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
