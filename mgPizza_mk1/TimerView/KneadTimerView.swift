@@ -52,7 +52,7 @@ struct KneadTimerView: View {
             Button("Edit", systemImage: "pencil") { isEditing = true }
         }
         .sheet(isPresented: $isEditing) {
-            KneadStepsEditor(steps: $recipe.kneadSteps)
+            KneadStepsEditor(steps: $recipe.kneadSteps, defaultPlan: KneadStep.plan(forStyle: recipe.style))
         }
         .onAppear { DoughNotifications.requestAuthorization() }
     }
@@ -123,6 +123,7 @@ struct KneadTimerView: View {
 struct KneadStepsEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var steps: [KneadStep]
+    var defaultPlan: [KneadStep] = KneadStep.defaultPlan
 
     var body: some View {
         NavigationStack {
@@ -141,7 +142,7 @@ struct KneadStepsEditor: View {
                     steps.append(KneadStep(title: String(localized: "New step"), detail: "", minutes: 2))
                 }
                 Button("Restore default plan", systemImage: "arrow.uturn.backward") {
-                    steps = KneadStep.defaultPlan
+                    steps = defaultPlan
                 }
             }
             .navigationTitle("Knead Steps")

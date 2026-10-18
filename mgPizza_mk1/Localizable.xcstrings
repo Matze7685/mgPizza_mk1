@@ -244,12 +244,32 @@
         }
       }
     },
+    "Add salt (and sugar). Slow to medium speed until the dough gets smooth." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salz (und Zucker) zugeben. Langsame bis mittlere Stufe, bis der Teig glatt wird."
+          }
+        }
+      }
+    },
     "Add step" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schritt hinzufügen"
+          }
+        }
+      }
+    },
+    "Add the held-back water in small portions, wait until each is absorbed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das zurückgehaltene Wasser in kleinen Portionen zugeben, jeweils warten, bis es aufgenommen ist."
           }
         }
       }
@@ -878,6 +898,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öl langsam einlaufen lassen (entfällt ohne Öl). Mittlere Stufe."
+          }
+        }
+      }
+    },
+    "Drizzle in the oil slowly. Medium speed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öl langsam einlaufen lassen. Mittlere Stufe."
           }
         }
       }
@@ -1876,6 +1906,16 @@
         }
       }
     },
+    "Remaining water" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restliches Wasser"
+          }
+        }
+      }
+    },
     "Remind 5 min before auto-off" : {
       "localizations" : {
         "de" : {
@@ -2048,6 +2088,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salz"
+          }
+        }
+      }
+    },
+    "Salt & knead" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salz & kneten"
           }
         }
       }
@@ -2322,6 +2372,16 @@
         }
       }
     },
+    "Sticky is fine – it should pull away from the bowl. Dough < 25 °C." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klebrig ist okay – er sollte sich vom Schüsselrand lösen. Teig < 25 °C."
+          }
+        }
+      }
+    },
     "Stop" : {
       "localizations" : {
         "de" : {
@@ -2592,6 +2652,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wasser"
+          }
+        }
+      }
+    },
+    "Water (hold back ~%lld%%) + yeast + all the flour. Slow speed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wasser (~%lld%% zurückhalten) + Hefe + das ganze Mehl. Langsame Stufe."
           }
         }
       }

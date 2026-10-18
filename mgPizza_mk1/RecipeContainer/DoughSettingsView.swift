@@ -95,11 +95,12 @@ struct DoughSettingsView: View {
                 recipeSetupData.doughBallsCount = 1
                 recipeSetupData.applyDetroitWeight()
             } else {
+                recipeSetupData.doughWeight = 250
                 recipeSetupData.waterRatio = 65
                 recipeSetupData.saltRatio = 3
                 recipeSetupData.oilRatio = 0
-                recipeSetupData.doughWeight = 250
             }
+            recipeSetupData.kneadSteps = KneadStep.plan(forStyle: newStyle)
         }
         .onChange(of: recipeSetupData.panWidth) { recipeSetupData.applyDetroitWeight() }
         .onChange(of: recipeSetupData.panLength) { recipeSetupData.applyDetroitWeight() }
