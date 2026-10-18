@@ -22,7 +22,12 @@ struct RecipeDetailView: View {
             }
             DoughIngredientsSection(recipe: recipeData)
             Section("Settings") {
-                LabeledContent("Dough Balls", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.doughWeight)) g")
+                if recipeData.isDetroit {
+                    LabeledContent("Pans", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.panWidth))×\(Int(recipeData.panLength)) cm")
+                    LabeledContent("Dough per Pan", value: "\(Int(recipeData.doughWeight)) g (\(String(format: "%.1f", recipeData.doughThickness)) mm)")
+                } else {
+                    LabeledContent("Dough Balls", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.doughWeight)) g")
+                }
                 LabeledContent("Water", value: "\(Int(recipeData.waterRatio)) %")
                 LabeledContent("Salt", value: String(format: "%.1f %%", recipeData.saltRatio))
                 if recipeData.oilRatio > 0 { LabeledContent("Olive Oil", value: String(format: "%.1f %%", recipeData.oilRatio)) }
@@ -32,6 +37,9 @@ struct RecipeDetailView: View {
                 LabeledContent("Yeast Correction", value: "\(Int(recipeData.yeastCorrection)) %")
             }
             DoughWarningsSection(recipe: recipeData)
+            if recipeData.isDetroit {
+                DetroitTipsSection()
+            }
             timerSection
             Section {
                 NavigationLink {
@@ -99,6 +107,20 @@ struct RecipeDetailView: View {
             TextField("Notes", text: $recipeData.notes, axis: .vertical)
                 .lineLimit(4...12)
         }
+    }
+}
+
+struct DetroitTipsSection: View {
+    var body: some View {
+        Section("Detroit – how to") {
+            Label("Oil the pan well (1–2 tbsp), put the cold-fermented dough in and press it out.", systemImage: "1.circle")
+            Label("If it shrinks back: rest 15–20 min, then press into the corners again.", systemImage: "2.circle")
+            Label("Proof covered 2–3 h at room temperature until puffy.", systemImage: "3.circle")
+            Label("Cheese (cubed Brick, young Gouda or Mozzarella) all the way to the edges – that makes the crispy rim.", systemImage: "4.circle")
+            Label("Sauce in 2–3 stripes on top, after or before baking.", systemImage: "5.circle")
+            Label("Bake at 260–290 °C on the lowest rack, 12–15 min, until the cheese rim is dark.", systemImage: "6.circle")
+        }
+        .font(.callout)
     }
 }
 

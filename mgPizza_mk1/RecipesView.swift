@@ -87,7 +87,7 @@ struct RecipeRow: View {
                 Spacer()
                 StarRatingView(rating: .constant(recipe.rating), size: 12)
             }
-            Text("\(Int(recipe.doughBallsCount))× \(Int(recipe.doughWeight)) g · \(Int(recipe.waterRatio)) % water · \(recipe.saltRatio, specifier: "%.1f") % salt")
+            Text("\(recipe.isDetroit ? "Detroit " : "")\(Int(recipe.doughBallsCount))× \(Int(recipe.doughWeight)) g · \(Int(recipe.waterRatio)) % water · \(recipe.saltRatio, specifier: "%.1f") % salt")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text("\(Int(recipe.coolTime)) h fridge @ \(Int(recipe.coolTemp)) °C · \(Int(recipe.roomTime)) h room @ \(Int(recipe.roomTemp)) °C")

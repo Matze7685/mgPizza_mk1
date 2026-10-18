@@ -33,6 +33,12 @@ class RecipeSetupData {
     var yeastCorrection: Double = 100.0        // in %, zum Feintuning über das Feedback
     var kneadSteps: [KneadStep] = KneadStep.defaultPlan
 
+    // Pizza-Stil: "round" (Teiglinge) oder "detroit" (Blech/Pfanne)
+    var style: String = "round"
+    var panWidth: Double = 25.0                // cm
+    var panLength: Double = 35.0               // cm
+    var doughThickness: Double = 5.5           // mm (roher Teig, ausgedrückt in der Pfanne)
+
     // Timer (gesetzt beim START)
     var isStarted: Bool = false
     var startDate: Date?
@@ -89,6 +95,15 @@ class RecipeSetupData {
                         dateSelection: Date().addingTimeInterval((roomTime + coolTime) * 3600),
                         oilRatio: oilRatio, sugarRatio: sugarRatio, yeastCorrection: yeastCorrection,
                         kneadSteps: kneadSteps, name: name)
+            .withPan(style: style, width: panWidth, length: panLength, thickness: doughThickness)
+    }
+
+    private func withPan(style: String, width: Double, length: Double, thickness: Double) -> RecipeSetupData {
+        self.style = style
+        panWidth = width
+        panLength = length
+        doughThickness = thickness
+        return self
     }
 }
 
@@ -103,6 +118,19 @@ extension RecipeSetupData {
     }
 
     var yeastName: String { yeastTypes[safeYeastSelection] }
+
+    var isDetroit: Bool { style == "detroit" }
+
+    /// Teiggewicht pro Pfanne: Fläche × Dicke × Dichte (roher Teig ≈ 1 g/cm³).
+    /// 25 × 35 cm bei 5,5 mm ≈ 480 g – entspricht dem klassischen 10" × 14" Detroit-Blech.
+    var detroitDoughWeight: Double {
+        panWidth * panLength * (doughThickness / 10.0) * 1.0
+    }
+
+    /// Detroit-Werte übernehmen (Gewicht aus der Pfannengröße)
+    func applyDetroitWeight() {
+        if isDetroit { doughWeight = detroitDoughWeight.rounded() }
+    }
 
     var totalDoughWeight: Double { doughWeight * doughBallsCount }
 

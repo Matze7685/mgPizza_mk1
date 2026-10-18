@@ -46,12 +46,19 @@ struct DoughResultView: View {
     var doughSection: some View {
         Section(header: Text("")) {
             HStack {
-                Text("Dough Balls")
+                Text(recipeSetupData.isDetroit ? LocalizedStringKey("Pans") : "Dough Balls")
                 Spacer()
                 Text("\(recipeSetupData.doughBallsCount, specifier: "%.0f")").bold()
             }
+            if recipeSetupData.isDetroit {
+                HStack {
+                    Text("Pan Size")
+                    Spacer()
+                    Text("\(Int(recipeSetupData.panWidth)) × \(Int(recipeSetupData.panLength)) cm · \(recipeSetupData.doughThickness, specifier: "%.1f") mm").bold()
+                }
+            }
             HStack {
-                Text("Dough Balls Weight")
+                Text(recipeSetupData.isDetroit ? LocalizedStringKey("Dough per Pan") : "Dough Balls Weight")
                 Spacer()
                 Text("\(recipeSetupData.doughWeight, specifier: "%.0f") g").bold()
             }
@@ -204,7 +211,9 @@ struct DoughWarningsSection: View {
         if recipe.saltRatio < 2.2 { result.append("Salt below 2.2% tastes flat and weakens the gluten.") }
         if recipe.saltRatio > 3.2 { result.append("Salt above 3.2% slows the yeast noticeably.") }
         if recipe.roomTemp >= 26 && recipe.roomTime >= 8 { result.append("Long proof at ≥26 °C – high risk of over-proofing.") }
-        if recipe.doughWeight < 200 || recipe.doughWeight > 300 { result.append("Typical ball weight is 230–280 g for a 30–33 cm pizza.") }
+        if !recipe.isDetroit && (recipe.doughWeight < 200 || recipe.doughWeight > 300) { result.append("Typical ball weight is 230–280 g for a 30–33 cm pizza.") }
+        if recipe.isDetroit && recipe.waterRatio < 65 { result.append("Detroit dough is usually 68–75% hydration for an airy crumb.") }
+        if recipe.isDetroit && recipe.oilRatio == 0 { result.append("Add ~2% oil for Detroit – and oil the pan generously.") }
         if recipe.effectiveCoolTime() > 72 { result.append("More than 72 h in the fridge – gluten may break down.") }
         return result
     }
