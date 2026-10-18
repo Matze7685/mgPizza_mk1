@@ -14,6 +14,7 @@ struct ActivityView: View {
            sort: \RecipeSetupData.dateSelection) private var activeRecipes: [RecipeSetupData]
     
     @EnvironmentObject var ovenMonitor: OvenMonitor
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         List {
@@ -52,6 +53,11 @@ struct ActivityView: View {
             }
         }
         .navigationTitle("Timer")
+        // Live Activities aktualisieren (nächstes Ereignis, 8-Std.-Grenze von iOS)
+        .onAppear { LiveActivityManager.shared.refreshDough(activeRecipes) }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { LiveActivityManager.shared.refreshDough(activeRecipes) }
+        }
     }
 }
 

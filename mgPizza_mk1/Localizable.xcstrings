@@ -124,12 +124,42 @@
         }
       }
     },
+    "%@: take the dough out of the fridge and portion it now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: Jetzt den Teig aus dem Kühlschrank nehmen und portionieren."
+          }
+        }
+      }
+    },
+    "%@: the dough comes out of the fridge in one hour." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: Der Teig kommt in einer Stunde aus dem Kühlschrank."
+          }
+        }
+      }
+    },
     "%@: the dough is ready – heat the oven and start baking." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: Der Teig ist bereit – Ofen anheizen und losbacken."
+          }
+        }
+      }
+    },
+    "%@: the dough is ready. Time to heat the oven." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: Der Teig ist fertig. Zeit, den Ofen anzuheizen."
           }
         }
       }
@@ -330,6 +360,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alarm über Lautsprecher ansagen"
+          }
+        }
+      }
+    },
+    "Announce dough timers on speaker" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teig-Timer über Lautsprecher ansagen"
+          }
+        }
+      }
+    },
+    "Announces “dough out in 1 hour”, “take the dough out” and “serving” on the selected speaker (e.g. HomePod). Only works while the app is running – keep it open or in the background (e.g. with the oven probe connected). The normal notification always comes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sagt „Teig in 1 Std. raus“, „Teig rausnehmen“ und „Servieren“ über den gewählten Lautsprecher an (z. B. HomePod). Funktioniert nur, solange die App läuft – offen lassen oder im Hintergrund (z. B. mit verbundenem Ofen-Fühler). Die normale Benachrichtigung kommt immer."
           }
         }
       }
@@ -2508,6 +2558,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Testansage"
+          }
+        }
+      }
+    },
+    "Test: the dough timer announcement works." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test: Die Teig-Timer-Ansage funktioniert."
           }
         }
       }

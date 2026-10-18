@@ -176,11 +176,13 @@ extension RecipeSetupData {
         dateSelection = servingDate ?? dateSelection
         isStarted = true
         DoughNotifications.schedule(for: self)
+        LiveActivityManager.shared.refreshDough([self], now: now)
     }
 
     func stopTimers() {
         isStarted = false
         DoughNotifications.cancel(for: self)
+        LiveActivityManager.shared.endDough(self)
     }
 
     /// Zutaten für die Einkaufsliste (Wasser wird ausgelassen)

@@ -41,6 +41,9 @@
 		B1B2C3D4000000030000BB02 /* OvenMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000030000BB01 /* OvenMonitor.swift */; };
 		B1B2C3D4000000040000BB02 /* OvenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000040000BB01 /* OvenView.swift */; };
 		B1B2C3D4000000050000BB02 /* OvenSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000050000BB01 /* OvenSpeaker.swift */; };
+		C1B2C3D4000000010000CC02 /* PizzaActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000010000CC01 /* PizzaActivityAttributes.swift */; };
+		C1B2C3D4000000020000CC02 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000020000CC01 /* LiveActivityManager.swift */; };
+		C1B2C3D4000000030000CC02 /* DoughAnnouncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000030000CC01 /* DoughAnnouncer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -81,6 +84,9 @@
 		B1B2C3D4000000030000BB01 /* OvenMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenMonitor.swift; sourceTree = "<group>"; };
 		B1B2C3D4000000040000BB01 /* OvenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenView.swift; sourceTree = "<group>"; };
 		B1B2C3D4000000050000BB01 /* OvenSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenSpeaker.swift; sourceTree = "<group>"; };
+		C1B2C3D4000000010000CC01 /* PizzaActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PizzaActivityAttributes.swift; sourceTree = "<group>"; };
+		C1B2C3D4000000020000CC01 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		C1B2C3D4000000030000CC01 /* DoughAnnouncer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughAnnouncer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +100,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C1B2C3D400000001000CC000 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				C1B2C3D4000000010000CC01 /* PizzaActivityAttributes.swift */,
+				C1B2C3D4000000020000CC01 /* LiveActivityManager.swift */,
+				C1B2C3D4000000030000CC01 /* DoughAnnouncer.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		B1B2C3D400000001000BB000 /* Bluetooth */ = {
 			isa = PBXGroup;
 			children = (
@@ -136,6 +152,7 @@
 		C7DC0DB63019FA16003738AA /* mgPizza_mk1 */ = {
 			isa = PBXGroup;
 			children = (
+				C1B2C3D400000001000CC000 /* Shared */,
 				B1B2C3D400000001000BB000 /* Bluetooth */,
 				A1B2C3D4000000060000AA01 /* ShoppingListView.swift */,
 				A1B2C3D4000000050000AA01 /* SauceView.swift */,
@@ -276,6 +293,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C1B2C3D4000000030000CC02 /* DoughAnnouncer.swift in Sources */,
+				C1B2C3D4000000020000CC02 /* LiveActivityManager.swift in Sources */,
+				C1B2C3D4000000010000CC02 /* PizzaActivityAttributes.swift in Sources */,
 				B1B2C3D4000000050000BB02 /* OvenSpeaker.swift in Sources */,
 				B1B2C3D4000000040000BB02 /* OvenView.swift in Sources */,
 				B1B2C3D4000000030000BB02 /* OvenMonitor.swift in Sources */,
@@ -328,6 +348,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Reads the temperature of your pizza oven thermometer.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -363,6 +384,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Reads the temperature of your pizza oven thermometer.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

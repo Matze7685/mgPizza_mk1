@@ -8,8 +8,28 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage("doughSpeak") private var doughSpeak = false
+
     var body: some View {
         List {
+            Section {
+                Toggle("Announce dough timers on speaker", isOn: $doughSpeak)
+                if doughSpeak {
+                    HStack {
+                        Text("Output")
+                        Spacer()
+                        AirPlayPicker()
+                            .frame(width: 44, height: 44)
+                    }
+                    Button("Test announcement", systemImage: "speaker.wave.2") {
+                        OvenSpeaker.shared.announce(String(localized: "Test: the dough timer announcement works."), repeats: 1)
+                    }
+                }
+            } header: {
+                Text("Dough")
+            } footer: {
+                Text("Announces “dough out in 1 hour”, “take the dough out” and “serving” on the selected speaker (e.g. HomePod). Only works while the app is running – keep it open or in the background (e.g. with the oven probe connected). The normal notification always comes.")
+            }
             Section("Oven") {
                 NavigationLink {
                     OvenView()

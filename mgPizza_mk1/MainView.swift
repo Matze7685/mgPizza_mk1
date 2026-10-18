@@ -15,6 +15,7 @@ enum MainTab: Hashable {
 struct MainView: View {
     @State private var isShowingNewRecipeView: Bool = false
     @State private var selectedTab: MainTab = .activity
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         NavigationStack {
@@ -57,6 +58,7 @@ struct MainView: View {
                     }
                 }
             }
+            .onAppear { DoughAnnouncer.shared.start(context: modelContext) }
             .sheet(isPresented: $isShowingNewRecipeView) {
                 RecipeContainerView(recipeSetupData: RecipeSetupData(), isShowingNewRecipeView: $isShowingNewRecipeView)
             }

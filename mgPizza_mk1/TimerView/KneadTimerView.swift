@@ -103,10 +103,12 @@ struct KneadTimerView: View {
         let end = Date().addingTimeInterval(step.minutes * 60)
         storedEnd = end.timeIntervalSince1970
         DoughNotifications.scheduleKneadStep(title: step.title, at: end)
+        LiveActivityManager.shared.startKnead(title: step.title, end: end)
     }
 
     private func nextStep() {
         DoughNotifications.cancelKneadStep()
+        LiveActivityManager.shared.endKnead()
         kneadRecipeID = recipe.uid.uuidString
         storedIndex = currentIndex + 1
         storedEnd = 0
@@ -114,6 +116,7 @@ struct KneadTimerView: View {
 
     private func reset() {
         DoughNotifications.cancelKneadStep()
+        LiveActivityManager.shared.endKnead()
         kneadRecipeID = recipe.uid.uuidString
         storedIndex = 0
         storedEnd = 0
