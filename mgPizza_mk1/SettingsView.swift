@@ -13,6 +13,13 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
+                NavigationLink {
+                    TimerStatusView()
+                } label: {
+                    Label("Timer Status", systemImage: "checklist")
+                }
+            }
+            Section {
                 Toggle("Announce dough timers on speaker", isOn: $doughSpeak)
                 if doughSpeak {
                     HStack {

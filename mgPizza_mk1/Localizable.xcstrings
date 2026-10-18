@@ -188,6 +188,16 @@
         }
       }
     },
+    "%lld reminders scheduled" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Erinnerungen geplant"
+          }
+        }
+      }
+    },
     "(no name)" : {
       "localizations" : {
         "de" : {
@@ -344,6 +354,16 @@
         }
       }
     },
+    "Allowed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaubt"
+          }
+        }
+      }
+    },
     "Amount" : {
       "localizations" : {
         "de" : {
@@ -380,6 +400,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sagt „Teig in 1 Std. raus“, „Teig rausnehmen“ und „Servieren“ über den gewählten Lautsprecher an (z. B. HomePod). Funktioniert nur, solange die App läuft – offen lassen oder im Hintergrund (z. B. mit verbundenem Ofen-Fühler). Die normale Benachrichtigung kommt immer."
+          }
+        }
+      }
+    },
+    "App" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
           }
         }
       }
@@ -704,6 +734,16 @@
         }
       }
     },
+    "Denied – no reminders will appear!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verweigert – es kommen keine Erinnerungen!"
+          }
+        }
+      }
+    },
     "Description" : {
       "localizations" : {
         "de" : {
@@ -990,6 +1030,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplizieren"
+          }
+        }
+      }
+    },
+    "Dynamic Island" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dynamic Island"
           }
         }
       }
@@ -1384,12 +1434,32 @@
         }
       }
     },
+    "Knead timer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knet-Timer"
+          }
+        }
+      }
+    },
     "Lid off: 2–4 min to brown cheese and rim, watch closely." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deckel ab: 2–4 Min., bis Käse und Rand gebräunt sind – dranbleiben."
+          }
+        }
+      }
+    },
+    "Live Activities" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live-Aktivitäten"
           }
         }
       }
@@ -1570,6 +1640,16 @@
         }
       }
     },
+    "No Live Activity running" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Live-Aktivität aktiv"
+          }
+        }
+      }
+    },
     "No dough running" : {
       "localizations" : {
         "de" : {
@@ -1600,6 +1680,16 @@
         }
       }
     },
+    "No reminders scheduled" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Erinnerungen geplant"
+          }
+        }
+      }
+    },
     "No sauces yet" : {
       "localizations" : {
         "de" : {
@@ -1610,12 +1700,32 @@
         }
       }
     },
+    "Not asked yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht gefragt"
+          }
+        }
+      }
+    },
     "Not connected" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht verbunden"
+          }
+        }
+      }
+    },
+    "Not running" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft nicht"
           }
         }
       }
@@ -1640,6 +1750,26 @@
         }
       }
     },
+    "Notifications" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen"
+          }
+        }
+      }
+    },
+    "Notifications off!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen aus!"
+          }
+        }
+      }
+    },
     "Now!" : {
       "localizations" : {
         "de" : {
@@ -1660,6 +1790,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aus"
+          }
+        }
+      }
+    },
+    "Off – alarms may be delayed in Focus mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus – Alarme können im Fokus-Modus verzögert sein"
+          }
+        }
+      }
+    },
+    "Off – enable in iOS Settings → mgPizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus – in den iOS-Einstellungen → mgPizza aktivieren"
           }
         }
       }
@@ -1714,6 +1864,26 @@
         }
       }
     },
+    "On" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An"
+          }
+        }
+      }
+    },
+    "On – only while the app is running" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An – nur solange die App läuft"
+          }
+        }
+      }
+    },
     "Onion" : {
       "localizations" : {
         "de" : {
@@ -1732,6 +1902,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rezept öffnen"
+          }
+        }
+      }
+    },
+    "Open iOS Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS-Einstellungen öffnen"
           }
         }
       }
@@ -1792,6 +1972,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ofen ist bereit 🔥"
+          }
+        }
+      }
+    },
+    "Oven probe" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ofen-Fühler"
           }
         }
       }
@@ -1866,6 +2056,16 @@
         }
       }
     },
+    "Permissions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berechtigungen"
+          }
+        }
+      }
+    },
     "Pizza time 🍕" : {
       "localizations" : {
         "de" : {
@@ -1922,6 +2122,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abgedeckt 2–3 Std. bei Raumtemperatur gehen lassen, bis er luftig ist."
+          }
+        }
+      }
+    },
+    "Provisional (silent)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorläufig (lautlos)"
           }
         }
       }
@@ -2106,6 +2316,16 @@
         }
       }
     },
+    "Running until %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft bis %@"
+          }
+        }
+      }
+    },
     "SAVE" : {
       "comment" : "A button to save the recipe.",
       "isCommentAutoGenerated" : true,
@@ -2234,6 +2454,16 @@
         }
       }
     },
+    "Scheduled reminders (%lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geplante Erinnerungen (%lld)"
+          }
+        }
+      }
+    },
     "Searching for Ooni hub …" : {
       "localizations" : {
         "de" : {
@@ -2322,6 +2552,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sortierung"
+          }
+        }
+      }
+    },
+    "Speaker announcements" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lautsprecher-Ansagen"
           }
         }
       }
@@ -2552,6 +2792,16 @@
         }
       }
     },
+    "Temporary" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorübergehend"
+          }
+        }
+      }
+    },
     "Test announcement" : {
       "localizations" : {
         "de" : {
@@ -2602,6 +2852,26 @@
         }
       }
     },
+    "These are stored by iOS and arrive even when the app is closed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese sind bei iOS hinterlegt und kommen auch, wenn die App geschlossen ist."
+          }
+        }
+      }
+    },
+    "Time Sensitive" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dringliche Mitteilungen"
+          }
+        }
+      }
+    },
     "Timer" : {
       "comment" : "A section header for the timer.",
       "isCommentAutoGenerated" : true,
@@ -2610,6 +2880,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Timer"
+          }
+        }
+      }
+    },
+    "Timer Status" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timer-Status"
           }
         }
       }

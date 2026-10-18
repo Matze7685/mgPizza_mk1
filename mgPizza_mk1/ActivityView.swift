@@ -33,6 +33,13 @@ struct ActivityView: View {
                     }
                 }
             }
+            Section {
+                NavigationLink {
+                    TimerStatusView()
+                } label: {
+                    TimerStatusBadge()
+                }
+            }
             if activeRecipes.isEmpty {
                 ContentUnavailableView("No dough running", systemImage: "timer",
                                        description: Text("Press START on a new recipe or “Start dough timer” on a saved one."))
