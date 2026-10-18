@@ -13,11 +13,11 @@ struct KneadStep: Codable, Hashable, Identifiable {
     var minutes: Double
 
     static let defaultPlan: [KneadStep] = [
-        KneadStep(title: "Mix", detail: "Cold water + yeast, then ~90% of the flour. Slow speed.", minutes: 3),
-        KneadStep(title: "Autolyse", detail: "Machine off – let the flour hydrate.", minutes: 15),
-        KneadStep(title: "Salt & rest of flour", detail: "Add salt (and sugar) plus the remaining flour.", minutes: 5),
-        KneadStep(title: "Oil", detail: "Drizzle in the oil slowly (skip if none). Medium speed.", minutes: 2),
-        KneadStep(title: "Rest", detail: "Machine off, cover the bowl.", minutes: 10),
-        KneadStep(title: "Final knead", detail: "Until smooth & windowpane test passes. Dough < 25 °C.", minutes: 2),
+        KneadStep(title: String(localized: "Mix"), detail: String(localized: "Cold water + yeast, then ~\(90)% of the flour. Slow speed."), minutes: 3),
+        KneadStep(title: String(localized: "Autolyse"), detail: String(localized: "Machine off – let the flour hydrate."), minutes: 15),
+        KneadStep(title: String(localized: "Salt & rest of flour"), detail: String(localized: "Add salt (and sugar) plus the remaining flour."), minutes: 5),
+        KneadStep(title: String(localized: "Oil"), detail: String(localized: "Drizzle in the oil slowly (skip if none). Medium speed."), minutes: 2),
+        KneadStep(title: String(localized: "Rest"), detail: String(localized: "Machine off, cover the bowl."), minutes: 10),
+        KneadStep(title: String(localized: "Final knead"), detail: String(localized: "Until smooth & windowpane test passes. Dough < 25 °C."), minutes: 2),
     ]
 }

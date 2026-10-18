@@ -117,7 +117,9 @@ extension RecipeSetupData {
         min(max(yeastSelection, 0), yeastTypes.count - 1, yeastRatio.count - 1)
     }
 
-    var yeastName: String { yeastTypes[safeYeastSelection] }
+    var yeastName: String {
+        [String(localized: "Fresh Yeast"), String(localized: "Dry Yeast"), String(localized: "Instant Dry Yeast")][safeYeastSelection]
+    }
 
     var isDetroit: Bool { style == "detroit" }
 

@@ -18,7 +18,7 @@ struct OvenView: View {
                         .frame(width: 10, height: 10)
                     Text(monitor.status.isEmpty ? String(localized: "Not connected") : monitor.status)
                     Spacer()
-                    Button(monitor.isActive ? "Stop" : "Connect") {
+                    Button(monitor.isActive ? LocalizedStringKey("Stop") : "Connect") {
                         monitor.isActive ? monitor.stop() : monitor.start()
                     }
                     .buttonStyle(.borderedProminent)
@@ -103,7 +103,7 @@ struct OvenView: View {
                     Text("– – –")
                         .font(.system(size: 56, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
-                    Text(monitor.isActive ? "No probe plugged in" : "Not connected")
+                    Text(monitor.isActive ? LocalizedStringKey("No probe plugged in") : "Not connected")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

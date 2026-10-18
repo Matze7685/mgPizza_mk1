@@ -51,7 +51,7 @@ struct BLEDebugView: View {
     @ViewBuilder
     var scanSection: some View {
         Section(footer: Text("Close the Ooni app first (or disconnect the hub there) – the hub usually accepts only one connection.")) {
-            Button(scanner.isScanning ? "Stop scan" : "Start scan",
+            Button(scanner.isScanning ? LocalizedStringKey("Stop scan") : "Start scan",
                    systemImage: scanner.isScanning ? "stop.circle" : "antenna.radiowaves.left.and.right") {
                 scanner.isScanning ? scanner.stopScan() : scanner.startScan()
             }
@@ -67,7 +67,7 @@ struct BLEDebugView: View {
                 } label: {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(device.name.isEmpty ? "(no name)" : device.name).font(.headline)
+                            Text(device.name.isEmpty ? String(localized: "(no name)") : device.name).font(.headline)
                             Text(device.id.uuidString).font(.caption2).foregroundStyle(.secondary)
                         }
                         Spacer()

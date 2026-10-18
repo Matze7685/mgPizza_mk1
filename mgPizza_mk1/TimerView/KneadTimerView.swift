@@ -76,7 +76,7 @@ struct KneadTimerView: View {
                         .font(.system(size: 56, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(remaining == 0 ? .green : .primary)
-                    Button(remaining == 0 ? "Next step" : "Skip", systemImage: "forward.fill") {
+                    Button(remaining == 0 ? LocalizedStringKey("Next step") : "Skip", systemImage: "forward.fill") {
                         nextStep()
                     }
                     .buttonStyle(.borderedProminent)
@@ -138,7 +138,7 @@ struct KneadStepsEditor: View {
                 .onMove { steps.move(fromOffsets: $0, toOffset: $1) }
 
                 Button("Add step", systemImage: "plus") {
-                    steps.append(KneadStep(title: "New step", detail: "", minutes: 2))
+                    steps.append(KneadStep(title: String(localized: "New step"), detail: "", minutes: 2))
                 }
                 Button("Restore default plan", systemImage: "arrow.uturn.backward") {
                     steps = KneadStep.defaultPlan

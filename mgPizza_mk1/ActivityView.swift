@@ -27,7 +27,7 @@ struct ActivityView: View {
                         if let temp = ovenMonitor.temperatures.compactMap({ $0 }).first {
                             Text("\(Int(temp)) °C").bold().monospacedDigit()
                         } else {
-                            Text(ovenMonitor.isActive ? "…" : "Off").foregroundStyle(.secondary)
+                            Text(ovenMonitor.isActive ? LocalizedStringKey("…") : "Off").foregroundStyle(.secondary)
                         }
                     }
                 }

@@ -63,13 +63,13 @@ class SauceRecipe {
     }
 
     static let defaultIngredients: [SauceIngredient] = [
-        SauceIngredient(name: "Salt", percent: 1.5),
-        SauceIngredient(name: "Olive Oil", percent: 3.0),
-        SauceIngredient(name: "Fresh Basil", percent: 0.8),
-        SauceIngredient(name: "Dried Oregano", percent: 0.2),
-        SauceIngredient(name: "Garlic", percent: 0.0),
-        SauceIngredient(name: "Onion", percent: 0.0, unit: .piece),
-        SauceIngredient(name: "Sugar", percent: 0.0),
+        SauceIngredient(name: String(localized: "Salt"), percent: 1.5),
+        SauceIngredient(name: String(localized: "Olive Oil"), percent: 3.0),
+        SauceIngredient(name: String(localized: "Fresh Basil"), percent: 0.8),
+        SauceIngredient(name: String(localized: "Dried Oregano"), percent: 0.2),
+        SauceIngredient(name: String(localized: "Garlic"), percent: 0.0),
+        SauceIngredient(name: String(localized: "Onion"), percent: 0.0, unit: .piece),
+        SauceIngredient(name: String(localized: "Sugar"), percent: 0.0),
     ]
 
     var displayName: String {
