@@ -118,7 +118,15 @@ struct DetroitTipsSection: View {
             Label("Proof covered 2–3 h at room temperature until puffy.", systemImage: "3.circle")
             Label("Cheese (cubed Brick, young Gouda or Mozzarella) all the way to the edges – that makes the crispy rim.", systemImage: "4.circle")
             Label("Sauce in 2–3 stripes on top, after or before baking.", systemImage: "5.circle")
-            Label("Bake at 260–290 °C on the lowest rack, 12–15 min, until the cheese rim is dark.", systemImage: "6.circle")
+            Label("Oven: 260–290 °C on the lowest rack, 12–15 min, until the cheese rim is dark.", systemImage: "6.circle")
+        }
+        Section(header: Text("Detroit in the Ooni (pan with lid)"),
+                footer: Text("Use the stone temperature as a guide – the oven thermometer probe helps here.")) {
+            Label("Heat the stone to ~300–350 °C, then turn the flame to the lowest setting.", systemImage: "flame")
+            Label("Pan in with lid on: 8–10 min so the dough bakes through and the base crisps without burning the top.", systemImage: "1.circle")
+            Label("Rotate the pan 90° every 2–3 min – the back near the flame gets hotter.", systemImage: "2.circle")
+            Label("Lid off: 2–4 min to brown cheese and rim, watch closely.", systemImage: "3.circle")
+            Label("Check the base with a spatula – if it's pale, give it 1–2 more min with the lid on.", systemImage: "4.circle")
         }
         .font(.callout)
     }
