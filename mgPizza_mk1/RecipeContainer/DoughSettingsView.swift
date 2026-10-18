@@ -35,8 +35,8 @@ struct DoughSettingsView: View {
                     }
                     VStack(alignment: .leading) {
                         Text("Dough Thickness: \(recipeSetupData.doughThickness, specifier: "%.1f") mm")
-                        Slider(value: $recipeSetupData.doughThickness, in: 3...10, step: 0.5)
-                        Text("Raw dough pressed into the pan. ~5–6 mm = classic, rises to ~2.5–3 cm.")
+                        Slider(value: $recipeSetupData.doughThickness, in: 3...25, step: 0.5)
+                        Text("Raw dough pressed into the pan. ~5–6 mm = classic (rises to ~2.5–3 cm), 8–12 mm = thick, 15+ mm = very thick / focaccia-like.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     LabeledContent("Dough per Pan", value: "\(Int(recipeSetupData.doughWeight)) g")

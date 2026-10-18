@@ -35,10 +35,34 @@ struct OvenView: View {
                 }
             }
 
+            hubTimerSection
             speakerSection
         }
         .navigationTitle("Oven Temperature")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    var hubTimerSection: some View {
+        Section {
+            Toggle("Remind 5 min before auto-off", isOn: $monitor.hubReminder)
+            if let off = monitor.hubOffDate {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let remaining = max(0, off.timeIntervalSince(context.date))
+                    LabeledContent("Hub turns off in") {
+                        Text(Duration.seconds(remaining.rounded(.up)), format: .time(pattern: .minuteSecond))
+                            .monospacedDigit()
+                            .foregroundStyle(remaining < OvenMonitor.hubWarningLead ? .red : .primary)
+                    }
+                }
+                Button("I pressed the hub button", systemImage: "arrow.counterclockwise") {
+                    monitor.resetHubTimer()
+                }
+            }
+        } header: {
+            Text("Hub auto-off (45 min)")
+        } footer: {
+            Text("Counted from the first connection. If you switched the hub on earlier, the real time may be shorter.")
+        }
     }
 
     var speakerSection: some View {

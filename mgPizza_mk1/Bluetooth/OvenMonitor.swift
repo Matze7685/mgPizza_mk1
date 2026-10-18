@@ -42,12 +42,42 @@ class OvenMonitor: NSObject, ObservableObject {
     @Published var isActive = false
     @Published var temperatures: [Double?] = Array(repeating: nil, count: OoniHub.probeCount)
     @Published var lastUpdate: Date?
+    /// Seit wann der Hub (vermutlich) eingeschaltet ist – er schaltet sich nach 45 Min. selbst ab
+    @Published var hubOnSince: Date?
+
+    static let hubAutoOff: TimeInterval = 45 * 60
+    static let hubWarningLead: TimeInterval = 5 * 60
+    private var hubWarningSent = false
 
     @AppStorage("ovenTarget0") var target0: Double = 400 { willSet { objectWillChange.send() } }
     @AppStorage("ovenTarget1") var target1: Double = 450 { willSet { objectWillChange.send() } }
     @AppStorage("ovenAlarm0") var alarm0: Bool = true { willSet { objectWillChange.send() } }
     @AppStorage("ovenAlarm1") var alarm1: Bool = false { willSet { objectWillChange.send() } }
     @AppStorage("ovenSpeakAlarm") var speakAlarm: Bool = false { willSet { objectWillChange.send() } }
+    @AppStorage("ovenHubReminder") var hubReminder: Bool = true { willSet { objectWillChange.send() } }
+
+    var hubOffDate: Date? { hubOnSince?.addingTimeInterval(Self.hubAutoOff) }
+
+    /// Nach Tastendruck am Hub: 45-Minuten-Zähler neu starten
+    func resetHubTimer() {
+        hubOnSince = Date()
+        hubWarningSent = false
+    }
+
+    private func checkHubTimer() {
+        guard hubReminder, !hubWarningSent, let off = hubOffDate,
+              Date() >= off.addingTimeInterval(-Self.hubWarningLead) else { return }
+        hubWarningSent = true
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Temperature hub turns off soon")
+        content.body = String(localized: "The Ooni hub switches off in about 5 minutes – press its power button briefly.")
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "oven-hub-off", content: content, trigger: nil))
+        if speakAlarm {
+            OvenSpeaker.shared.announce(String(localized: "The temperature hub switches off in five minutes. Please press its button."), repeats: 1)
+        }
+    }
 
     /// Hysterese: erneut melden erst, wenn die Temperatur wieder so weit unter das Ziel gefallen ist
     private let rearmDelta: Double = 20
@@ -80,6 +110,7 @@ class OvenMonitor: NSObject, ObservableObject {
         if let hub { central?.cancelPeripheralConnection(hub) }
         hub = nil
         status = String(localized: "Stopped")
+        hubOnSince = nil
         temperatures = Array(repeating: nil, count: OoniHub.probeCount)
     }
 
@@ -175,6 +206,8 @@ extension OvenMonitor: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         guard isActive else { return }
         status = String(localized: "Connection lost – reconnecting …")
+        // Hub vermutlich aus – beim nächsten Verbinden startet der 45-Minuten-Zähler neu
+        hubOnSince = nil
         // connect() ohne Timeout: iOS verbindet automatisch, sobald der Hub wieder erreichbar ist
         central.connect(peripheral)
     }
@@ -197,6 +230,8 @@ extension OvenMonitor: CBPeripheralDelegate {
         guard characteristic.uuid == OoniHub.temperatureUUID, let data = characteristic.value else { return }
         temperatures = OoniHub.parse(data)
         lastUpdate = Date()
+        if hubOnSince == nil { resetHubTimer() }
         checkAlarms()
+        checkHubTimer()
     }
 }
