@@ -58,7 +58,10 @@ struct MainView: View {
                     }
                 }
             }
-            .onAppear { DoughAnnouncer.shared.start(context: modelContext) }
+            .onAppear {
+                SeedImporter.importIfNeeded(into: modelContext)
+                DoughAnnouncer.shared.start(context: modelContext)
+            }
             .sheet(isPresented: $isShowingNewRecipeView) {
                 RecipeContainerView(recipeSetupData: RecipeSetupData(), isShowingNewRecipeView: $isShowingNewRecipeView)
             }
