@@ -17,7 +17,7 @@ struct DoughSettingsView: View {
     var body: some View {
         Form {
             Section("Step 1 of 3") {
-                TextField("Name (e.g. Neapolitan)", text: $recipeSetupData.name)
+                TextField(recipeSetupData.autoName, text: $recipeSetupData.name)
                 Picker("Style", selection: $recipeSetupData.style) {
                     Text("Round").tag("round")
                     Text("Detroit").tag("detroit")

@@ -31,6 +31,7 @@ struct RecipeDetailView: View {
         }
         .navigationTitle(recipeData.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: recipeData.displayName) { recipeData.refreshScheduledTexts() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Use as template", systemImage: "doc.on.doc") {
@@ -191,7 +192,7 @@ struct RecipeDetailView: View {
 
     var settingsSection: some View {
         Section("Recipe") {
-            TextField("Name", text: $recipeData.name)
+            TextField(recipeData.autoName, text: $recipeData.name)
             if recipeData.isDetroit {
                 LabeledContent("Pans", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.panWidth))×\(Int(recipeData.panLength)) cm")
                 LabeledContent("Dough per Pan", value: "\(Int(recipeData.doughWeight)) g (\(String(format: "%.1f", recipeData.doughThickness)) mm)")

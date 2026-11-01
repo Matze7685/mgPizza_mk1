@@ -103,7 +103,7 @@ class RecipeSetupData {
                         roomTemp: roomTemp, roomTime: roomTime, coolTemp: coolTemp, coolTime: coolTime,
                         dateSelection: Date().addingTimeInterval((roomTime + coolTime) * 3600),
                         oilRatio: oilRatio, sugarRatio: sugarRatio, yeastCorrection: yeastCorrection,
-                        kneadSteps: kneadSteps, name: name)
+                        kneadSteps: kneadSteps, name: "")   // leer -> automatischer Name passend zu den neuen Einstellungen
             .withPan(style: style, width: panWidth, length: panLength, thickness: doughThickness)
     }
 
@@ -119,7 +119,25 @@ class RecipeSetupData {
 // MARK: - Berechnung
 extension RecipeSetupData {
     var displayName: String {
-        name.isEmpty ? String(localized: "Dough \(createdAt.formatted(date: .abbreviated, time: .omitted))") : name
+        name.isEmpty ? autoName : name
+    }
+
+    /// z. B. "05.11.26 · 8× 330 g" – passt sich an Anzahl und Gewicht an
+    var autoName: String {
+        let date = createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.twoDigits))
+        return "\(date) · \(Int(doughBallsCount))× \(Int(doughWeight)) g" + (isDetroit ? " · Detroit" : "")
+    }
+
+    /// Nach Namensänderung: Erinnerungen und Live Activities mit dem neuen Namen neu planen
+    func refreshScheduledTexts() {
+        if isStarted {
+            DoughNotifications.schedule(for: self)
+            LiveActivityManager.shared.refreshDough([self])
+        }
+        if let end = kneadStepEnd, let step = currentKneadStep {
+            DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: step.title, recipe: displayName, at: end)
+            LiveActivityManager.shared.startKnead(self, title: step.title, end: end)
+        }
     }
 
     var safeYeastSelection: Int {
