@@ -27,6 +27,9 @@ struct KneadSection: View {
         } header: {
             HStack {
                 Text("2 · Knead")
+                if !recipe.batchLabel.isEmpty {
+                    Text("· \(recipe.batchLabel)").foregroundStyle(.orange)
+                }
                 Spacer()
                 Button("Edit") { isEditing = true }
                     .font(.caption)
@@ -85,6 +88,20 @@ struct KneadSection: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+        } else if recipe.hasMoreBatches {
+            VStack(spacing: 8) {
+                Label("Batch \(recipe.currentBatch + 1) done", systemImage: "checkmark.circle.fill")
+                    .font(.headline)
+                    .foregroundStyle(.green)
+                Text("Take the dough out, then fill the machine for the next batch.")
+                    .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Button("Start batch \(recipe.currentBatch + 2) of \(recipe.batchCount)", systemImage: "arrow.right.circle.fill") {
+                    recipe.startNextBatch()
+                }
+                .buttonStyle(.borderedProminent)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)

@@ -23,6 +23,14 @@ struct DoughResultView: View {
             doughSection
             fermentSection
             DoughWarningsSection(recipe: recipeSetupData)
+            if recipeSetupData.batchCount > 1 {
+                Section {
+                    Label("Kneaded in \(recipeSetupData.batchCount) batches (max. \(Int(RecipeSetupData.mixerCapacity)) g per batch). Ingredients and knead timer are split automatically.",
+                          systemImage: "square.split.2x1")
+                        .font(.callout)
+                        .foregroundStyle(.orange)
+                }
+            }
             FlourHintSection(totalHours: recipeSetupData.roomTime + recipeSetupData.effectiveCoolTime())
         }
         .navigationTitle("Result").font(.subheadline)

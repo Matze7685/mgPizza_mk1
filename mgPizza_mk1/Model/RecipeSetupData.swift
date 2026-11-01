@@ -47,6 +47,8 @@ class RecipeSetupData {
     // Knet-Timer pro Rezept
     var kneadStepIndex: Int = 0
     var kneadStepEnd: Date?
+    /// Aktueller Knet-Durchgang (Teig wird geteilt, wenn er größer als die Knetmaschine ist)
+    var kneadBatch: Int = 0
 
     // Gärtimer (Kühlschrank -> Raum -> Servieren)
     var isStarted: Bool = false
@@ -135,8 +137,8 @@ extension RecipeSetupData {
             LiveActivityManager.shared.refreshDough([self])
         }
         if let end = kneadStepEnd, let step = currentKneadStep {
-            DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: step.title, recipe: displayName, at: end)
-            LiveActivityManager.shared.startKnead(self, title: step.title, end: end)
+            DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: kneadTitle(step), recipe: displayName, at: end)
+            LiveActivityManager.shared.startKnead(self, title: kneadTitle(step), end: end)
         }
     }
 
@@ -229,7 +231,7 @@ extension RecipeSetupData {
             return .serve
         }
         guard isInProgress else { return nil }
-        return (kneadStepIndex > 0 || kneadStepEnd != nil) ? .knead : .ingredients
+        return (kneadStepIndex > 0 || kneadStepEnd != nil || kneadBatch > 0) ? .knead : .ingredients
     }
 
     var isActive: Bool { isInProgress || isStarted }
@@ -249,16 +251,54 @@ extension RecipeSetupData {
 
     // MARK: Knet-Timer
 
-    var isKneadFinished: Bool { kneadStepIndex >= kneadSteps.count }
-    var currentKneadStep: KneadStep? { isKneadFinished ? nil : kneadSteps[kneadStepIndex] }
+    // MARK: Durchgänge (Knetmaschinen-Kapazität)
+
+    /// Max. Teigmenge der Knetmaschine in g (Einstellungen)
+    static var mixerCapacity: Double {
+        let value = UserDefaults.standard.double(forKey: "mixerCapacity")
+        return value > 0 ? value : 2500
+    }
+
+    var batchCount: Int {
+        let needed = Int((totalDoughWeight / Self.mixerCapacity).rounded(.up))
+        return max(1, min(needed, Int(doughBallsCount)))
+    }
+
+    /// Teiglinge pro Durchgang, gleichmäßig verteilt (z. B. 25 -> 9 / 8 / 8)
+    func batchBalls(_ batch: Int) -> Int {
+        let balls = Int(doughBallsCount), n = batchCount
+        return balls / n + (batch < balls % n ? 1 : 0)
+    }
+
+    func batchFraction(_ batch: Int) -> Double {
+        doughBallsCount > 0 ? Double(batchBalls(batch)) / doughBallsCount : 1
+    }
+
+    var currentBatch: Int { min(kneadBatch, batchCount - 1) }
+
+    /// "Durchgang 2/3" – leer, wenn nicht geteilt wird
+    var batchLabel: String {
+        batchCount > 1 ? String(localized: "Batch \(currentBatch + 1)/\(batchCount)") : ""
+    }
+
+    var isBatchKneaded: Bool { kneadStepIndex >= kneadSteps.count }
+    var hasMoreBatches: Bool { currentBatch < batchCount - 1 }
+    var isKneadFinished: Bool { isBatchKneaded && !hasMoreBatches }
+    var currentKneadStep: KneadStep? { isBatchKneaded ? nil : kneadSteps[kneadStepIndex] }
+
+    func startNextBatch() {
+        cancelKneadTimer()
+        kneadBatch = min(currentBatch + 1, batchCount - 1)
+        kneadStepIndex = 0
+    }
 
     func startKneadStep(now: Date = Date()) {
         guard let step = currentKneadStep else { return }
         isInProgress = true
         let end = now.addingTimeInterval(step.minutes * 60)
         kneadStepEnd = end
-        DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: step.title, recipe: displayName, at: end)
-        LiveActivityManager.shared.startKnead(self, title: step.title, end: end)
+        DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: kneadTitle(step), recipe: displayName, at: end)
+        LiveActivityManager.shared.startKnead(self, title: kneadTitle(step), end: end)
     }
 
     func nextKneadStep() {
@@ -269,6 +309,12 @@ extension RecipeSetupData {
     func resetKnead() {
         cancelKneadTimer()
         kneadStepIndex = 0
+        kneadBatch = 0
+    }
+
+    /// Schritt-Titel inkl. Durchgang, z. B. "Mischen (Durchgang 2/3)"
+    func kneadTitle(_ step: KneadStep) -> String {
+        batchLabel.isEmpty ? step.title : "\(step.title) (\(batchLabel))"
     }
 
     private func cancelKneadTimer() {
@@ -291,10 +337,12 @@ extension RecipeSetupData {
     }
 
     /// z. B. "434 g Wasser · 781 g Mehl · 0,38 g Trockenhefe"
+    /// Mengen für den aktuellen Durchgang
     func addsText(for step: KneadStep) -> String {
-        step.effectiveAdds.compactMap { add -> String? in
+        let batch = batchFraction(currentBatch)
+        return step.effectiveAdds.compactMap { add -> String? in
             guard let item = amount(of: add.key) else { return nil }
-            let grams = item.grams * add.fraction
+            let grams = item.grams * add.fraction * batch
             let value = grams < 10 ? grams.formatted(.number.precision(.fractionLength(0...2)))
                                    : grams.formatted(.number.precision(.fractionLength(0)))
             return "\(value) g \(item.name)"

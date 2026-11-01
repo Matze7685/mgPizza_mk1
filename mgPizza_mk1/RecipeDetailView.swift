@@ -14,6 +14,7 @@ struct RecipeDetailView: View {
     @State private var templateRecipe: RecipeSetupData?
     @State private var isShowingShoppingPicker = false
     @State private var checkedIngredients: Set<String> = []
+    @State private var shownBatch = 0
 
     private var isShowingTemplate: Binding<Bool> {
         Binding { templateRecipe != nil } set: { if !$0 { templateRecipe = nil } }
@@ -32,6 +33,9 @@ struct RecipeDetailView: View {
         .navigationTitle(recipeData.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: recipeData.displayName) { recipeData.refreshScheduledTexts() }
+        // Zutaten zeigen automatisch den aktuellen Knet-Durchgang
+        .onAppear { shownBatch = recipeData.currentBatch }
+        .onChange(of: recipeData.kneadBatch) { shownBatch = recipeData.currentBatch }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Use as template", systemImage: "doc.on.doc") {
@@ -84,13 +88,28 @@ struct RecipeDetailView: View {
 
     var ingredientsSection: some View {
         Section {
+            if recipeData.batchCount > 1 {
+                Label("Too much for the mixer – kneaded in \(recipeData.batchCount) batches (max. \(Int(RecipeSetupData.mixerCapacity)) g each).",
+                      systemImage: "square.split.2x1")
+                    .font(.callout)
+                    .foregroundStyle(.orange)
+                Picker("Batch", selection: $shownBatch) {
+                    ForEach(0..<recipeData.batchCount, id: \.self) { batch in
+                        Text("\(batch + 1)").tag(batch)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text("Batch \(shownBatch + 1): \(recipeData.batchBalls(shownBatch)) dough balls")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             ForEach(ingredientRows, id: \.key) { row in
+                let checkKey = "\(shownBatch)-\(row.key)"
                 Button {
-                    if checkedIngredients.contains(row.key) { checkedIngredients.remove(row.key) } else { checkedIngredients.insert(row.key) }
+                    if checkedIngredients.contains(checkKey) { checkedIngredients.remove(checkKey) } else { checkedIngredients.insert(checkKey) }
                 } label: {
                     HStack {
-                        Image(systemName: checkedIngredients.contains(row.key) ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(checkedIngredients.contains(row.key) ? .green : .gray)
+                        Image(systemName: checkedIngredients.contains(checkKey) ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(checkedIngredients.contains(checkKey) ? .green : .gray)
                         Text(row.name)
                         Spacer()
                         Text(row.amount).bold().foregroundStyle(row.key == "yeast" ? .orange : .primary)
@@ -99,9 +118,17 @@ struct RecipeDetailView: View {
                 .foregroundStyle(.primary)
             }
             HStack {
-                Text("Total")
+                Text(recipeData.batchCount > 1 ? LocalizedStringKey("Batch total") : "Total")
                 Spacer()
-                Text("\(recipeData.totalDoughWeight, specifier: "%.0f") g").foregroundStyle(.secondary)
+                Text("\(recipeData.totalDoughWeight * recipeData.batchFraction(min(shownBatch, recipeData.batchCount - 1)), specifier: "%.0f") g")
+                    .foregroundStyle(.secondary)
+            }
+            if recipeData.batchCount > 1 {
+                HStack {
+                    Text("Total (all batches)")
+                    Spacer()
+                    Text("\(recipeData.totalDoughWeight, specifier: "%.0f") g").foregroundStyle(.secondary)
+                }
             }
             Button("Add to shopping list", systemImage: "cart.badge.plus") {
                 isShowingShoppingPicker = true
@@ -114,10 +141,12 @@ struct RecipeDetailView: View {
     }
 
     private var ingredientRows: [(key: String, name: String, amount: String)] {
-        ["flour", "water", "salt", "oil", "sugar", "yeast"].compactMap { key -> (key: String, name: String, amount: String)? in
+        let fraction = recipeData.batchFraction(min(shownBatch, recipeData.batchCount - 1))
+        return ["flour", "water", "salt", "oil", "sugar", "yeast"].compactMap { key -> (key: String, name: String, amount: String)? in
             guard let item = recipeData.amount(of: key) else { return nil }
-            let format = key == "yeast" ? "%.2f g" : (item.grams < 50 ? "%.1f g" : "%.0f g")
-            return (key, item.name, String(format: format, item.grams))
+            let grams = item.grams * fraction
+            let format = key == "yeast" ? "%.2f g" : (grams < 50 ? "%.1f g" : "%.0f g")
+            return (key, item.name, String(format: format, grams))
         }
     }
 

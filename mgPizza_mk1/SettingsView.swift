@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("doughSpeak") private var doughSpeak = false
+    @AppStorage("mixerCapacity") private var mixerCapacity: Double = 2500
 
     var body: some View {
         List {
@@ -18,6 +19,13 @@ struct SettingsView: View {
                 } label: {
                     Label("Timer Status", systemImage: "checklist")
                 }
+            }
+            Section {
+                Stepper("Max. dough per batch: \(Int(mixerCapacity)) g", value: $mixerCapacity, in: 500...10000, step: 100)
+            } header: {
+                Text("Mixer")
+            } footer: {
+                Text("Larger recipes are split into several batches (ingredients and knead timer).")
             }
             Section {
                 Toggle("Announce dough timers on speaker", isOn: $doughSpeak)

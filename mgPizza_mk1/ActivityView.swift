@@ -96,7 +96,7 @@ struct ActiveRecipeCard: View {
     private var kneadInfo: some View {
         if let step = recipe.currentKneadStep {
             HStack {
-                Label(LocalizedStringKey(step.title), systemImage: "timer")
+                Label(recipe.kneadTitle(step), systemImage: "timer")
                 Spacer()
                 if let end = recipe.kneadStepEnd {
                     let remaining = max(0, end.timeIntervalSince(now))
@@ -107,6 +107,10 @@ struct ActiveRecipeCard: View {
                     Text("Ready to start").font(.caption).foregroundStyle(.orange)
                 }
             }
+        } else if recipe.hasMoreBatches {
+            Label("Batch \(recipe.currentBatch + 1) done – start the next one", systemImage: "square.split.2x1")
+                .font(.callout)
+                .foregroundStyle(.orange)
         } else {
             Label("Kneading done – start the fridge timer", systemImage: "refrigerator")
                 .font(.callout)
