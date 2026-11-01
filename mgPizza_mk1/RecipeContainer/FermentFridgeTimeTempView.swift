@@ -24,6 +24,9 @@ struct FermentFridgeTimeTempView: View {
                     LabeledContent("Out of the fridge") {
                         Text(recipeSetupData.fridgeOutSelection, format: .dateTime.weekday().day().month().hour().minute())
                     }
+                    LabeledContent("Serving") {
+                        Text(recipeSetupData.dateSelection, format: .dateTime.weekday().day().month().hour().minute())
+                    }
                     LabeledContent("Fridge Time", value: "\(Int(recipeSetupData.effectiveCoolTime().rounded())) h")
                 }
             } else {

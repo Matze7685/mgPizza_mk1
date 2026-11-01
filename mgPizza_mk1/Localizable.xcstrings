@@ -1254,6 +1254,16 @@
         }
       }
     },
+    "Fridge time = now until out of the fridge. Room time = out of the fridge until serving. Both are calculated for you." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kühlzeit = jetzt bis aus dem Kühlschrank. Raumzeit = aus dem Kühlschrank bis Servieren. Beides wird für dich berechnet."
+          }
+        }
+      }
+    },
     "Garlic" : {
       "localizations" : {
         "de" : {
@@ -2530,6 +2540,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "In Schritt 2 festgelegt – dort ändern."
+          }
+        }
+      }
+    },
+    "Set times by date" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeiten per Datum festlegen"
           }
         }
       }
