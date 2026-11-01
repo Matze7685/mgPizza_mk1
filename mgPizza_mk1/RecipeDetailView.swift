@@ -11,8 +11,11 @@ import SwiftUI
 struct RecipeDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var recipeData: RecipeSetupData
-    @State private var isShowingTemplate = false
     @State private var templateRecipe: RecipeSetupData?
+
+    private var isShowingTemplate: Binding<Bool> {
+        Binding { templateRecipe != nil } set: { if !$0 { templateRecipe = nil } }
+    }
     @State private var isShowingShoppingPicker = false
     
     var body: some View {
@@ -53,7 +56,6 @@ struct RecipeDetailView: View {
                 }
                 Button {
                     templateRecipe = recipeData.copyAsTemplate()
-                    isShowingTemplate = true
                 } label: {
                     Label("Use as template", systemImage: "doc.on.doc")
                 }
@@ -65,10 +67,9 @@ struct RecipeDetailView: View {
         .sheet(isPresented: $isShowingShoppingPicker) {
             ShoppingPickerSheet(items: recipeData.shoppingItems, source: recipeData.displayName)
         }
-        .sheet(isPresented: $isShowingTemplate) {
-            if let templateRecipe {
-                RecipeContainerView(recipeSetupData: templateRecipe, isShowingNewRecipeView: $isShowingTemplate)
-            }
+        // sheet(item:) statt isPresented: sonst ist das Rezept beim ersten Öffnen noch nil (leeres Sheet)
+        .sheet(item: $templateRecipe) { recipe in
+            RecipeContainerView(recipeSetupData: recipe, isShowingNewRecipeView: isShowingTemplate)
         }
     }
 

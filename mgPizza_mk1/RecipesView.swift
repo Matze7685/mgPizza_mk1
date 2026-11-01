@@ -18,7 +18,10 @@ struct RecipesView: View {
     @Query(sort: \RecipeSetupData.createdAt, order: .reverse) private var recipes: [RecipeSetupData]
     @State private var sortMode: SortMode = .newest
     @State private var templateRecipe: RecipeSetupData?
-    @State private var isShowingTemplate = false
+
+    private var isShowingTemplate: Binding<Bool> {
+        Binding { templateRecipe != nil } set: { if !$0 { templateRecipe = nil } }
+    }
 
     var sortedRecipes: [RecipeSetupData] {
         switch sortMode {
@@ -49,17 +52,15 @@ struct RecipesView: View {
                 .swipeActions(edge: .leading) {
                     Button("Use as template", systemImage: "doc.on.doc") {
                         templateRecipe = recipe.copyAsTemplate()
-                        isShowingTemplate = true
                     }
                     .tint(.blue)
                 }
             }
             .onDelete(perform: deleteRecipe)
         }
-        .sheet(isPresented: $isShowingTemplate) {
-            if let templateRecipe {
-                RecipeContainerView(recipeSetupData: templateRecipe, isShowingNewRecipeView: $isShowingTemplate)
-            }
+        // sheet(item:) statt isPresented: sonst ist das Rezept beim ersten Öffnen noch nil (leeres Sheet)
+        .sheet(item: $templateRecipe) { recipe in
+            RecipeContainerView(recipeSetupData: recipe, isShowingNewRecipeView: isShowingTemplate)
         }
     }
 
