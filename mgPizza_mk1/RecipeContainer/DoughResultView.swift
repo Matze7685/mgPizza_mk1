@@ -157,7 +157,7 @@ struct DoughResultView: View {
     
     private func saveRecipe() {
         // AUTO-Kühlzeit fest übernehmen, damit das gespeicherte Rezept reproduzierbar bleibt
-        if recipeSetupData.fridgeTimeMode == "AUTO" {
+        if recipeSetupData.fridgeTimeMode != "MAN" {
             recipeSetupData.coolTime = recipeSetupData.effectiveCoolTime().rounded()
             recipeSetupData.fridgeTimeMode = "MAN"
         }

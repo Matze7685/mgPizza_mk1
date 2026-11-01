@@ -20,6 +20,20 @@ struct FermentRoomTimeTempView: View {
                 Stepper("Room Time: \(Int(recipeSetupData.roomTime)) h", value: $recipeSetupData.roomTime, in: 0...48)
                 Stepper("Room Temperature: \(Int(recipeSetupData.roomTemp)) °C", value: $recipeSetupData.roomTemp, in: 10...30)
             }
+            Section {
+                Toggle("Pick when the dough comes out of the fridge", isOn: outModeBinding)
+                if recipeSetupData.fridgeTimeMode == "OUT" {
+                    DatePicker("Out of the fridge", selection: $recipeSetupData.fridgeOutSelection,
+                               in: Date()..., displayedComponents: [.date, .hourAndMinute])
+                    LabeledContent("Fridge Time", value: "\(Int(recipeSetupData.effectiveCoolTime().rounded())) h")
+                    LabeledContent("Serving") {
+                        Text(recipeSetupData.fridgeOutSelection.addingTimeInterval(recipeSetupData.roomTime * 3600),
+                             format: .dateTime.weekday().day().month().hour().minute())
+                    }
+                }
+            } footer: {
+                Text("The fridge time is calculated from now until this moment; serving = out of the fridge + room time.")
+            }
         }
         .navigationTitle("Ferment Room Time & Temp").font(.subheadline)
         .navigationBarTitleDisplayMode(.inline)
@@ -33,6 +47,21 @@ struct FermentRoomTimeTempView: View {
         
         Button("Continue") {
             path.append(RecipeSetupStep.fermentFridgeTimeTemp)
+        }
+    }
+
+    private var outModeBinding: Binding<Bool> {
+        Binding {
+            recipeSetupData.fridgeTimeMode == "OUT"
+        } set: { isOn in
+            if isOn {
+                if recipeSetupData.fridgeOutSelection < Date() {
+                    recipeSetupData.fridgeOutSelection = Date().addingTimeInterval(24 * 3600)
+                }
+                recipeSetupData.fridgeTimeMode = "OUT"
+            } else {
+                recipeSetupData.fridgeTimeMode = "MAN"
+            }
         }
     }
 }

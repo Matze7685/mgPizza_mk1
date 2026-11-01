@@ -39,6 +39,9 @@ class RecipeSetupData {
     var panLength: Double = 35.0               // cm
     var doughThickness: Double = 5.5           // mm (roher Teig, ausgedrückt in der Pfanne)
 
+    /// Gewählter Zeitpunkt "Teig aus dem Kühlschrank" (fridgeTimeMode == "OUT")
+    var fridgeOutSelection: Date = Date().addingTimeInterval(24 * 3600)
+
     // Timer (gesetzt beim START)
     var isStarted: Bool = false
     var startDate: Date?
@@ -147,7 +150,11 @@ extension RecipeSetupData {
     var sugar: Double { flour * sugarRatio / 100.0 }
 
     /// Kühlschrankzeit in Stunden. Im AUTO-Modus wird sie aus dem Servierzeitpunkt berechnet.
+    /// Modi: "MAN" = Stunden, "AUTO" = aus Servierzeit, "OUT" = aus gewähltem Rausnehm-Zeitpunkt
     func effectiveCoolTime(now: Date = Date()) -> Double {
+        if fridgeTimeMode == "OUT" {
+            return max(0, fridgeOutSelection.timeIntervalSince(now) / 3600.0)
+        }
         if fridgeTimeMode == "AUTO" {
             return max(0, dateSelection.timeIntervalSince(now) / 3600.0 - roomTime)
         }
