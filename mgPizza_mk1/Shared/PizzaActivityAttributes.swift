@@ -16,6 +16,6 @@ struct PizzaActivityAttributes: ActivityAttributes {
         var symbol: String         // SF Symbol
     }
 
-    /// "knead" oder Rezept-UUID
+    /// "knead-<Rezept-UUID>" oder Rezept-UUID
     var id: String
 }

@@ -12,58 +12,32 @@ struct RecipeDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var recipeData: RecipeSetupData
     @State private var templateRecipe: RecipeSetupData?
+    @State private var isShowingShoppingPicker = false
+    @State private var checkedIngredients: Set<String> = []
 
     private var isShowingTemplate: Binding<Bool> {
         Binding { templateRecipe != nil } set: { if !$0 { templateRecipe = nil } }
     }
-    @State private var isShowingShoppingPicker = false
-    
+
     var body: some View {
         Form {
-            Section {
-                TextField("Name", text: $recipeData.name)
-            }
-            DoughIngredientsSection(recipe: recipeData)
-            Section("Settings") {
-                if recipeData.isDetroit {
-                    LabeledContent("Pans", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.panWidth))×\(Int(recipeData.panLength)) cm")
-                    LabeledContent("Dough per Pan", value: "\(Int(recipeData.doughWeight)) g (\(String(format: "%.1f", recipeData.doughThickness)) mm)")
-                } else {
-                    LabeledContent("Dough Balls", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.doughWeight)) g")
-                }
-                LabeledContent("Water", value: "\(Int(recipeData.waterRatio)) %")
-                LabeledContent("Salt", value: String(format: "%.1f %%", recipeData.saltRatio))
-                if recipeData.oilRatio > 0 { LabeledContent("Olive Oil", value: String(format: "%.1f %%", recipeData.oilRatio)) }
-                if recipeData.sugarRatio > 0 { LabeledContent("Sugar", value: String(format: "%.1f %%", recipeData.sugarRatio)) }
-                LabeledContent("Fridge", value: "\(Int(recipeData.coolTime)) h @ \(Int(recipeData.coolTemp)) °C")
-                LabeledContent("Room", value: "\(Int(recipeData.roomTime)) h @ \(Int(recipeData.roomTemp)) °C")
-                LabeledContent("Yeast Correction", value: "\(Int(recipeData.yeastCorrection)) %")
-            }
-            DoughWarningsSection(recipe: recipeData)
-            FlourHintSection(totalHours: recipeData.roomTime + recipeData.coolTime)
-            if recipeData.isDetroit {
-                DetroitTipsSection()
-            }
+            phaseSection
+            ingredientsSection
+            KneadSection(recipe: recipeData)
             timerSection
-            Section {
-                NavigationLink {
-                    KneadTimerView(recipe: recipeData)
-                } label: {
-                    Label("Knead Timer", systemImage: "timer")
-                }
-                Button("Add to shopping list", systemImage: "cart.badge.plus") {
-                    isShowingShoppingPicker = true
-                }
-                Button {
-                    templateRecipe = recipeData.copyAsTemplate()
-                } label: {
-                    Label("Use as template", systemImage: "doc.on.doc")
-                }
-            }
+            tipsSections
             feedbackSection
+            settingsSection
         }
         .navigationTitle(recipeData.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Use as template", systemImage: "doc.on.doc") {
+                    templateRecipe = recipeData.copyAsTemplate()
+                }
+            }
+        }
         .sheet(isPresented: $isShowingShoppingPicker) {
             ShoppingPickerSheet(items: recipeData.shoppingItems, source: recipeData.displayName)
         }
@@ -73,32 +47,134 @@ struct RecipeDetailView: View {
         }
     }
 
-    var timerSection: some View {
-        Section("Timer") {
-            if recipeData.isStarted {
-                if let out = recipeData.fridgeOutDate, recipeData.coolTime > 0 {
-                    LabeledContent("Out of the fridge") {
-                        Text(out, format: .dateTime.weekday().hour().minute())
+    // MARK: 0 · Status
+
+    var phaseSection: some View {
+        Section {
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                PhaseProgressView(phase: recipeData.phase(now: context.date))
+            }
+            if !recipeData.isActive {
+                Button {
+                    recipeData.beginSession()
+                } label: {
+                    Label("Bake now", systemImage: "play.circle.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .listRowBackground(Color.clear)
+            } else if recipeData.phase() == .serve {
+                Button {
+                    recipeData.finishSession()
+                } label: {
+                    Label("Done – finish recipe", systemImage: "checkmark.circle.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+                .listRowBackground(Color.clear)
+            }
+        }
+    }
+
+    // MARK: 1 · Zutaten
+
+    var ingredientsSection: some View {
+        Section {
+            ForEach(ingredientRows, id: \.key) { row in
+                Button {
+                    if checkedIngredients.contains(row.key) { checkedIngredients.remove(row.key) } else { checkedIngredients.insert(row.key) }
+                } label: {
+                    HStack {
+                        Image(systemName: checkedIngredients.contains(row.key) ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(checkedIngredients.contains(row.key) ? .green : .gray)
+                        Text(row.name)
+                        Spacer()
+                        Text(row.amount).bold().foregroundStyle(row.key == "yeast" ? .orange : .primary)
                     }
                 }
-                if let serving = recipeData.servingDate {
-                    LabeledContent("Serving") {
-                        Text(serving, format: .dateTime.weekday().hour().minute())
-                    }
+                .foregroundStyle(.primary)
+            }
+            HStack {
+                Text("Total")
+                Spacer()
+                Text("\(recipeData.totalDoughWeight, specifier: "%.0f") g").foregroundStyle(.secondary)
+            }
+            Button("Add to shopping list", systemImage: "cart.badge.plus") {
+                isShowingShoppingPicker = true
+            }
+        } header: {
+            Text("1 · Ingredients")
+        } footer: {
+            Text("Tap to tick off what you have weighed.")
+        }
+    }
+
+    private var ingredientRows: [(key: String, name: String, amount: String)] {
+        ["flour", "water", "salt", "oil", "sugar", "yeast"].compactMap { key -> (key: String, name: String, amount: String)? in
+            guard let item = recipeData.amount(of: key) else { return nil }
+            let format = key == "yeast" ? "%.2f g" : (item.grams < 50 ? "%.1f g" : "%.0f g")
+            return (key, item.name, String(format: format, item.grams))
+        }
+    }
+
+    // MARK: 3 · Gare & Timer
+
+    var timerSection: some View {
+        Section {
+            if recipeData.isStarted {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    ActiveDoughRow(recipe: recipeData, now: context.date, showsName: false)
                 }
                 Button("Stop timer", systemImage: "stop.circle", role: .destructive) {
                     recipeData.stopTimers()
                 }
             } else {
-                Text("Starting now uses the same settings again (fridge \(Int(recipeData.coolTime)) h + room \(Int(recipeData.roomTime)) h).")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button("Start dough timer", systemImage: "play.circle") {
-                    DoughNotifications.requestAuthorization()
-                    recipeData.fridgeTimeMode = "MAN"
-                    recipeData.startTimers()
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    let cool = recipeData.effectiveCoolTime(now: context.date)
+                    let out = context.date.addingTimeInterval(cool * 3600)
+                    let serving = out.addingTimeInterval(recipeData.roomTime * 3600)
+                    VStack(alignment: .leading, spacing: 4) {
+                        LabeledContent("Fridge", value: "\(Int(cool.rounded())) h @ \(Int(recipeData.coolTemp)) °C")
+                        LabeledContent("Room", value: "\(Int(recipeData.roomTime.rounded())) h @ \(Int(recipeData.roomTemp)) °C")
+                        if cool > 0 {
+                            LabeledContent("Out of the fridge") { Text(out, format: .dateTime.weekday().hour().minute()) }
+                        }
+                        LabeledContent("Serving") { Text(serving, format: .dateTime.weekday().hour().minute()) }
+                    }
+                    .font(.callout)
                 }
+                Button {
+                    DoughNotifications.requestAuthorization()
+                    recipeData.isInProgress = true
+                    recipeData.startTimers()
+                } label: {
+                    Label("Into the fridge – start timer", systemImage: "refrigerator.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(recipeData.isKneadFinished ? .blue : .gray)
             }
+        } header: {
+            Text("3 · Proof & timer")
+        } footer: {
+            if !recipeData.isStarted {
+                Text("Start when kneading is done. Reminders: 1 h before and when the dough comes out of the fridge, and at serving time.")
+            }
+        }
+    }
+
+    // MARK: Tipps
+
+    @ViewBuilder
+    var tipsSections: some View {
+        FlourHintSection(totalHours: recipeData.roomTime + (recipeData.isStarted ? recipeData.coolTime : recipeData.effectiveCoolTime()))
+        DoughWarningsSection(recipe: recipeData)
+        if recipeData.isDetroit {
+            DetroitTipsSection()
         }
     }
 
@@ -109,6 +185,71 @@ struct RecipeDetailView: View {
             TextField("Notes", text: $recipeData.notes, axis: .vertical)
                 .lineLimit(4...12)
         }
+    }
+
+    // MARK: Rezept-Einstellungen
+
+    var settingsSection: some View {
+        Section("Recipe") {
+            TextField("Name", text: $recipeData.name)
+            if recipeData.isDetroit {
+                LabeledContent("Pans", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.panWidth))×\(Int(recipeData.panLength)) cm")
+                LabeledContent("Dough per Pan", value: "\(Int(recipeData.doughWeight)) g (\(String(format: "%.1f", recipeData.doughThickness)) mm)")
+            } else {
+                LabeledContent("Dough Balls", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.doughWeight)) g")
+            }
+            LabeledContent("Water", value: "\(Int(recipeData.waterRatio)) %")
+            LabeledContent("Salt", value: String(format: "%.1f %%", recipeData.saltRatio))
+            if recipeData.oilRatio > 0 { LabeledContent("Olive Oil", value: String(format: "%.1f %%", recipeData.oilRatio)) }
+            if recipeData.sugarRatio > 0 { LabeledContent("Sugar", value: String(format: "%.1f %%", recipeData.sugarRatio)) }
+            LabeledContent("Yeast Correction", value: "\(Int(recipeData.yeastCorrection)) %")
+            Button("Use as template", systemImage: "doc.on.doc") {
+                templateRecipe = recipeData.copyAsTemplate()
+            }
+        }
+    }
+}
+
+/// Fortschritt: Zutaten → Kneten → Kühlschrank → Raumgare → Servieren
+struct PhaseProgressView: View {
+    var phase: RecipeSetupData.Phase?
+
+    private let items: [(RecipeSetupData.Phase, LocalizedStringKey, String)] = [
+        (.ingredients, "Ingredients", "scalemass"),
+        (.knead, "Knead", "timer"),
+        (.fridge, "Fridge", "refrigerator"),
+        (.room, "Room", "thermometer.medium"),
+        (.serve, "Serve", "fork.knife"),
+    ]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            ForEach(items, id: \.0) { item in
+                let state = stateFor(item.0)
+                VStack(spacing: 4) {
+                    Image(systemName: state == .done ? "checkmark.circle.fill" : item.2)
+                        .font(.title3)
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(state == .current ? Color.orange.opacity(0.25) : Color.clear))
+                        .foregroundStyle(state == .done ? .green : (state == .current ? .orange : .gray))
+                    Text(item.1)
+                        .font(.caption2)
+                        .foregroundStyle(state == .current ? .primary : .secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private enum StepState { case done, current, open }
+
+    private func stateFor(_ item: RecipeSetupData.Phase) -> StepState {
+        guard let phase else { return .open }
+        if item.rawValue < phase.rawValue { return .done }
+        return item == phase ? .current : .open
     }
 }
 

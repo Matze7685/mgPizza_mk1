@@ -3,81 +3,74 @@
 //  mgPizza_mk1
 //
 
+import AudioToolbox
+import Combine
 import SwiftUI
 
-/// Manuell gestartete Timer für die Knetmaschine: Schritt starten, wenn alles drin ist.
-struct KneadTimerView: View {
+/// Knet-Timer direkt im Rezept: aktueller Schritt groß (mit Zutatenmengen), darunter alle Schritte.
+/// Jeder Schritt wird von Hand gestartet, sobald alles in der Maschine ist.
+struct KneadSection: View {
     @Bindable var recipe: RecipeSetupData
-
-    @AppStorage("kneadRecipeID") private var kneadRecipeID: String = ""
-    @AppStorage("kneadStepIndex") private var storedIndex: Int = 0
-    @AppStorage("kneadStepEnd") private var storedEnd: Double = 0
     @State private var isEditing = false
+    @State private var alarmedFor: Date?
 
-    private var isMine: Bool { kneadRecipeID == recipe.uid.uuidString }
-    private var currentIndex: Int { isMine ? storedIndex : 0 }
-    private var stepEnd: Date? { isMine && storedEnd > 0 ? Date(timeIntervalSince1970: storedEnd) : nil }
-    private var isFinished: Bool { currentIndex >= recipe.kneadSteps.count }
+    private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        List {
-            Section {
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    currentStepView(now: context.date)
-                }
+        Section {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                currentStepView(now: context.date)
             }
-            Section("Steps") {
-                ForEach(Array(recipe.kneadSteps.enumerated()), id: \.element.id) { index, step in
-                    HStack(alignment: .top) {
-                        Image(systemName: index < currentIndex ? "checkmark.circle.fill" : (index == currentIndex ? "circle.inset.filled" : "circle"))
-                            .foregroundStyle(index < currentIndex ? .green : (index == currentIndex ? .orange : .gray))
-                        VStack(alignment: .leading) {
-                            Text(LocalizedStringKey(step.title)).font(.headline)
-                            Text(LocalizedStringKey(step.detail)).font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text("\(step.minutes, specifier: "%.0f") min").monospacedDigit()
-                    }
-                }
+            ForEach(Array(recipe.kneadSteps.enumerated()), id: \.element.id) { index, step in
+                stepRow(index: index, step: step)
             }
-            Section {
-                Button("Reset", systemImage: "arrow.counterclockwise", role: .destructive) {
-                    reset()
-                }
+        } header: {
+            HStack {
+                Text("2 · Knead")
+                Spacer()
+                Button("Edit") { isEditing = true }
+                    .font(.caption)
+                    .textCase(nil)
             }
-        }
-        .navigationTitle("Knead Timer")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            Button("Edit", systemImage: "pencil") { isEditing = true }
         }
         .sheet(isPresented: $isEditing) {
             KneadStepsEditor(steps: $recipe.kneadSteps, defaultPlan: KneadStep.plan(forStyle: recipe.style))
         }
-        .onAppear { DoughNotifications.requestAuthorization() }
+        .onReceive(tick) { now in
+            // Alarm, wenn der laufende Schritt abgelaufen ist und die App offen ist
+            guard let end = recipe.kneadStepEnd, now >= end, alarmedFor != end else { return }
+            alarmedFor = end
+            KneadAlarm.ring()   // Sprachansage übernimmt ggf. der DoughAnnouncer
+        }
     }
 
     @ViewBuilder
-    func currentStepView(now: Date) -> some View {
-        if isFinished {
-            Label("All steps done – into the fridge with it!", systemImage: "checkmark.seal.fill")
-                .font(.headline)
-                .foregroundStyle(.green)
-        } else {
-            let step = recipe.kneadSteps[currentIndex]
-            VStack(spacing: 12) {
-                Text("Step \(currentIndex + 1) of \(recipe.kneadSteps.count)").font(.caption).foregroundStyle(.secondary)
+    private func currentStepView(now: Date) -> some View {
+        if let step = recipe.currentKneadStep {
+            VStack(spacing: 10) {
+                Text("Step \(recipe.kneadStepIndex + 1) of \(recipe.kneadSteps.count)")
+                    .font(.caption).foregroundStyle(.secondary)
                 Text(LocalizedStringKey(step.title)).font(.title2).bold()
-                Text(LocalizedStringKey(step.detail)).font(.callout).multilineTextAlignment(.center)
+                let adds = recipe.addsText(for: step)
+                if !adds.isEmpty {
+                    Label(adds, systemImage: "plus.circle.fill")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(.orange)
+                        .multilineTextAlignment(.center)
+                }
+                if !step.detail.isEmpty {
+                    Text(LocalizedStringKey(step.detail)).font(.callout).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
-                if let end = stepEnd {
+                if let end = recipe.kneadStepEnd {
                     let remaining = max(0, end.timeIntervalSince(now))
                     Text(Duration.seconds(remaining.rounded(.up)), format: .time(pattern: .minuteSecond))
                         .font(.system(size: 56, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(remaining == 0 ? .green : .primary)
                     Button(remaining == 0 ? LocalizedStringKey("Next step") : "Skip", systemImage: "forward.fill") {
-                        nextStep()
+                        recipe.nextKneadStep()
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(remaining == 0 ? .green : .gray)
@@ -87,39 +80,57 @@ struct KneadTimerView: View {
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                     Button("Start (ready)", systemImage: "play.fill") {
-                        start(step)
+                        DoughNotifications.requestAuthorization()
+                        recipe.startKneadStep()
                     }
                     .buttonStyle(.borderedProminent)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical)
+            .padding(.vertical, 6)
+        } else {
+            VStack(spacing: 8) {
+                Label("All steps done – into the fridge with it!", systemImage: "checkmark.seal.fill")
+                    .font(.headline)
+                    .foregroundStyle(.green)
+                Button("Knead again", systemImage: "arrow.counterclockwise") {
+                    recipe.resetKnead()
+                }
+                .font(.caption)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
         }
     }
 
-    private func start(_ step: KneadStep) {
-        kneadRecipeID = recipe.uid.uuidString
-        storedIndex = currentIndex
-        let end = Date().addingTimeInterval(step.minutes * 60)
-        storedEnd = end.timeIntervalSince1970
-        DoughNotifications.scheduleKneadStep(title: step.title, at: end)
-        LiveActivityManager.shared.startKnead(title: step.title, end: end)
+    private func stepRow(index: Int, step: KneadStep) -> some View {
+        let current = recipe.kneadStepIndex
+        return HStack(alignment: .top) {
+            Image(systemName: index < current ? "checkmark.circle.fill" : (index == current ? "circle.inset.filled" : "circle"))
+                .foregroundStyle(index < current ? .green : (index == current ? .orange : .gray))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(LocalizedStringKey(step.title)).font(.subheadline.weight(.semibold))
+                let adds = recipe.addsText(for: step)
+                if !adds.isEmpty {
+                    Text(adds).font(.caption).foregroundStyle(.orange)
+                }
+            }
+            Spacer()
+            Text("\(step.minutes, specifier: "%.0f") min").font(.caption).monospacedDigit()
+        }
+        .opacity(index < current ? 0.5 : 1)
     }
+}
 
-    private func nextStep() {
-        DoughNotifications.cancelKneadStep()
-        LiveActivityManager.shared.endKnead()
-        kneadRecipeID = recipe.uid.uuidString
-        storedIndex = currentIndex + 1
-        storedEnd = 0
-    }
-
-    private func reset() {
-        DoughNotifications.cancelKneadStep()
-        LiveActivityManager.shared.endKnead()
-        kneadRecipeID = recipe.uid.uuidString
-        storedIndex = 0
-        storedEnd = 0
+/// Weckton für den Knet-Timer (wenn die App offen ist; im Hintergrund klingelt die Benachrichtigung)
+enum KneadAlarm {
+    static func ring(times: Int = 3) {
+        for i in 0..<times {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 1.2) {
+                AudioServicesPlayAlertSound(SystemSoundID(1005))
+                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+            }
+        }
     }
 }
 
@@ -161,5 +172,5 @@ struct KneadStepsEditor: View {
 }
 
 #Preview {
-    NavigationStack { KneadTimerView(recipe: RecipeSetupData()) }
+    NavigationStack { List { KneadSection(recipe: RecipeSetupData()) } }
 }

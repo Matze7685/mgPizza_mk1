@@ -15,12 +15,13 @@ final class LiveActivityManager {
 
     private var enabled: Bool { ActivityAuthorizationInfo().areActivitiesEnabled }
 
-    // MARK: Knet-Timer
-    func startKnead(title: String, end: Date) {
-        show(id: "knead", state: .init(title: title, subtitle: String(localized: "Knead Timer"), endDate: end, symbol: "timer"))
+    // MARK: Knet-Timer (pro Rezept)
+    func startKnead(_ recipe: RecipeSetupData, title: String, end: Date) {
+        show(id: "knead-\(recipe.uid.uuidString)",
+             state: .init(title: title, subtitle: "\(String(localized: "Knead Timer")) · \(recipe.displayName)", endDate: end, symbol: "timer"))
     }
 
-    func endKnead() { end(id: "knead") }
+    func endKnead(_ recipe: RecipeSetupData) { end(id: "knead-\(recipe.uid.uuidString)") }
 
     // MARK: Teig-Timer
     func refreshDough(_ recipes: [RecipeSetupData], now: Date = Date()) {

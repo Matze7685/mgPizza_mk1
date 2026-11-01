@@ -42,7 +42,13 @@ class RecipeSetupData {
     /// Gewählter Zeitpunkt "Teig aus dem Kühlschrank" (fridgeTimeMode == "OUT")
     var fridgeOutSelection: Date = Date().addingTimeInterval(24 * 3600)
 
-    // Timer (gesetzt beim START)
+    // Ablauf: Rezept ist "in Arbeit" (Zutaten abwiegen / kneten), bevor der Gärtimer läuft
+    var isInProgress: Bool = false
+    // Knet-Timer pro Rezept
+    var kneadStepIndex: Int = 0
+    var kneadStepEnd: Date?
+
+    // Gärtimer (Kühlschrank -> Raum -> Servieren)
     var isStarted: Bool = false
     var startDate: Date?
     var fridgeOutDate: Date?
@@ -190,6 +196,92 @@ extension RecipeSetupData {
         isStarted = false
         DoughNotifications.cancel(for: self)
         LiveActivityManager.shared.endDough(self)
+    }
+
+    // MARK: Ablauf / Phase
+
+    enum Phase: Int, CaseIterable {
+        case ingredients, knead, fridge, room, serve
+    }
+
+    func phase(now: Date = Date()) -> Phase? {
+        if isStarted {
+            if let out = fridgeOutDate, coolTime > 0, now < out { return .fridge }
+            if let serving = servingDate, now < serving { return .room }
+            return .serve
+        }
+        guard isInProgress else { return nil }
+        return (kneadStepIndex > 0 || kneadStepEnd != nil) ? .knead : .ingredients
+    }
+
+    var isActive: Bool { isInProgress || isStarted }
+
+    /// Rezept beginnen (nach START im Setup oder "Jetzt backen")
+    func beginSession() {
+        isInProgress = true
+        resetKnead()
+    }
+
+    /// Fertig gebacken / abbrechen
+    func finishSession() {
+        stopTimers()
+        resetKnead()
+        isInProgress = false
+    }
+
+    // MARK: Knet-Timer
+
+    var isKneadFinished: Bool { kneadStepIndex >= kneadSteps.count }
+    var currentKneadStep: KneadStep? { isKneadFinished ? nil : kneadSteps[kneadStepIndex] }
+
+    func startKneadStep(now: Date = Date()) {
+        guard let step = currentKneadStep else { return }
+        isInProgress = true
+        let end = now.addingTimeInterval(step.minutes * 60)
+        kneadStepEnd = end
+        DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: step.title, recipe: displayName, at: end)
+        LiveActivityManager.shared.startKnead(self, title: step.title, end: end)
+    }
+
+    func nextKneadStep() {
+        cancelKneadTimer()
+        kneadStepIndex = min(kneadStepIndex + 1, kneadSteps.count)
+    }
+
+    func resetKnead() {
+        cancelKneadTimer()
+        kneadStepIndex = 0
+    }
+
+    private func cancelKneadTimer() {
+        kneadStepEnd = nil
+        DoughNotifications.cancelKneadStep(id: uid.uuidString)
+        LiveActivityManager.shared.endKnead(self)
+    }
+
+    /// Menge einer Zutat in Gramm (für die Knet-Infos)
+    func amount(of key: String) -> (name: String, grams: Double)? {
+        switch key {
+        case "flour": return (String(localized: "Flour"), flour)
+        case "water": return (String(localized: "Water"), water)
+        case "yeast": return (yeastName, yeast())
+        case "salt": return (String(localized: "Salt"), salt)
+        case "oil": return oil > 0 ? (String(localized: "Olive Oil"), oil) : nil
+        case "sugar": return sugar > 0 ? (String(localized: "Sugar"), sugar) : nil
+        default: return nil
+        }
+    }
+
+    /// z. B. "434 g Wasser · 781 g Mehl · 0,38 g Trockenhefe"
+    func addsText(for step: KneadStep) -> String {
+        step.effectiveAdds.compactMap { add -> String? in
+            guard let item = amount(of: add.key) else { return nil }
+            let grams = item.grams * add.fraction
+            let value = grams < 10 ? grams.formatted(.number.precision(.fractionLength(0...2)))
+                                   : grams.formatted(.number.precision(.fractionLength(0)))
+            return "\(value) g \(item.name)"
+        }
+        .joined(separator: " · ")
     }
 
     /// Zutaten für die Einkaufsliste (Wasser wird ausgelassen)

@@ -4,6 +4,7 @@
 //
 
 import ActivityKit
+import SwiftData
 import SwiftUI
 import UserNotifications
 
@@ -18,7 +19,7 @@ struct TimerStatusView: View {
 
     @EnvironmentObject var ovenMonitor: OvenMonitor
     @AppStorage("doughSpeak") private var doughSpeak = false
-    @AppStorage("kneadStepEnd") private var kneadStepEnd: Double = 0
+    @Query(filter: #Predicate<RecipeSetupData> { $0.kneadStepEnd != nil }) private var kneading: [RecipeSetupData]
 
     @State private var authorization: UNAuthorizationStatus = .notDetermined
     @State private var timeSensitive: UNNotificationSetting = .notSupported
@@ -84,10 +85,13 @@ struct TimerStatusView: View {
             }
 
             Section("App") {
-                statusRow("Knead timer", ok: kneadStepEnd > Date().timeIntervalSince1970,
-                          detail: kneadStepEnd > Date().timeIntervalSince1970
-                            ? String(localized: "Running until \(Date(timeIntervalSince1970: kneadStepEnd).formatted(date: .omitted, time: .shortened))")
-                            : String(localized: "Not running"))
+                if kneading.isEmpty {
+                    statusRow("Knead timer", ok: false, detail: String(localized: "Not running"))
+                }
+                ForEach(kneading) { recipe in
+                    statusRow("Knead timer", ok: true,
+                              detail: "\(recipe.displayName): " + String(localized: "Running until \((recipe.kneadStepEnd ?? Date()).formatted(date: .omitted, time: .shortened))"))
+                }
                 statusRow("Speaker announcements", ok: doughSpeak,
                           detail: doughSpeak ? String(localized: "On – only while the app is running") : String(localized: "Off"))
                 statusRow("Oven probe", ok: ovenMonitor.lastUpdate.map { Date().timeIntervalSince($0) < 10 } == true,

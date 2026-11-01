@@ -14,12 +14,12 @@ enum MainTab: Hashable {
 
 struct MainView: View {
     @State private var isShowingNewRecipeView: Bool = false
-    @State private var selectedTab: MainTab = .activity
+    @ObservedObject private var router = AppRouter.shared
     @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         NavigationStack {
-            TabView(selection: $selectedTab) {
+            TabView(selection: $router.selectedTab) {
                 ActivityView()
                     .tabItem {
                         Label("Activity", systemImage: "house")
@@ -53,10 +53,13 @@ struct MainView: View {
                             isShowingNewRecipeView.toggle()
                         }
                         Button("Open Recipe", systemImage: "folder") {
-                            selectedTab = .recipes
+                            router.selectedTab = .recipes
                         }
                     }
                 }
+            }
+            .navigationDestination(item: $router.openRecipe) { recipe in
+                RecipeDetailView(recipeData: recipe)
             }
             .onAppear {
                 SeedImporter.importIfNeeded(into: modelContext)

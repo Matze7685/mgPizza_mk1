@@ -133,17 +133,22 @@ enum SeedImporter {
 
     private static func haloCoreSteps(_ m: [Double]) -> [KneadStep] {
         [
-            KneadStep(title: "Start (Stufe 1)", detail: "Wasser, Mehl, Hefe", minutes: m[0]),
-            KneadStep(title: "Salz (Stufe 1)", detail: "Salz zugeben (ggf. Öl, Zucker)", minutes: m[1]),
+            KneadStep(title: "Start (Stufe 1)", detail: "Wasser, Mehl, Hefe", minutes: m[0],
+                      adds: [KneadAdd(key: "water"), KneadAdd(key: "flour"), KneadAdd(key: "yeast")]),
+            KneadStep(title: "Salz (Stufe 1)", detail: "Salz zugeben (ggf. Öl, Zucker)", minutes: m[1],
+                      adds: [KneadAdd(key: "salt"), KneadAdd(key: "oil"), KneadAdd(key: "sugar")]),
             KneadStep(title: "Warten", detail: "Maschine aus", minutes: m[2]),
             KneadStep(title: "Schluss (Stufe 2)", detail: "Fertig kneten", minutes: m[3]),
         ]
     }
 
     private static let glutenFreeSteps: [KneadStep] = [
-        KneadStep(title: "Trocken mischen", detail: "Mehl u. Hefe trocken rühren", minutes: 1),
-        KneadStep(title: "Wasser (Stufe 2)", detail: "Lauwarmes Wasser nach und nach zugeben", minutes: 3),
-        KneadStep(title: "Öl & Salz", detail: "Öl und Salz zugeben, Halo Core", minutes: 4),
+        KneadStep(title: "Trocken mischen", detail: "Mehl u. Hefe trocken rühren", minutes: 1,
+                  adds: [KneadAdd(key: "flour"), KneadAdd(key: "yeast")]),
+        KneadStep(title: "Wasser (Stufe 2)", detail: "Lauwarmes Wasser nach und nach zugeben", minutes: 3,
+                  adds: [KneadAdd(key: "water")]),
+        KneadStep(title: "Öl & Salz", detail: "Öl und Salz zugeben, Halo Core", minutes: 4,
+                  adds: [KneadAdd(key: "oil"), KneadAdd(key: "salt")]),
         KneadStep(title: "Ruhen", detail: "1 Std. ruhen lassen, dann Ballen formen (in Öl) und kalt gären 16–20 Std. 2 Std. vorher raus.", minutes: 60),
     ]
 

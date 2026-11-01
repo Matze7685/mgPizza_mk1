@@ -25,8 +25,8 @@ struct RecipesView: View {
 
     var sortedRecipes: [RecipeSetupData] {
         switch sortMode {
-        case .newest: return recipes
-        case .rating: return recipes.sorted { $0.rating > $1.rating }
+        case .newest: return recipes.filter(\.isActive) + recipes.filter { !$0.isActive }   // laufende zuerst
+        case .rating: return recipes.sorted { ($0.isActive ? 1 : 0, $0.rating) > ($1.isActive ? 1 : 0, $1.rating) }
         }
     }
 
@@ -49,6 +49,7 @@ struct RecipesView: View {
                 } label: {
                     RecipeRow(recipe: recipe)
                 }
+                .listRowBackground(recipe.isActive ? Color.orange.opacity(0.12) : nil)
                 .swipeActions(edge: .leading) {
                     Button("Use as template", systemImage: "doc.on.doc") {
                         templateRecipe = recipe.copyAsTemplate()
@@ -82,8 +83,12 @@ struct RecipeRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(recipe.displayName).font(.headline)
-                if recipe.isStarted {
-                    Image(systemName: "timer").foregroundStyle(.green)
+                if recipe.isActive {
+                    Text("Running")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(Color.orange))
+                        .foregroundStyle(.white)
                 }
                 Spacer()
                 StarRatingView(rating: .constant(recipe.rating), size: 12)

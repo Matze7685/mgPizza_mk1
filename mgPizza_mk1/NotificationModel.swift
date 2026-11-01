@@ -68,22 +68,24 @@ enum DoughNotifications {
             withIdentifiers: ["\(id)-fridge-warn", "\(id)-fridge", "\(id)-serving"])
     }
 
-    static func scheduleKneadStep(title: String, at date: Date) {
-        add(id: "knead-step", at: date, title: String(localized: "Knead step done"),
-            body: String(localized: "\(title) is finished – start the next step."))
+    /// Knet-Timer pro Rezept, mit Ton (auch wenn die App offen ist, siehe AppDelegate)
+    static func scheduleKneadStep(id: String, title: String, recipe: String, at date: Date) {
+        add(id: "knead-\(id)", at: date, title: String(localized: "Knead step done ⏰"),
+            body: String(localized: "\(recipe): \(title) is finished – start the next step."), timeSensitive: true)
     }
 
-    static func cancelKneadStep() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["knead-step"])
+    static func cancelKneadStep(id: String) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["knead-\(id)"])
     }
 
-    private static func add(id: String, at date: Date, title: String, body: String) {
+    private static func add(id: String, at date: Date, title: String, body: String, timeSensitive: Bool = false) {
         let interval = date.timeIntervalSinceNow
         guard interval > 1 else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         content.sound = .default
+        if timeSensitive { content.interruptionLevel = .timeSensitive }
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
             if let error = error {

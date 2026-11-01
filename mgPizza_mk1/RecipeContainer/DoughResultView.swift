@@ -148,16 +148,20 @@ struct DoughResultView: View {
                 print("Fehler: \(error.localizedDescription)")
             }
             DispatchQueue.main.async {
-                recipeSetupData.startTimers()
-                saveRecipe()
+                // START = Rezept beginnen und direkt hineinwechseln (Zutaten -> Kneten -> Kühlschrank-Timer).
+                // Gewählte Datum/Uhrzeit-Zeitpunkte bleiben erhalten, bis der Kühlschrank-Timer gestartet wird.
+                saveRecipe(keepDateMode: true)
+                recipeSetupData.beginSession()
+                try? modelContext.save()
                 isShowingNewRecipeView = false
+                AppRouter.shared.open(recipeSetupData)
             }
         }
     }
     
-    private func saveRecipe() {
+    private func saveRecipe(keepDateMode: Bool = false) {
         // AUTO-Kühlzeit fest übernehmen, damit das gespeicherte Rezept reproduzierbar bleibt
-        if recipeSetupData.fridgeTimeMode != "MAN" {
+        if !keepDateMode && recipeSetupData.fridgeTimeMode != "MAN" {
             recipeSetupData.coolTime = recipeSetupData.effectiveCoolTime().rounded()
             recipeSetupData.fridgeTimeMode = "MAN"
         }

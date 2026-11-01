@@ -8,9 +8,9 @@
 import SwiftData
 import SwiftUI
 
-/// Laufende Teige mit Countdown bis "Teig raus" und "Servieren".
+/// Startseite: laufende Rezepte ganz oben (Knet-Timer bzw. Gärtimer), darunter Ofen und Status.
 struct ActivityView: View {
-    @Query(filter: #Predicate<RecipeSetupData> { $0.isStarted == true },
+    @Query(filter: #Predicate<RecipeSetupData> { $0.isStarted == true || $0.isInProgress == true },
            sort: \RecipeSetupData.dateSelection) private var activeRecipes: [RecipeSetupData]
     
     @EnvironmentObject var ovenMonitor: OvenMonitor
@@ -18,6 +18,28 @@ struct ActivityView: View {
 
     var body: some View {
         List {
+            if activeRecipes.isEmpty {
+                ContentUnavailableView("No dough running", systemImage: "timer",
+                                       description: Text("Open a recipe and tap “Bake now”, or create a new one with … → New Recipe."))
+            } else {
+                Section("Running") {
+                    ForEach(activeRecipes) { recipe in
+                        NavigationLink {
+                            RecipeDetailView(recipeData: recipe)
+                        } label: {
+                            TimelineView(.periodic(from: .now, by: 1)) { context in
+                                ActiveRecipeCard(recipe: recipe, now: context.date)
+                            }
+                        }
+                        .listRowBackground(Color.orange.opacity(0.12))
+                        .swipeActions {
+                            Button("Finish", systemImage: "stop.circle", role: .destructive) {
+                                recipe.finishSession()
+                            }
+                        }
+                    }
+                }
+            }
             Section {
                 NavigationLink {
                     OvenView()
@@ -32,38 +54,63 @@ struct ActivityView: View {
                         }
                     }
                 }
-            }
-            Section {
                 NavigationLink {
                     TimerStatusView()
                 } label: {
                     TimerStatusBadge()
                 }
             }
-            if activeRecipes.isEmpty {
-                ContentUnavailableView("No dough running", systemImage: "timer",
-                                       description: Text("Press START on a new recipe or “Start dough timer” on a saved one."))
-            }
-            ForEach(activeRecipes) { recipe in
-                NavigationLink {
-                    RecipeDetailView(recipeData: recipe)
-                } label: {
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
-                        ActiveDoughRow(recipe: recipe, now: context.date)
-                    }
-                }
-                .swipeActions {
-                    Button("Stop", systemImage: "stop.circle", role: .destructive) {
-                        recipe.stopTimers()
-                    }
-                }
-            }
         }
         .navigationTitle("Timer")
         // Live Activities aktualisieren (nächstes Ereignis, 8-Std.-Grenze von iOS)
-        .onAppear { LiveActivityManager.shared.refreshDough(activeRecipes) }
+        .onAppear { LiveActivityManager.shared.refreshDough(activeRecipes.filter(\.isStarted)) }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { LiveActivityManager.shared.refreshDough(activeRecipes) }
+            if phase == .active { LiveActivityManager.shared.refreshDough(activeRecipes.filter(\.isStarted)) }
+        }
+    }
+}
+
+/// Karte für ein laufendes Rezept: Fortschritt + das, was gerade zu tun ist
+struct ActiveRecipeCard: View {
+    var recipe: RecipeSetupData
+    var now: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(recipe.displayName).font(.headline)
+            PhaseProgressView(phase: recipe.phase(now: now))
+            switch recipe.phase(now: now) {
+            case .ingredients:
+                Label("Weigh the ingredients, then start kneading", systemImage: "scalemass")
+                    .font(.callout)
+            case .knead:
+                kneadInfo
+            default:
+                ActiveDoughRow(recipe: recipe, now: now, showsName: false)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var kneadInfo: some View {
+        if let step = recipe.currentKneadStep {
+            HStack {
+                Label(LocalizedStringKey(step.title), systemImage: "timer")
+                Spacer()
+                if let end = recipe.kneadStepEnd {
+                    let remaining = max(0, end.timeIntervalSince(now))
+                    Text(Duration.seconds(remaining.rounded(.up)), format: .time(pattern: .minuteSecond))
+                        .monospacedDigit().bold()
+                        .foregroundStyle(remaining == 0 ? .green : .primary)
+                } else {
+                    Text("Ready to start").font(.caption).foregroundStyle(.orange)
+                }
+            }
+        } else {
+            Label("Kneading done – start the fridge timer", systemImage: "refrigerator")
+                .font(.callout)
+                .foregroundStyle(.blue)
         }
     }
 }
@@ -71,10 +118,13 @@ struct ActivityView: View {
 struct ActiveDoughRow: View {
     var recipe: RecipeSetupData
     var now: Date
+    var showsName = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(recipe.displayName).font(.headline)
+            if showsName {
+                Text(recipe.displayName).font(.headline)
+            }
             if let out = recipe.fridgeOutDate, recipe.coolTime > 0 {
                 countdown(title: "Out of the fridge", systemImage: "refrigerator", date: out)
             }

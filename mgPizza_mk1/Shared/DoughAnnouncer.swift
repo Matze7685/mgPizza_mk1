@@ -32,7 +32,7 @@ final class DoughAnnouncer {
         let now = Date()
         defer { lastCheck = now }
         guard isEnabled, let context else { return }
-        let descriptor = FetchDescriptor<RecipeSetupData>(predicate: #Predicate { $0.isStarted == true })
+        let descriptor = FetchDescriptor<RecipeSetupData>(predicate: #Predicate { $0.isStarted == true || $0.isInProgress == true })
         guard let recipes = try? context.fetch(descriptor) else { return }
 
         for recipe in recipes {
@@ -45,6 +45,10 @@ final class DoughAnnouncer {
     private func events(for recipe: RecipeSetupData) -> [(Date, String)] {
         let name = recipe.displayName
         var result: [(Date, String)] = []
+        if let end = recipe.kneadStepEnd, let step = recipe.currentKneadStep {
+            result.append((end, String(localized: "\(name): \(step.title) is finished. Start the next step.")))
+        }
+        guard recipe.isStarted else { return result }
         if let out = recipe.fridgeOutDate, recipe.coolTime > 0 {
             result.append((out.addingTimeInterval(-DoughNotifications.fridgeWarningLead),
                            String(localized: "\(name): the dough comes out of the fridge in one hour.")))
