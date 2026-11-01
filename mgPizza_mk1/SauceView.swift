@@ -84,6 +84,8 @@ struct SauceDetailView: View {
                 }
             }
 
+            SauceTipsSection(sauce: sauce)
+
             Section(header: Text("Ingredients"),
                     footer: Text("% = share of the tomato weight. g / ml / pcs / tsp = amount for all \(Int(sauce.pizzaCount)) pizzas, scales when you change the pizza count. Tip: Neapolitan style uses only crushed raw tomatoes + ~1.5–2% salt; basil and oil go on the pizza.")) {
                 TextField("Tomatoes", text: $sauce.tomatoName)
@@ -143,4 +145,34 @@ struct SauceDetailView: View {
 
 #Preview {
     NavigationStack { SauceDetailView(sauce: SauceRecipe()) }
+}
+
+/// Hinweise zu einzelnen Zutaten (z. B. Kürbiskernöl erst nach dem Kochen)
+struct SauceTipsSection: View {
+    var sauce: SauceRecipe
+
+    private static let rules: [(keywords: [String], tip: LocalizedStringKey, icon: String)] = [
+        (["kürbiskern", "pumpkin"], "Pumpkin seed oil: stir in only after cooking – heat destroys its aroma (smoke point ~120 °C).", "drop.fill"),
+        (["basilikum", "basil"], "Basil: add fresh at the end or onto the pizza – cooking makes it taste flat.", "leaf.fill"),
+        (["balsamico", "balsamic"], "Balsamic: add at the end, a little goes a long way.", "drop"),
+        (["oregano"], "Dried oregano: cook it briefly with the sauce or rub it between your fingers before adding.", "leaf"),
+        (["knoblauch", "garlic"], "Garlic: sauté gently only – brown garlic turns bitter.", "flame"),
+    ]
+
+    private var tips: [(tip: LocalizedStringKey, icon: String)] {
+        let names = ([sauce.tomatoName] + sauce.ingredients.filter { $0.percent > 0 }.map(\.name) + [sauce.notes])
+            .joined(separator: " ").lowercased()
+        return Self.rules.filter { rule in rule.keywords.contains(where: names.contains) }.map { ($0.tip, $0.icon) }
+    }
+
+    var body: some View {
+        if !tips.isEmpty {
+            Section("Tips") {
+                ForEach(Array(tips.enumerated()), id: \.offset) { _, item in
+                    Label(item.tip, systemImage: item.icon)
+                        .font(.callout)
+                }
+            }
+        }
+    }
 }

@@ -504,6 +504,26 @@
         }
       }
     },
+    "Balsamic: add at the end, a little goes a long way." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balsamico: zum Schluss zugeben, wenig reicht."
+          }
+        }
+      }
+    },
+    "Basil: add fresh at the end or onto the pizza – cooking makes it taste flat." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basilikum: frisch zum Schluss oder auf die Pizza – mitgekocht schmeckt es fade."
+          }
+        }
+      }
+    },
     "Batch" : {
       "localizations" : {
         "de" : {
@@ -1122,6 +1142,16 @@
         }
       }
     },
+    "Dried oregano: cook it briefly with the sauce or rub it between your fingers before adding." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getrockneter Oregano: kurz mitkochen oder vor dem Zugeben zwischen den Fingern zerreiben."
+          }
+        }
+      }
+    },
     "Drizzle in the oil slowly (skip if none). Medium speed." : {
       "localizations" : {
         "de" : {
@@ -1410,6 +1440,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Knoblauch"
+          }
+        }
+      }
+    },
+    "Garlic: sauté gently only – brown garlic turns bitter." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knoblauch: nur sanft andünsten – braun gewordener Knoblauch wird bitter."
           }
         }
       }
@@ -2406,6 +2446,16 @@
         }
       }
     },
+    "Pumpkin seed oil: stir in only after cooking – heat destroys its aroma (smoke point ~120 °C)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kürbiskernöl: erst nach dem Kochen einrühren – Hitze zerstört das Aroma (Rauchpunkt ~120 °C)."
+          }
+        }
+      }
+    },
     "Rating" : {
       "localizations" : {
         "de" : {
@@ -3270,6 +3320,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Timer-Status"
+          }
+        }
+      }
+    },
+    "Tips" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipps"
           }
         }
       }
