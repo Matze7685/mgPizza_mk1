@@ -37,6 +37,7 @@ struct RecipeDetailView: View {
                 LabeledContent("Yeast Correction", value: "\(Int(recipeData.yeastCorrection)) %")
             }
             DoughWarningsSection(recipe: recipeData)
+            FlourHintSection(totalHours: recipeData.roomTime + recipeData.coolTime)
             if recipeData.isDetroit {
                 DetroitTipsSection()
             }

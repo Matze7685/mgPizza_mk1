@@ -516,6 +516,16 @@
         }
       }
     },
+    "Caputo red (Cuoco): more than 24 h. Caputo blue (Pizzeria): less than 24 h." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caputo rot (Cuoco): über 24 Std. Caputo blau (Pizzeria): unter 24 Std."
+          }
+        }
+      }
+    },
     "Change the probe temperature (hand, hot water) and watch which bytes turn orange." : {
       "localizations" : {
         "de" : {
@@ -2924,6 +2934,16 @@
         }
       }
     },
+    "Total proof %lld h" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamte Gare %lld Std."
+          }
+        }
+      }
+    },
     "Typical ball weight is 230–280 g for a 30–33 cm pizza." : {
       "localizations" : {
         "de" : {
@@ -2950,6 +2970,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bis der Teig glatt ist und der Fenstertest klappt. Teig < 25 °C."
+          }
+        }
+      }
+    },
+    "Use Caputo blue" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caputo blau verwenden"
+          }
+        }
+      }
+    },
+    "Use Caputo red" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caputo rot verwenden"
           }
         }
       }

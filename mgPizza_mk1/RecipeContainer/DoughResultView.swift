@@ -23,6 +23,7 @@ struct DoughResultView: View {
             doughSection
             fermentSection
             DoughWarningsSection(recipe: recipeSetupData)
+            FlourHintSection(totalHours: recipeSetupData.roomTime + recipeSetupData.effectiveCoolTime())
         }
         .navigationTitle("Result").font(.subheadline)
         .navigationBarTitleDisplayMode(.inline)
@@ -196,6 +197,31 @@ struct DoughIngredientsSection: View {
             Text(title)
             Spacer()
             Text(String(format: format, value)).bold()
+        }
+    }
+}
+
+/// Gedankenstütze Mehlwahl: Caputo rot (Cuoco) für lange, Caputo blau (Pizzeria) für kurze Gare.
+struct FlourHintSection: View {
+    var totalHours: Double
+
+    private var isLong: Bool { totalHours > 24 }
+
+    var body: some View {
+        Section {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isLong ? Color.red : Color.blue)
+                    .frame(width: 8, height: 36)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(isLong ? "Use Caputo red" : "Use Caputo blue").font(.headline)
+                    Text("Total proof \(Int(totalHours.rounded())) h").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("Flour")
+        } footer: {
+            Text("Caputo red (Cuoco): more than 24 h. Caputo blue (Pizzeria): less than 24 h.")
         }
     }
 }
