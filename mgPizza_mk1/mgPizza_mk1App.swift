@@ -14,6 +14,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        _ = OvenMonitor.shared   // Bluetooth sofort wiederherstellen, auch wenn iOS die App im Hintergrund startet
         return true
     }
 
@@ -27,13 +28,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 @main
 struct mgPizza_mk1App: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var ovenMonitor = OvenMonitor()
+    @ObservedObject private var ovenMonitor = OvenMonitor.shared
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             RecipeSetupData.self,
             SauceRecipe.self,
             ShoppingItem.self,
+            MenuPizza.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

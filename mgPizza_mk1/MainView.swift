@@ -35,9 +35,9 @@ struct MainView: View {
                         Label("Sauce", systemImage: "drop")
                     }
                     .tag(MainTab.sauce)
-                ShoppingListView()
+                MenuAndShoppingView()
                     .tabItem {
-                        Label("Shopping", systemImage: "cart")
+                        Label("Menu", systemImage: "menucard")
                     }
                     .tag(MainTab.shopping)
                 SettingsView()

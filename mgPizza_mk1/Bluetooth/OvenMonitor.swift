@@ -37,6 +37,9 @@ enum OoniHub {
 
 /// Verbindet sich mit dem Ooni-Hub, zeigt die Temperaturen und meldet, wenn die Zieltemperatur erreicht ist.
 class OvenMonitor: NSObject, ObservableObject {
+    /// Eine Instanz für die ganze App – wird schon beim App-Start erzeugt (wichtig für die Bluetooth-Wiederherstellung im Hintergrund)
+    static let shared = OvenMonitor()
+
     @Published var state: CBManagerState = .unknown
     @Published var status: String = ""
     @Published var isActive = false
@@ -86,19 +89,39 @@ class OvenMonitor: NSObject, ObservableObject {
     /// Zuletzt verbundener Hub, damit er direkt (auch im Hintergrund) wieder verbunden werden kann
     @AppStorage("ovenHubID") private var savedHubID: String = ""
 
+    /// War die Überwachung aktiv? -> nach einem Neustart der App (auch durch iOS im Hintergrund) fortsetzen
+    @AppStorage("ovenMonitorActive") private var wasActive: Bool = false
+
     private var central: CBCentralManager?
     private var hub: CBPeripheral?
+    private static let restoreID = "mgPizzaOvenMonitor"
+
+    override init() {
+        super.init()
+        if wasActive {
+            // iOS kann die App im Hintergrund neu starten (State Restoration) – dann sofort wieder verbinden
+            DispatchQueue.main.async { self.start() }
+        }
+    }
+
+    private func makeCentral() -> CBCentralManager {
+        // Restore-ID: iOS hält die Verbindung auch, wenn die App im Sperrbildschirm beendet wird,
+        // und weckt sie bei neuen Daten wieder auf
+        CBCentralManager(delegate: self, queue: .main,
+                         options: [CBCentralManagerOptionRestoreIdentifierKey: Self.restoreID])
+    }
 
     func target(_ probe: Int) -> Double { probe == 0 ? target0 : target1 }
     func isAlarmOn(_ probe: Int) -> Bool { probe == 0 ? alarm0 : alarm1 }
 
     func start() {
         isActive = true
+        wasActive = true
         alarmFired = Array(repeating: false, count: OoniHub.probeCount)
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         if speakAlarm { OvenSpeaker.shared.activateSession() }
         if central == nil {
-            central = CBCentralManager(delegate: self, queue: .main)
+            central = makeCentral()
         } else {
             scan()
         }
@@ -106,6 +129,7 @@ class OvenMonitor: NSObject, ObservableObject {
 
     func stop() {
         isActive = false
+        wasActive = false
         central?.stopScan()
         if let hub { central?.cancelPeripheralConnection(hub) }
         hub = nil
@@ -127,8 +151,12 @@ class OvenMonitor: NSObject, ObservableObject {
             connect(known)
         }
         // Der Hub sendet seine Service-UUID nicht in der Werbung mit, daher ohne Filter suchen
-        // und nach dem Namen ("Ooni_DT_Hub") auswählen
-        status = String(localized: "Searching for Ooni hub …")
+        // und nach dem Namen ("Ooni_DT_Hub") auswählen.
+        // Achtung: Im Hintergrund/Sperrbildschirm liefert iOS bei einer Suche ohne Filter nichts –
+        // dort hilft nur die oben gestartete Verbindung zum bekannten Hub (läuft ohne Zeitlimit).
+        if hub == nil || hub?.state == .disconnected {
+            status = String(localized: "Searching for Ooni hub …")
+        }
         central.scanForPeripherals(withServices: nil)
     }
 
@@ -173,10 +201,27 @@ class OvenMonitor: NSObject, ObservableObject {
 }
 
 extension OvenMonitor: CBCentralManagerDelegate {
+    /// iOS hat die App im Hintergrund neu gestartet und gibt die bestehende Verbindung zurück
+    func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
+        guard let restored = (dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral])?.first else { return }
+        isActive = true
+        hub = restored
+        restored.delegate = self
+        if restored.state == .connected {
+            status = String(localized: "Connected")
+            restored.discoverServices([OoniHub.serviceUUID])
+        }
+    }
+
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         state = central.state
         if central.state == .poweredOn {
-            scan()
+            if let hub, hub.state == .connected {
+                // Nach Wiederherstellung: Benachrichtigungen erneut abonnieren
+                hub.discoverServices([OoniHub.serviceUUID])
+            } else {
+                scan()
+            }
         } else {
             status = String(localized: "Bluetooth not available")
         }

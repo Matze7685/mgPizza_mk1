@@ -47,6 +47,8 @@
 		C1B2C3D4000000040000CC02 /* TimerStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000040000CC01 /* TimerStatusView.swift */; };
 		C1B2C3D4000000050000CC02 /* SeedImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000050000CC01 /* SeedImporter.swift */; };
 		C1B2C3D4000000060000CC02 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000060000CC01 /* AppRouter.swift */; };
+		D1B2C3D4000000010000DD02 /* MenuPizza.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B2C3D4000000010000DD01 /* MenuPizza.swift */; };
+		D1B2C3D4000000020000DD02 /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B2C3D4000000020000DD01 /* MenuView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -93,6 +95,8 @@
 		C1B2C3D4000000040000CC01 /* TimerStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerStatusView.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000050000CC01 /* SeedImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedImporter.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000060000CC01 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
+		D1B2C3D4000000010000DD01 /* MenuPizza.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuPizza.swift; sourceTree = "<group>"; };
+		D1B2C3D4000000020000DD01 /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -134,6 +138,7 @@
 		C7B149573066D0150021AA7E /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				D1B2C3D4000000010000DD01 /* MenuPizza.swift */,
 				A1B2C3D4000000030000AA01 /* ShoppingItem.swift */,
 				A1B2C3D4000000020000AA01 /* SauceRecipe.swift */,
 				A1B2C3D4000000010000AA01 /* KneadStep.swift */,
@@ -161,6 +166,7 @@
 		C7DC0DB63019FA16003738AA /* mgPizza_mk1 */ = {
 			isa = PBXGroup;
 			children = (
+				D1B2C3D4000000020000DD01 /* MenuView.swift */,
 				C1B2C3D400000001000CC000 /* Shared */,
 				B1B2C3D400000001000BB000 /* Bluetooth */,
 				A1B2C3D4000000060000AA01 /* ShoppingListView.swift */,
@@ -302,6 +308,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D1B2C3D4000000020000DD02 /* MenuView.swift in Sources */,
+				D1B2C3D4000000010000DD02 /* MenuPizza.swift in Sources */,
 				C1B2C3D4000000060000CC02 /* AppRouter.swift in Sources */,
 				C1B2C3D4000000050000CC02 /* SeedImporter.swift in Sources */,
 				C1B2C3D4000000040000CC02 /* TimerStatusView.swift in Sources */,
