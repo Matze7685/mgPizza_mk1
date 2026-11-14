@@ -4332,12 +4332,12 @@
         }
       }
     },
-    "Shows the current step and countdown above the tab bar on every screen. Running timers move to the Dynamic Island when you leave the app." : {
+    "Pins the current step and countdown to the top of every screen while you prepare the dough (weighing, kneading) – not during proofing. Running timers move to the Dynamic Island when you leave the app." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeigt den aktuellen Schritt und Countdown auf jedem Bildschirm über der Tab-Leiste. Laufende Timer wandern in die Dynamic Island, sobald du die App verlässt."
+            "value" : "Heftet den aktuellen Schritt und Countdown oben auf jedem Bildschirm an, solange du den Teig zubereitest (Abwiegen, Kneten) – nicht während der Gare. Laufende Timer wandern in die Dynamic Island, sobald du die App verlässt."
           }
         }
       }

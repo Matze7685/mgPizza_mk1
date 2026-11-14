@@ -50,9 +50,9 @@ struct MainView: View {
                     }
                     .tag(MainTab.settings)
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
+            .safeAreaInset(edge: .top, spacing: 0) {
                 if showDoughStatus {
-                    DoughStatusBar().padding(.bottom, 52)   // über der Tab-Leiste
+                    DoughStatusBar().padding(.vertical, 4)   // oben angeheftet, auch in Rezepten
                 }
             }
             // Laufende Timer in die Dynamic Island schieben, sobald die App verlassen wird

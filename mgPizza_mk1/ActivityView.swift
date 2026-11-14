@@ -169,15 +169,20 @@ struct ActiveDoughRow: View {
         .environmentObject(OvenMonitor())
 }
 
-/// Immer sichtbare Statusleiste über der Tab-Leiste: was gerade zu tun ist + Countdown.
+/// Oben angeheftete Statusleiste (in der ganzen App) während der Zubereitung (Zutaten/Kneten) – nicht während der Garzeit.
 /// Ein-/ausschaltbar in den Einstellungen („Always show dough status“).
 struct DoughStatusBar: View {
     @Query(filter: #Predicate<RecipeSetupData> { $0.isStarted == true || $0.isInProgress == true },
            sort: \RecipeSetupData.dateSelection) private var activeRecipes: [RecipeSetupData]
     @ObservedObject private var router = AppRouter.shared
 
+    /// Nur Rezepte in der Zubereitung (Gärphasen zeigt die Aktivitäts-Seite)
+    private var preparing: [RecipeSetupData] {
+        activeRecipes.filter { !$0.isStarted && $0.isInProgress }
+    }
+
     var body: some View {
-        if let recipe = activeRecipes.first {
+        if let recipe = preparing.first {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Button {
                     router.open(recipe)
@@ -194,8 +199,8 @@ struct DoughStatusBar: View {
                             Text(format(remaining)).font(.subheadline.weight(.bold)).monospacedDigit()
                                 .foregroundStyle(remaining == 0 ? .green : .primary)
                         }
-                        if activeRecipes.count > 1 {
-                            Text("+\(activeRecipes.count - 1)").font(.caption).foregroundStyle(.secondary)
+                        if preparing.count > 1 {
+                            Text("+\(preparing.count - 1)").font(.caption).foregroundStyle(.secondary)
                         }
                     }
                     .padding(.horizontal, 14).padding(.vertical, 8)
