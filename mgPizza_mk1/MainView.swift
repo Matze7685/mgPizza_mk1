@@ -16,6 +16,10 @@ struct MainView: View {
     @State private var isShowingNewRecipeView: Bool = false
     @ObservedObject private var router = AppRouter.shared
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("showDoughStatus") private var showDoughStatus = true
+    @Query(filter: #Predicate<RecipeSetupData> { $0.isStarted == true || $0.isInProgress == true })
+    private var activeRecipes: [RecipeSetupData]
     
     var body: some View {
         NavigationStack {
@@ -46,6 +50,16 @@ struct MainView: View {
                     }
                     .tag(MainTab.settings)
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if showDoughStatus {
+                    DoughStatusBar().padding(.bottom, 52)   // über der Tab-Leiste
+                }
+            }
+            // Laufende Timer in die Dynamic Island schieben, sobald die App verlassen wird
+            // (Live Activities dürfen nur im Vordergrund gestartet werden – .inactive gilt noch dazu)
+            .onChange(of: scenePhase) { _, phase in
+                if phase != .active { moveTimersToDynamicIsland() }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu("Actions", systemImage: "ellipsis") {
@@ -67,6 +81,18 @@ struct MainView: View {
             }
             .sheet(isPresented: $isShowingNewRecipeView) {
                 RecipeContainerView(recipeSetupData: RecipeSetupData(), isShowingNewRecipeView: $isShowingNewRecipeView)
+            }
+        }
+    }
+}
+
+extension MainView {
+    func moveTimersToDynamicIsland() {
+        let manager = LiveActivityManager.shared
+        manager.refreshDough(activeRecipes.filter(\.isStarted))
+        for recipe in activeRecipes {
+            if let end = recipe.kneadStepEnd, let step = recipe.currentKneadStep, end > Date() {
+                manager.startKnead(recipe, title: recipe.kneadTitle(step), end: end)
             }
         }
     }

@@ -306,6 +306,17 @@ extension RecipeSetupData {
         kneadStepIndex = min(kneadStepIndex + 1, kneadSteps.count)
     }
 
+    /// Einen Schritt zurück (Sprachbefehl „zurück“)
+    func previousKneadStep() {
+        cancelKneadTimer()
+        kneadStepIndex = max(kneadStepIndex - 1, 0)
+    }
+
+    /// Aktuellen Schritt von vorn (Timer verwerfen)
+    func restartKneadStep() {
+        cancelKneadTimer()
+    }
+
     func resetKnead() {
         cancelKneadTimer()
         kneadStepIndex = 0

@@ -11,9 +11,12 @@ import SwiftUI
 final class OvenSpeaker {
     static let shared = OvenSpeaker()
     private let synthesizer = AVSpeechSynthesizer()
+    var isSpeaking: Bool { synthesizer.isSpeaking }
 
     /// Long-Form-Audio erlaubt die Ausgabe auf AirPlay-Lautsprechern wie dem HomePod
     func activateSession() {
+        // Während der Sprachsteuerung läuft das Mikrofon – Audio-Session dann nicht umstellen
+        if VoiceControl.shared.isListening { return }
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playback, mode: .spokenAudio, policy: .longFormAudio)
@@ -23,14 +26,15 @@ final class OvenSpeaker {
         }
     }
 
-    func announce(_ text: String, repeats: Int = 2) {
+    /// `delay`: Pause vor der ersten Ansage, z. B. damit sie nicht über den Weckton läuft
+    func announce(_ text: String, repeats: Int = 2, delay: TimeInterval = 0.5) {
         activateSession()
         let voice = AVSpeechSynthesisVoice(language: Locale.current.identifier.replacingOccurrences(of: "_", with: "-"))
             ?? AVSpeechSynthesisVoice(language: "de-DE")
         for index in 0..<repeats {
             let utterance = AVSpeechUtterance(string: text)
             utterance.voice = voice
-            utterance.preUtteranceDelay = index == 0 ? 0.5 : 2.0
+            utterance.preUtteranceDelay = index == 0 ? delay : 2.0
             synthesizer.speak(utterance)
         }
     }
