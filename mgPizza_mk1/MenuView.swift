@@ -164,30 +164,29 @@ extension MenuPizza {
     static func aggregatedToppings(of onMenu: [MenuPizza]) -> [(key: String, name: String, amount: Double, unit: String)] {
         var totals: [String: (name: String, amount: Double, unit: String)] = [:]
         var order: [String] = []
+        // Gleiche Zutat zusammenrechnen, auch wenn sie unterschiedlich heißt („Cooked ham“ ↔ „Schinken“,
+        // „Mozzarella (fior di latte)“ ↔ „Mozzarella“) oder in anderer Einheit steht (g ↔ Stück).
+        func add(_ name: String, _ amount: Double, _ unit: String) {
+            var key = "\(name.lowercased())|\(unit)"
+            var amount = amount
+            if totals[key] == nil, let match = existingKey(for: name, unit: unit, in: totals, order: order) {
+                key = match.key
+                if match.unit != unit, let converted = convert(amount, from: unit, to: match.unit, name: name) { amount = converted }
+            }
+            if totals[key] == nil { order.append(key) }
+            totals[key, default: (name, 0, unit)].amount += amount
+        }
         for pizza in onMenu where pizza.orderCount > 0 {
             for topping in pizza.toppings {
-                let key = "\(topping.name.lowercased())|\(topping.unit)"
-                if totals[key] == nil { order.append(key) }
                 let count = max(0, pizza.orderCount - (pizza.removedToppings[topping.name] ?? 0))
-                if count > 0 { totals[key, default: (topping.name, 0, topping.unit)].amount += topping.amount * Double(count) }
+                if count > 0 { add(topping.name, topping.amount * Double(count), topping.unit) }
             }
         }
-        // Zusatzzutaten der Gäste mit Standardmenge pro Pizza (Einstellung „Extra amounts per pizza“).
-        // Gibt es die Zutat schon im Belag (z. B. „Mozzarella“ ↔ „Mozzarella (fior di latte)“), wird sie dort dazugerechnet,
-        // bei anderer Einheit (g ↔ Stück) umgerechnet; sonst entstehen doppelte Einträge.
+        // Zusatzzutaten der Gäste mit Standardmenge pro Pizza (Einstellung „Extra amounts per pizza“)
         for pizza in onMenu where pizza.orderCount > 0 {
             for (name, count) in pizza.guestExtras.sorted(by: { $0.key < $1.key }) where count > 0 {
                 let standard = ExtraDefaults.amount(for: name)
-                var amount = standard.amount * Double(count)
-                var key = "\(name.lowercased())|\(standard.unit)"
-                if totals[key] == nil, let match = existingKey(for: name, unit: standard.unit, in: totals, order: order) {
-                    key = match.key
-                    if match.unit != standard.unit, let converted = convert(amount, from: standard.unit, to: match.unit, name: name) {
-                        amount = converted
-                    }
-                }
-                if totals[key] == nil { order.append(key) }
-                totals[key, default: (name, 0, standard.unit)].amount += amount
+                add(name, standard.amount * Double(count), standard.unit)
             }
         }
         return order.compactMap { key -> (key: String, name: String, amount: Double, unit: String)? in
@@ -203,6 +202,10 @@ extension MenuPizza {
             .trimmingCharacters(in: .whitespaces)
     }
 
+    private static func words(_ name: String) -> [String] {
+        name.split(whereSeparator: { $0 == " " || $0 == "-" || $0 == "/" }).map(String.init)
+    }
+
     /// Schon vorhandener Eintrag für dieselbe Zutat (Namen enthalten sich gegenseitig); gleiche Einheit hat Vorrang
     private static func existingKey(for name: String, unit: String, in totals: [String: (name: String, amount: Double, unit: String)],
                                     order: [String]) -> (key: String, unit: String)? {
@@ -211,7 +214,9 @@ extension MenuPizza {
         let matches = order.compactMap { key -> (key: String, unit: String)? in
             guard let item = totals[key] else { return nil }
             let have = normalized(item.name)
-            guard !have.isEmpty, have.contains(wanted) || wanted.contains(have) else { return nil }
+            // ganze Wörter vergleichen: „Oliven“ passt zu „Schwarze Oliven“, „Tomaten“ aber nicht zu „Tomatensauce“
+            let haveWords = Set(words(have)), wantedWords = Set(words(wanted))
+            guard !haveWords.isEmpty, haveWords.isSubset(of: wantedWords) || wantedWords.isSubset(of: haveWords) else { return nil }
             // andere Einheit nur, wenn umrechenbar
             if item.unit != unit, convert(1, from: unit, to: item.unit, name: name) == nil { return nil }
             return (key, item.unit)
