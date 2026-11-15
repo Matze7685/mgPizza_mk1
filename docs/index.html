@@ -207,7 +207,7 @@ const refreshSummary = () => {
 async function removeLine(i) {
   const name = i === "custom" ? "Eigene Pizza" : event.pizzas[+i].name;
   const n = i === "custom" ? customCount : counts[+i];
-  if (!await ask(`${n}× ${name} entfernen?`, "Die Pizza wird aus deiner Auswahl genommen, samt abgewählter Zutaten und Extras.", "Entfernen")) return;
+  if (!await ask(`${n}× ${name} aus der Bestellung von ${guest} entfernen?`, "Die Pizza wird aus der Auswahl genommen, samt abgewählter Zutaten und Extras.", "Entfernen")) return;
   if (i === "custom") { customCount = 0; customToppings = new Set(); customExtra = ""; }
   else { counts[+i] = 0; without[+i] = new Set(); extras[+i] = ""; extraSel[+i] = new Set(); }
   render();
@@ -215,7 +215,7 @@ async function removeLine(i) {
 
 // Die gespeicherte Bestellung des Gastes komplett löschen
 async function deleteOrder() {
-  if (!await ask("Deine gesamte Bestellung löschen?", "Das kann nicht rückgängig gemacht werden. Du kannst danach aber neu bestellen.", "Ja, löschen")) return;
+  if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, `Ja, ${guest} löschen`)) return;
   const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
   if (r.ok) showNames(); else document.getElementById("msg").textContent = "Löschen hat nicht geklappt – bitte nochmal versuchen.";
 }
@@ -241,7 +241,7 @@ function render() {
     </div>
     <textarea id="note" rows="2" placeholder="Anmerkung (optional)">${esc(note)}</textarea>
     <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>
-    ${hadOrder ? "<button class='delorder' id='delorder'>Gesamte Bestellung löschen</button>" : ""}`;
+    ${hadOrder ? "<button class='delorder' id='delorder'>Gesamte Bestellung von ${esc(guest)} löschen</button>" : ""}`;
   document.getElementById("change").onclick = showNames;
   app.querySelectorAll(".count button").forEach(b => b.onclick = () => {
     const d = +b.dataset.d;
