@@ -28,7 +28,8 @@
   Begrüßungstext (z. B. „Wir feiern Annas 40er!“). Die Gästeseite zeigt Titel, Datum und Text statt fest „Pizza“.
 - *Guest link → New evening (new link)* legt einen neuen Abend an; der bisherige bleibt erhalten.
 - *All evenings* zeigt alle Abende (kommende und vergangene) mit Gästen, Bestellungen und Status. Antippen wechselt
-  zu dem Abend, nach links wischen kopiert den Link, nach rechts wischen blendet ihn in der App aus.
+  zu dem Abend, nach rechts wischen öffnet oder kopiert den Link, nach links wischen blendet ihn in der App aus.
+  *Open guest page* öffnet die Seite des aktuellen Abends im Browser.
 - *Orders closed* + *Publish menu*: Gäste sehen ihre Bestellungen noch, können aber nichts mehr ändern.
 - Die Übersicht liegt nur in der App. Gäste sehen nie eine Liste anderer Abende.
 

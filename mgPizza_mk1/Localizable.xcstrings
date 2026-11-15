@@ -4982,16 +4982,6 @@
         }
       }
     },
-    "Tap an evening to work on it. Removing it here only hides it in the app; its guest link keeps working." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe auf einen Abend, um ihn zu bearbeiten. Entfernen blendet ihn nur in der App aus; sein Gästelink funktioniert weiter."
-          }
-        }
-      }
-    },
     "Refresh orders" : {
       "localizations" : {
         "de" : {
@@ -5068,6 +5058,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bestellung geschlossen"
+          }
+        }
+      }
+    },
+    "Tap an evening to work on it. Swipe right to open or copy its link. Removing it here only hides it in the app; its guest link keeps working." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf einen Abend, um ihn zu bearbeiten. Nach rechts wischen öffnet oder kopiert seinen Link. Entfernen blendet ihn nur in der App aus; sein Gästelink funktioniert weiter."
+          }
+        }
+      }
+    },
+    "Open guest page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästeseite öffnen"
+          }
+        }
+      }
+    },
+    "Open" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnen"
           }
         }
       }

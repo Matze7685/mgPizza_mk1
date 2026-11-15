@@ -337,6 +337,9 @@ struct GuestLinkSheet: View {
                         ShareLink(item: "🍕 \(title)\n\(link.absoluteString)") {
                             Label("Send guest link", systemImage: "link")
                         }
+                        Link(destination: link) {
+                            Label("Open guest page", systemImage: "safari")
+                        }
                         Button("Copy guest link", systemImage: "doc.on.doc") {
                             UIPasteboard.general.string = link.absoluteString
                             status = String(localized: "Link copied.")
@@ -474,6 +477,7 @@ struct GuestLinkSheet: View {
 /// Übersicht aller Abende/Anlässe (nur für den Gastgeber): kommende und vergangene, mit Status und Anzahl Bestellungen
 struct GuestEveningsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     var currentID: String
     var pageURL: String
     var service: GuestOrderService
@@ -499,7 +503,7 @@ struct GuestEveningsView: View {
             }
             Section {
             } footer: {
-                Text("Tap an evening to work on it. Removing it here only hides it in the app; its guest link keeps working.")
+                Text("Tap an evening to work on it. Swipe right to open or copy its link. Removing it here only hides it in the app; its guest link keeps working.")
             }
         }
         .navigationTitle("All evenings")
@@ -540,6 +544,8 @@ struct GuestEveningsView: View {
         }
         .swipeActions(edge: .leading) {
             if let link = GuestLinkSheet.link(pageURL: pageURL, id: evening.id) {
+                Button("Open", systemImage: "safari") { openURL(link) }
+                    .tint(.green)
                 Button("Copy link", systemImage: "doc.on.doc") { UIPasteboard.general.string = link.absoluteString }
                     .tint(.blue)
             }
