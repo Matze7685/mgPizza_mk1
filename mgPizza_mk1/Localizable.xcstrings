@@ -4861,6 +4861,236 @@
           }
         }
       }
+    },
+    "Welcome text for guests (optional)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begrüßungstext für Gäste (optional)"
+          }
+        }
+      }
+    },
+    "Orders closed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellung geschlossen"
+          }
+        }
+      }
+    },
+    "All evenings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Abende"
+          }
+        }
+      }
+    },
+    "New evening (new link)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Abend (neuer Link)"
+          }
+        }
+      }
+    },
+    "Evening" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abend"
+          }
+        }
+      }
+    },
+    "Title and date come from the menu. Each evening gets its own link; guests only ever see their own evening. Changes reach the guests after “Publish menu”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel und Datum kommen aus der Speisekarte. Jeder Abend hat einen eigenen Link; Gäste sehen immer nur ihren eigenen Abend. Änderungen sehen die Gäste nach „Speisekarte veröffentlichen“."
+          }
+        }
+      }
+    },
+    "Guests" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste"
+          }
+        }
+      }
+    },
+    "New evening created. Set title and date in the menu, then publish." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Abend angelegt. Titel und Datum in der Speisekarte setzen, dann veröffentlichen."
+          }
+        }
+      }
+    },
+    "Switched to “%@”. Publishing sends the menu currently set up in the app." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu „%@“ gewechselt. Beim Veröffentlichen wird die aktuell in der App eingerichtete Speisekarte gesendet."
+          }
+        }
+      }
+    },
+    "No evenings yet. Publish a menu to add one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Abende. Veröffentliche eine Speisekarte, um einen anzulegen."
+          }
+        }
+      }
+    },
+    "Upcoming" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommende"
+          }
+        }
+      }
+    },
+    "Past" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergangene"
+          }
+        }
+      }
+    },
+    "Refresh orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen aktualisieren"
+          }
+        }
+      }
+    },
+    "Current" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuell"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernen"
+          }
+        }
+      }
+    },
+    "Copy link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link kopieren"
+          }
+        }
+      }
+    },
+    "%lld guests" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Gäste"
+          }
+        }
+      }
+    },
+    "%lld orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Bestellungen"
+          }
+        }
+      }
+    },
+    "not published" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nicht veröffentlicht"
+          }
+        }
+      }
+    },
+    "orders closed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellung geschlossen"
+          }
+        }
+      }
+    },
+    "Tap an evening to work on it. Swipe right to open or copy its link. Removing it here only hides it in the app; its guest link keeps working." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf einen Abend, um ihn zu bearbeiten. Nach rechts wischen öffnet oder kopiert seinen Link. Entfernen blendet ihn nur in der App aus; sein Gästelink funktioniert weiter."
+          }
+        }
+      }
+    },
+    "Open guest page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästeseite öffnen"
+          }
+        }
+      }
+    },
+    "Open" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnen"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
