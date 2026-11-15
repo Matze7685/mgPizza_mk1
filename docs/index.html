@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pizzaabend</title>
+<title>Pizza</title>
 <style>
   body{font-family:-apple-system,system-ui,sans-serif;background:#fffaf0;margin:0;color:#222}
   main{max-width:560px;margin:0 auto;padding:20px}
@@ -33,7 +33,7 @@ const eventId = new URLSearchParams(location.search).get("e");
 const app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const slug = n => n.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "gast";
-let event, counts = [], without = [];
+let event, counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [];
 
 async function load() {
   if (!eventId) { app.textContent = "Link unvollständig."; return; }
@@ -42,38 +42,66 @@ async function load() {
   event = JSON.parse((await r.json()).fields.data.stringValue);
   counts = event.pizzas.map(() => 0);
   without = event.pizzas.map(() => new Set());
+  // Alle Zutaten der Karte (einmal pro Name+Einheit) für die eigene Pizza
+  const seen = new Set();
+  pool = [];
+  event.pizzas.forEach(p => p.toppings.forEach(t => {
+    const k = t.name.toLowerCase() + "|" + t.unit;
+    if (!seen.has(k)) { seen.add(k); pool.push(t); }
+  }));
   render();
 }
 
 function render() {
   const date = new Date(event.date).toLocaleString("de-AT", {weekday:"long", day:"numeric", month:"long", hour:"2-digit", minute:"2-digit"});
-  app.innerHTML = `<h1>🍕 ${esc(event.title)}</h1><div class="date">${esc(date)}</div>
+  if (!event.guests.length) { app.innerHTML = "<h1>🍕 Pizza</h1><p>Der Gastgeber hat noch keine Gäste eingetragen.</p>"; return; }
+  app.innerHTML = `<h1>🍕 Pizza</h1><div class="date">${esc(date)}</div>
     <label>Wer bist du?</label>
-    <select id="guest">${event.guests.length ? "" : "<option value=''>–</option>"}${event.guests.map(g => `<option>${esc(g)}</option>`).join("")}</select>
-    <input id="custom" placeholder="… oder Name eingeben" style="margin-top:8px">
+    <select id="guest">${event.guests.map(g => `<option>${esc(g)}</option>`).join("")}</select>
     ${event.pizzas.map((p, i) => `<div class="pizza">
       <div class="row"><div><div class="name">${esc(p.name)}</div><div class="info">${esc(p.info || "")}</div></div>
         <div class="count"><button data-d="-1" data-i="${i}">−</button><b id="c${i}">0</b><button data-d="1" data-i="${i}">+</button></div></div>
-      <div class="toppings" id="t${i}" hidden>Ohne:${p.toppings.map(t => `<label><input type="checkbox" style="width:auto" data-i="${i}" data-t="${esc(t.name)}"> ${esc(t.name)}</label>`).join("")}</div>
+      <div class="info" style="margin-top:6px">${esc(p.toppings.map(t => t.name).join(", "))}</div>
+      <div class="toppings" id="t${i}" hidden>Abwählen, was du nicht möchtest:${p.toppings.map(t => `<label><input type="checkbox" style="width:auto" checked data-i="${i}" data-t="${esc(t.name)}"> ${esc(t.name)}</label>`).join("")}</div>
     </div>`).join("")}
+    <div class="pizza">
+      <div class="row"><div><div class="name">Eigene Pizza</div><div class="info">Zutaten selbst auswählen</div></div>
+        <div class="count"><button data-d="-1" data-i="custom">−</button><b id="cc">0</b><button data-d="1" data-i="custom">+</button></div></div>
+      <div class="toppings" id="tc" hidden>${pool.map((t, k) => `<label><input type="checkbox" style="width:auto" data-k="${k}"> ${esc(t.name)}</label>`).join("")}</div>
+    </div>
     <textarea id="note" rows="2" placeholder="Anmerkung (optional)"></textarea>
     <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>`;
   app.querySelectorAll(".count button").forEach(b => b.onclick = () => {
-    const i = +b.dataset.i; counts[i] = Math.max(0, counts[i] + +b.dataset.d);
+    const d = +b.dataset.d;
+    if (b.dataset.i === "custom") {
+      customCount = Math.max(0, customCount + d);
+      document.getElementById("cc").textContent = customCount;
+      document.getElementById("tc").hidden = customCount === 0;
+      return;
+    }
+    const i = +b.dataset.i; counts[i] = Math.max(0, counts[i] + d);
     document.getElementById("c" + i).textContent = counts[i];
     document.getElementById("t" + i).hidden = counts[i] === 0;
   });
   app.querySelectorAll("[data-t]").forEach(c => c.onchange = () => {
-    const set = without[+c.dataset.i]; c.checked ? set.add(c.dataset.t) : set.delete(c.dataset.t);
+    const set = without[+c.dataset.i]; c.checked ? set.delete(c.dataset.t) : set.add(c.dataset.t);
+  });
+  app.querySelectorAll("[data-k]").forEach(c => c.onchange = () => {
+    c.checked ? customToppings.add(+c.dataset.k) : customToppings.delete(+c.dataset.k);
   });
   document.getElementById("send").onclick = send;
 }
 
 async function send() {
   const msg = document.getElementById("msg");
-  const guest = (document.getElementById("custom").value.trim() || document.getElementById("guest").value).trim();
+  const guest = document.getElementById("guest").value.trim();
   if (!guest) { msg.textContent = "Bitte Namen wählen."; return; }
   const lines = event.pizzas.map((p, i) => ({name: p.name, count: counts[i], without: [...without[i]]})).filter(l => l.count > 0);
+  if (customCount > 0) {
+    const chosen = [...customToppings].sort((a, b) => a - b).map(k => pool[k]);
+    if (!chosen.length) { msg.textContent = "Bitte Zutaten für die eigene Pizza wählen."; return; }
+    lines.push({name: "Eigene Pizza", count: customCount, without: [], custom: chosen});
+  }
   if (!lines.length) { msg.textContent = "Bitte mindestens eine Pizza wählen."; return; }
   const order = {guest, lines, note: document.getElementById("note").value.trim()};
   const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {

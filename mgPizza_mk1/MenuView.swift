@@ -20,6 +20,9 @@ struct MenuView: View {
     @State private var isShowingGuestLink = false
 
     private var onMenu: [MenuPizza] { pizzas.filter(\.isOnMenu) }
+    /// Nur die eigentliche Speisekarte (ohne eigene Gäste-Pizzen) für Teilen, PDF und Gästelink
+    private var planPizzas: [MenuPizza] { pizzas.filter { !$0.isGuestCustom } }
+    private var menuPizzas: [MenuPizza] { onMenu.filter { !$0.isGuestCustom } }
     private var totalOrders: Int { onMenu.reduce(0) { $0 + $1.orderCount } }
     private var roundCount: Int { onMenu.filter { !$0.isDetroit }.reduce(0) { $0 + $1.orderCount } }
     private var detroitCount: Int { onMenu.filter(\.isDetroit).reduce(0) { $0 + $1.orderCount } }
@@ -53,10 +56,10 @@ struct MenuView: View {
 
             if mode == .plan {
             Section {
-                ForEach(pizzas) { pizza in
+                ForEach(planPizzas) { pizza in
                     MenuPizzaRow(pizza: pizza, number: number(of: pizza), showsOrders: false) { editingPizza = pizza }
                 }
-                .onDelete { offsets in offsets.forEach { modelContext.delete(pizzas[$0]) } }
+                .onDelete { offsets in offsets.forEach { modelContext.delete(planPizzas[$0]) } }
                 Button("Add pizza", systemImage: "plus") {
                     let pizza = MenuPizza(name: String(localized: "New pizza"), sortIndex: (pizzas.map(\.sortIndex).max() ?? 0) + 1)
                     modelContext.insert(pizza)
@@ -97,7 +100,7 @@ struct MenuView: View {
                               systemImage: addedToShopping ? "checkmark" : "cart.badge.plus")
                     }
                     Button("Reset orders", systemImage: "arrow.counterclockwise", role: .destructive) {
-                        pizzas.forEach { $0.orderCount = 0; $0.removedToppings = [:] }
+                        pizzas.forEach { $0.isGuestCustom ? modelContext.delete($0) : { $0.orderCount = 0; $0.removedToppings = [:] }() }
                         addedToShopping = false
                     }
                 } header: {
@@ -108,12 +111,12 @@ struct MenuView: View {
             }
         }
         .sheet(isPresented: $isShowingGuestLink) {
-            GuestLinkSheet(title: title, date: date, pizzas: onMenu)
+            GuestLinkSheet(title: title, date: date, pizzas: menuPizzas)
         }
         .sheet(item: $editingPizza) { pizza in
             MenuPizzaEditor(pizza: pizza)
         }
-        .task(id: shareText) { pdfURL = MenuPDF.render(title: title, date: date, pizzas: onMenu) }
+        .task(id: shareText) { pdfURL = MenuPDF.render(title: title, date: date, pizzas: menuPizzas) }
         .onAppear { MenuPizza.seedIfNeeded(into: modelContext) }
     }
 
@@ -124,13 +127,13 @@ struct MenuView: View {
     private var title: String { menuTitle.isEmpty ? String(localized: "Pizza night") : menuTitle }
 
     private func number(of pizza: MenuPizza) -> Int? {
-        onMenu.firstIndex { $0.persistentModelID == pizza.persistentModelID }.map { $0 + 1 }
+        menuPizzas.firstIndex { $0.persistentModelID == pizza.persistentModelID }.map { $0 + 1 }
     }
 
     /// Text für WhatsApp & Co.
     private var shareText: String {
         var lines = ["🍕 \(title) – \(date.formatted(.dateTime.weekday(.wide).day().month().hour().minute()))", ""]
-        for (index, pizza) in onMenu.enumerated() {
+        for (index, pizza) in menuPizzas.enumerated() {
             lines.append("\(index + 1). \(pizza.name)" + (pizza.info.isEmpty ? "" : " (\(pizza.info))"))
             if !pizza.toppingsText.isEmpty { lines.append("    \(pizza.toppingsText)") }
         }
