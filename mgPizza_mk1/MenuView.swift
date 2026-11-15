@@ -100,7 +100,14 @@ struct MenuView: View {
                               systemImage: addedToShopping ? "checkmark" : "cart.badge.plus")
                     }
                     Button("Reset orders", systemImage: "arrow.counterclockwise", role: .destructive) {
-                        pizzas.forEach { $0.isGuestCustom ? modelContext.delete($0) : { $0.orderCount = 0; $0.removedToppings = [:] }() }
+                        for pizza in pizzas {
+                            if pizza.isGuestCustom {
+                                modelContext.delete(pizza)
+                            } else {
+                                pizza.orderCount = 0
+                                pizza.removedToppings = [:]
+                            }
+                        }
                         addedToShopping = false
                     }
                 } header: {
