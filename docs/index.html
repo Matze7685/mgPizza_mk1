@@ -215,7 +215,7 @@ async function removeLine(i) {
 
 // Die gespeicherte Bestellung des Gastes komplett löschen
 async function deleteOrder() {
-  if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, `Ja, ${guest} löschen`)) return;
+  if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, "Ja, Bestellung löschen")) return;
   const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
   if (r.ok) showNames(); else document.getElementById("msg").textContent = "Löschen hat nicht geklappt – bitte nochmal versuchen.";
 }
@@ -241,7 +241,7 @@ function render() {
     </div>
     <textarea id="note" rows="2" placeholder="Anmerkung (optional)">${esc(note)}</textarea>
     <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>
-    ${hadOrder ? "<button class='delorder' id='delorder'>Gesamte Bestellung von ${esc(guest)} löschen</button>" : ""}`;
+    ${hadOrder ? `<button class='delorder' id='delorder'>Gesamte Bestellung von ${esc(guest)} löschen</button>` : ""}`;
   document.getElementById("change").onclick = showNames;
   app.querySelectorAll(".count button").forEach(b => b.onclick = () => {
     const d = +b.dataset.d;
