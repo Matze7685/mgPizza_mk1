@@ -4751,6 +4751,66 @@
           }
         }
       }
+    },
+    "Without cheese" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Käse"
+          }
+        }
+      }
+    },
+    "Oregano" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oregano"
+          }
+        }
+      }
+    },
+    "Artichokes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artischocken"
+          }
+        }
+      }
+    },
+    "Black olives" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarze Oliven"
+          }
+        }
+      }
+    },
+    "Rocket" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rucola"
+          }
+        }
+      }
+    },
+    "Parma ham" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parmaschinken"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
