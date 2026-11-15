@@ -92,8 +92,8 @@ struct MenuView: View {
                         LabeledContent(item.name, value: MenuPizza.formatted(item.amount, unit: item.unit))
                     }
                     Button {
-                        ShoppingItem.add(aggregatedToppings.map { ($0.name, MenuPizza.formatted($0.amount, unit: $0.unit)) },
-                                         source: title, to: modelContext)
+                        ShoppingItem.replace(aggregatedToppings.map { ($0.name, MenuPizza.formatted($0.amount, unit: $0.unit)) },
+                                             source: title, in: modelContext)
                         addedToShopping = true
                     } label: {
                         Label(addedToShopping ? "Added to shopping list" : "Add toppings to shopping list",
@@ -155,6 +155,13 @@ struct MenuView: View {
 
     /// Belag aller Bestellungen zusammengerechnet (gleicher Name + Einheit)
     private var aggregatedToppings: [(key: String, name: String, amount: Double, unit: String)] {
+        MenuPizza.aggregatedToppings(of: onMenu)
+    }
+}
+
+extension MenuPizza {
+    /// Belag aller Bestellungen zusammengerechnet (gleicher Name + Einheit)
+    static func aggregatedToppings(of onMenu: [MenuPizza]) -> [(key: String, name: String, amount: Double, unit: String)] {
         var totals: [String: (name: String, amount: Double, unit: String)] = [:]
         var order: [String] = []
         for pizza in onMenu where pizza.orderCount > 0 {
@@ -338,6 +345,11 @@ struct MenuCardView: View {
     }
 }
 
+extension Notification.Name {
+    /// Springt im Tab "Menü" direkt zur Einkaufsliste
+    static let showShoppingList = Notification.Name("showShoppingList")
+}
+
 /// Tab "Menü": Speisekarte und Einkaufsliste
 struct MenuAndShoppingView: View {
     enum Page: Hashable { case plan, orders, shopping }
@@ -359,6 +371,7 @@ struct MenuAndShoppingView: View {
             case .shopping: ShoppingListView()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .showShoppingList)) { _ in page = .shopping }
     }
 }
 

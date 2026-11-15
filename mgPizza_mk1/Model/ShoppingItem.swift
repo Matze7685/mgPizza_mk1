@@ -25,4 +25,11 @@ class ShoppingItem {
             context.insert(ShoppingItem(name: name, amount: amount, source: source))
         }
     }
+
+    /// Zutaten eines Abends eintragen; frühere, noch nicht abgehakte Einträge desselben Abends werden ersetzt (keine Doppelten)
+    static func replace(_ items: [(String, String)], source: String, in context: ModelContext) {
+        let old = (try? context.fetch(FetchDescriptor<ShoppingItem>())) ?? []
+        old.filter { $0.source == source && !$0.isDone }.forEach { context.delete($0) }
+        add(items, source: source, to: context)
+    }
 }

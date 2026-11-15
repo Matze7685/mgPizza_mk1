@@ -438,9 +438,9 @@ struct GuestLinkSheet: View {
                     }
                     if !orders.isEmpty {
                         Button("Import into menu & toppings", systemImage: "square.and.arrow.down") {
-                            MenuPizza.apply(orders: orders, to: pizzas, context: modelContext)
-                            status = String(localized: "Orders imported. The needed toppings are updated below.")
+                            importOrders()
                             dismiss()
+                            NotificationCenter.default.post(name: .showShoppingList, object: nil)
                         }
                     }
                 } header: {
@@ -595,6 +595,17 @@ struct GuestLinkSheet: View {
         } catch { status = error.localizedDescription }
     }
 
+    /// Bestellungen in die Karte übernehmen und alle benötigten Zutaten auf die Einkaufsliste setzen
+    private func importOrders() {
+        MenuPizza.apply(orders: orders, to: pizzas, context: modelContext)
+        try? modelContext.save()
+        let all = (try? modelContext.fetch(FetchDescriptor<MenuPizza>())) ?? []
+        let needed = MenuPizza.aggregatedToppings(of: all.filter(\.isOnMenu))
+        ShoppingItem.replace(needed.map { ($0.name, MenuPizza.formatted($0.amount, unit: $0.unit)) },
+                             source: title, in: modelContext)
+        status = String(localized: "Orders imported, shopping list updated.")
+    }
+
     private func fetch() async {
         isBusy = true; defer { isBusy = false }
         do {
@@ -604,6 +615,16 @@ struct GuestLinkSheet: View {
             GuestEvenings.upsert(evening)
             eveningCount = GuestEvenings.all.count
             status = String(localized: "\(orders.count) orders received.")
+            // Direkt übernehmen und Einkaufsliste füllen; fehlt noch jemand, bleibt das Fenster offen
+            if !orders.isEmpty {
+                importOrders()
+                if guests.allSatisfy({ name in orders.contains { $0.guest == name } }) {
+                    dismiss()
+                    NotificationCenter.default.post(name: .showShoppingList, object: nil)
+                } else {
+                    status = String(localized: "Orders imported, shopping list updated. Some guests are still missing.")
+                }
+            }
         } catch { status = error.localizedDescription }
     }
 }
