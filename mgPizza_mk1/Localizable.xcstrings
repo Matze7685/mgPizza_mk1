@@ -4612,16 +4612,6 @@
         }
       }
     },
-    "Orders" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bestellungen"
-          }
-        }
-      }
-    },
     "Importing replaces the order counts in the menu." : {
       "localizations" : {
         "de" : {
@@ -4728,6 +4718,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld Bestellungen erhalten."
+          }
+        }
+      }
+    },
+    "Copy guest link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästelink kopieren"
+          }
+        }
+      }
+    },
+    "Link copied." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link kopiert."
           }
         }
       }

@@ -152,9 +152,15 @@ struct GuestLinkSheet: View {
                     Button("Publish menu", systemImage: "icloud.and.arrow.up") { Task { await publish() } }
                         .disabled(isBusy)
                     if let link = guestLink {
-                        ShareLink(item: link, message: Text("🍕 \(title)")) {
+                        // Als reiner Text teilen: Mit URL + message schicken manche Apps (WhatsApp, Nachrichten) nur die Nachricht
+                        ShareLink(item: "🍕 \(title)\n\(link.absoluteString)") {
                             Label("Send guest link", systemImage: "link")
                         }
+                        Button("Copy guest link", systemImage: "doc.on.doc") {
+                            UIPasteboard.general.string = link.absoluteString
+                            status = String(localized: "Link copied.")
+                        }
+                        Text(link.absoluteString).font(.caption2).foregroundStyle(.secondary).textSelection(.enabled)
                     }
                     Button("New evening (new link, clears orders)", systemImage: "sparkles", role: .destructive) {
                         eventID = Self.newID()
