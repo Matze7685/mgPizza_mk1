@@ -42,6 +42,17 @@
   button.del{width:auto;padding:4px 10px;font-size:.85em;background:#fff;border:1px solid var(--red);color:var(--red);border-radius:6px;cursor:pointer}
   button.delorder{margin-top:14px;background:transparent;border:1px solid var(--red);color:var(--red)}
   .sum.empty{color:#7a6a55;font-style:italic}
+  .guestbtn .ordered span{font-size:1em;margin-top:6px}
+  .guestbtn .ordered small{display:block;color:#7a6a55;font-size:.95em;margin-top:2px}
+  .guestbtn .ordered em{font-style:normal;font-weight:bold}
+  .guestbtn .ordered .minus{color:var(--red)}
+  .ask{position:fixed;inset:0;background:rgba(43,33,24,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+  .ask div{background:var(--cream);border-top:6px solid var(--red);border-radius:8px;padding:18px;max-width:380px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .ask p{margin:0 0 6px;font-weight:bold;font-size:1.1em}
+  .ask small{display:block;color:#7a6a55;margin-bottom:14px}
+  .ask .btns{display:flex;gap:10px;padding:0;box-shadow:none;border:0;background:none}
+  .ask button{flex:1;cursor:pointer}
+  .ask .yes{background:var(--red);color:#fff;border:0;font-weight:bold}
 </style>
 </head>
 <body>
@@ -95,10 +106,32 @@ function header() {
     + (event.closed ? `<div class="closed">Die Bestellung für diesen Abend ist geschlossen.</div>` : "");
 }
 
-// Schritt 1: Namen wählen (mit bereits bestellten Pizzen)
-function orderText(o) {
-  return o.lines.map(l => `${l.count}× ${l.name}` + (l.extra && l.extra.length ? " + " + l.extra.join(", ") : "")).join(", ");
+// Sicherheitsfrage als eigener Dialog auf der Seite (das native confirm() wird in manchen App-Browsern unterdrückt)
+function ask(question, detail, yesText) {
+  return new Promise(resolve => {
+    const box = document.createElement("div");
+    box.className = "ask";
+    box.innerHTML = `<div role="dialog" aria-modal="true"><p>${esc(question)}</p>${detail ? `<small>${esc(detail)}</small>` : ""}
+      <div class="btns"><button class="no">Abbrechen</button><button class="yes">${esc(yesText)}</button></div></div>`;
+    const done = v => { box.remove(); resolve(v); };
+    box.querySelector(".no").onclick = () => done(false);
+    box.querySelector(".yes").onclick = () => done(true);
+    box.onclick = e => { if (e.target === box) done(false); };
+    document.body.appendChild(box);
+    box.querySelector(".no").focus();
+  });
 }
+
+// Schritt 1: Namen wählen (mit bereits bestellten Pizzen)
+// Pro Pizza: Extras und abgewählte Zutaten („Ohne“) getrennt, bei der eigenen Pizza die gewählten Zutaten
+function lineHTML(l) {
+  const parts = [];
+  if (l.custom && l.custom.length) parts.push(`<em>Mit:</em> ${esc(l.custom.map(t => t.name).join(", "))}`);
+  if (l.extra && l.extra.length) parts.push(`<em>Extra:</em> ${esc(l.extra.join(", "))}`);
+  if (l.without && l.without.length) parts.push(`<em class="minus">Ohne:</em> ${esc(l.without.join(", "))}`);
+  return `${l.count}× ${esc(l.name)}` + (parts.length ? `<small>${parts.join(" · ")}</small>` : "");
+}
+const orderHTML = o => o.lines.map(lineHTML).map(x => `<span>${x}</span>`).join("");
 
 async function fetchOrders() {
   try {
@@ -117,7 +150,7 @@ async function showNames() {
   const draw = orders => {
     app.innerHTML = header() + `<label>${event.closed ? "Bestellungen" : "Wer bist du?"}</label><div class="guests">${event.guests.map((g, i) => {
       const o = orders && orders[slug(g)];
-      const sub = orders === null ? "" : (o ? `<span class="ordered">✔ ${esc(orderText(o))}</span>` : `<span class="open">noch nichts bestellt</span>`);
+      const sub = orders === null ? "" : (o ? `<span class="ordered">✔ bestellt:${orderHTML(o)}</span>` : `<span class="open">noch nichts bestellt</span>`);
       return `<button class="guestbtn" data-g="${i}" ${event.closed ? "disabled" : ""}>${esc(g)}${sub}</button>`;
     }).join("")}</div>`;
     // Geschlossener Abend: Bestellungen nur anzeigen, nicht mehr ändern
@@ -171,7 +204,10 @@ const refreshSummary = () => {
 };
 
 // Eine Pizza aus der Auswahl entfernen (Anzahl 0, abgewählte Zutaten und Zusätze zurücksetzen)
-function removeLine(i) {
+async function removeLine(i) {
+  const name = i === "custom" ? "Eigene Pizza" : event.pizzas[+i].name;
+  const n = i === "custom" ? customCount : counts[+i];
+  if (!await ask(`${n}× ${name} aus der Bestellung von ${guest} entfernen?`, "Die Pizza wird aus der Auswahl genommen, samt abgewählter Zutaten und Extras.", "Entfernen")) return;
   if (i === "custom") { customCount = 0; customToppings = new Set(); customExtra = ""; }
   else { counts[+i] = 0; without[+i] = new Set(); extras[+i] = ""; extraSel[+i] = new Set(); }
   render();
@@ -179,7 +215,7 @@ function removeLine(i) {
 
 // Die gespeicherte Bestellung des Gastes komplett löschen
 async function deleteOrder() {
-  if (!confirm("Deine gesamte Bestellung löschen?")) return;
+  if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, "Ja, Bestellung löschen")) return;
   const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
   if (r.ok) showNames(); else document.getElementById("msg").textContent = "Löschen hat nicht geklappt – bitte nochmal versuchen.";
 }
@@ -205,7 +241,7 @@ function render() {
     </div>
     <textarea id="note" rows="2" placeholder="Anmerkung (optional)">${esc(note)}</textarea>
     <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>
-    ${hadOrder ? "<button class='delorder' id='delorder'>Gesamte Bestellung löschen</button>" : ""}`;
+    ${hadOrder ? `<button class='delorder' id='delorder'>Gesamte Bestellung von ${esc(guest)} löschen</button>` : ""}`;
   document.getElementById("change").onclick = showNames;
   app.querySelectorAll(".count button").forEach(b => b.onclick = () => {
     const d = +b.dataset.d;
