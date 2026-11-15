@@ -258,8 +258,11 @@ und die App „Server-Zentrale“ in der Menüleiste zeigt dir den Überblick.
 - Der Mac mini muss im **gleichen Heimnetz** wie die Geräte stehen (hier `192.168.96.x`) und sie erreichen können.
 - Die Passwort-Hashes aus dem alten Caddyfile gehören **nicht** ins Repo. Die App liest dein Caddyfile direkt
   von deinem Rechner ein, es wird nichts hochgeladen.
-- Ziele, die auf dem Raspberry **selbst** liegen (z. B. `127.0.0.1:80`), werden beim Import übersprungen,
-  weil sie auf dem Mac mini nicht existieren. Die App listet sie auf, dann entscheidest du, wohin sie sollen.
+- Ziele, die auf dem Raspberry **selbst** liegen (z. B. `127.0.0.1:80`), schreibt die App beim Import auf die
+  **IP des Raspberry** um (Feld „IP des Raspberry“ neben dem Import-Knopf, vorbelegt mit `192.168.96.211`).
+  Der Raspberry muss dann weiterlaufen, weil dort z. B. das Backoffice liegt. Der Mac mini leitet nur dorthin weiter.
+- **Port 80 bleibt am Raspberry.** Das Zertifikat holt sich der Mac mini nur über Port 443. Dafür gibt es
+  beim Einrichten den Zusatz `--ohne-port-80` (siehe U1).
 
 ### U1: Mac mini einrichten (Router noch nicht ändern)
 
@@ -267,7 +270,7 @@ Schritt 1 bis 3 wie oben, dann:
 
 ```
 cd ~/mgPizza_mk1
-bash hosting/mac-mini/einrichten.sh --domain guderjahn.homeip.net
+bash hosting/mac-mini/einrichten.sh --domain guderjahn.homeip.net --ohne-port-80
 ```
 
 ### U2: App „Server-Zentrale“ bauen
@@ -296,9 +299,12 @@ Systemeinstellungen → Allgemein → Anmeldeobjekte → **+** → „Server-Zen
 
 ### U4: Router umstellen (der eigentliche Umzug)
 
-In UniFi die Portweiterleitungen ändern: außen **443 → Mac mini, Port 8443** und außen **80 → Mac mini, Port 8081**
-(statt zum Raspberry). Dann alle Adressen auf dem Handy im Mobilfunknetz testen.
+In UniFi **nur eine** Portweiterleitung ändern: außen **443 → Mac mini (192.168.96.23), Port 8443** (statt zum Raspberry).
+Port 80 bleibt unverändert beim Raspberry. Dann alle Adressen auf dem Handy im Mobilfunknetz testen.
 Beim ersten Aufruf jeder Adresse holt sich der Mac das Zertifikat, das dauert kurz.
+
+> ⚠️ Über `bo.guderjahn.homeip.net` erreichst du die Steuerungen deiner Kunden. Teste diese Adresse besonders gründlich
+> und stelle um, wenn gerade niemand auf das Backoffice angewiesen ist. Der Rückweg ist ein einziger Klick in UniFi.
 
 **Zurück, falls etwas nicht klappt:** die Portweiterleitungen in UniFi wieder auf den Raspberry stellen,
 der Raspberry ist unverändert und läuft sofort wie vorher weiter.

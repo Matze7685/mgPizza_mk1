@@ -7,7 +7,9 @@
 # Aufruf:
 #   bash hosting/mac-mini/einrichten.sh                          -> Schnell-Tunnel (kostenlos, Adresse ändert sich nach Neustart)
 #   bash hosting/mac-mini/einrichten.sh pizza pizza.meinedomain.de -> fester Tunnel mit eigener Domain (siehe ANLEITUNG.md, Weg B)
-#   bash hosting/mac-mini/einrichten.sh --domain guderjahn.homeip.net
+#   bash hosting/mac-mini/einrichten.sh --domain guderjahn.homeip.net [--ohne-port-80]
+#        (mit --ohne-port-80 bleibt Port 80 am Router bei einem anderen Gerät, das Zertifikat
+#         wird dann nur über Port 443 geholt)
 #        -> ohne Tunnel: eigene DynDNS-Adresse + Portweiterleitung am Router, Caddy holt das
 #           https-Zertifikat selbst (siehe ANLEITUNG.md, Weg C)
 set -euo pipefail
@@ -24,6 +26,8 @@ HTTP_PORT=8081
 HTTPS_PORT=8443
 
 DOMAIN=""
+NO_PORT_80=""
+[ "${3:-}" = "--ohne-port-80" ] && NO_PORT_80=1
 TUNNEL_NAME=""
 TUNNEL_HOST=""
 if [ "${1:-}" = "--domain" ]; then
@@ -126,14 +130,23 @@ else
   # Weg C: Caddy mit eigener Domain und automatischem https-Zertifikat (Let's Encrypt)
   CADDYFILE="$STATE/Caddyfile"
   mkdir -p "$STATE/sites"
+  ACME_BLOCK=""
+  if [ -n "$NO_PORT_80" ]; then
+    # Zertifikat nur über Port 443 (TLS-ALPN) holen, Port 80 wird nicht gebraucht
+    ACME_BLOCK="	cert_issuer acme {
+		disable_http_challenge
+		alternate_tlsalpn_port $HTTPS_PORT
+	}
+"
+  fi
   cat > "$CADDYFILE" <<CADDY
 {
 	http_port $HTTP_PORT
 	https_port $HTTPS_PORT
 	admin off
-}
+${ACME_BLOCK}}
 
-# Von außen: https://$DOMAIN (Router leitet 80 -> $HTTP_PORT und 443 -> $HTTPS_PORT weiter)
+# Von außen: https://$DOMAIN (Router leitet 443 -> $HTTPS_PORT weiter, ohne --ohne-port-80 auch 80 -> $HTTP_PORT)
 $DOMAIN {
 	root * "$SITE"
 	file_server
@@ -177,8 +190,8 @@ Deine Gästeseite wird erreichbar unter:
 
 Damit das klappt, muss am Router (UDM) die Portweiterleitung eingerichtet sein
 (siehe ANLEITUNG.md, Weg C):
-    außen TCP 80  -> dieser Mac, Port $HTTP_PORT
     außen TCP 443 -> dieser Mac, Port $HTTPS_PORT
+    $( [ -n "$NO_PORT_80" ] && echo "(Port 80 bleibt wie bisher bei einem anderen Gerät.)" || echo "außen TCP 80  -> dieser Mac, Port $HTTP_PORT" )
 
 Beim ersten Aufruf holt sich der Webserver das https-Zertifikat. Das kann eine Minute dauern.
 Fragt macOS, ob „caddy“ eingehende Verbindungen annehmen darf: „Erlauben“ klicken.

@@ -10,6 +10,7 @@ struct ForwardsView: View {
     @State private var showImporter = false
     @State private var info: String?
     @State private var reach: [UUID: Bool] = [:]
+    @AppStorage("raspberryIP") private var raspberryIP = "192.168.96.211"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -38,6 +39,8 @@ struct ForwardsView: View {
                     editing = Forward(host: "", target: "")
                 }
                 Button("Caddyfile importieren …", systemImage: "square.and.arrow.down") { showImporter = true }
+                TextField("IP des Raspberry", text: $raspberryIP).frame(width: 130)
+                    .help("Ziele wie 127.0.0.1:80 im alten Caddyfile liegen auf dem Raspberry. Sie werden auf diese IP umgeschrieben.")
                 Spacer()
                 if store.isApplying { ProgressView().controlSize(.small) }
                 Button("Erreichbarkeit prüfen", systemImage: "arrow.clockwise") { Task { await checkReach() } }
@@ -94,7 +97,7 @@ struct ForwardsView: View {
         guard let text = try? String(contentsOf: url, encoding: .utf8) else {
             info = "Datei konnte nicht gelesen werden."; return
         }
-        let parsed = CaddyImporter.parse(text, replaceLocalhostWith: "")
+        let parsed = CaddyImporter.parse(text, replaceLocalhostWith: raspberryIP.trimmingCharacters(in: .whitespaces))
         guard !parsed.forwards.isEmpty else {
             info = "Keine Weiterleitungen gefunden." + (parsed.skipped.isEmpty ? "" : " Übersprungen: \(parsed.skipped.joined(separator: ", "))")
             return
@@ -103,7 +106,7 @@ struct ForwardsView: View {
         if ok {
             var text = "\(parsed.forwards.count) übernommen."
             if !parsed.skipped.isEmpty {
-                text += " Nicht übernommen (Ziel liegt auf dem Raspberry selbst oder ist ungültig): \(parsed.skipped.joined(separator: ", "))."
+                text += " Nicht übernommen (Ziel ungültig): \(parsed.skipped.joined(separator: ", "))."
             }
             info = text
             await checkReach()
