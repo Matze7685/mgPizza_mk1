@@ -27,6 +27,9 @@
   .guests{margin:16px}
   .guestbtn{display:block;width:100%;margin-top:10px;padding:16px;background:#fff;border:1px solid #e0d2b4;border-left:6px solid var(--green);border-radius:6px;
      font-size:1.2em;font-weight:bold;color:var(--red);text-align:left;box-shadow:2px 3px 0 #e8dcc2;cursor:pointer}
+  .guestbtn span{display:block;font-size:.8em;font-weight:normal;margin-top:4px}
+  .guestbtn .ordered{color:var(--green)}
+  .guestbtn .open{color:#7a6a55;font-style:italic}
   .hello{margin:16px 16px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}
   .hello a{color:var(--green);text-decoration:underline;cursor:pointer;font-size:.95em}
   .sum{margin:12px 16px 0;padding:12px 14px;background:#fff;border:1px dashed var(--green);border-radius:6px}
@@ -71,11 +74,35 @@ function header() {
   return `<h1>🍕 Pizza</h1><div class="date">${esc(date)}</div>`;
 }
 
-// Schritt 1: Namen wählen
-function showNames() {
+// Schritt 1: Namen wählen (mit bereits bestellten Pizzen)
+function orderText(o) {
+  return o.lines.map(l => `${l.count}× ${l.name}` + (l.extra && l.extra.length ? " + " + l.extra.join(", ") : "")).join(", ");
+}
+
+async function fetchOrders() {
+  try {
+    const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders?key=${API_KEY}&pageSize=300`);
+    if (!r.ok) return {};
+    const out = {};
+    ((await r.json()).documents || []).forEach(d => {
+      try { const o = JSON.parse(d.fields.data.stringValue); out[slug(o.guest)] = o; } catch (e) {}
+    });
+    return out;
+  } catch (e) { return {}; }
+}
+
+async function showNames() {
   if (!event.guests.length) { app.innerHTML = header() + "<p style='margin:16px'>Der Gastgeber hat noch keine Gäste eingetragen.</p>"; return; }
-  app.innerHTML = header() + `<label>Wer bist du?</label><div class="guests">${event.guests.map((g, i) => `<button class="guestbtn" data-g="${i}">${esc(g)}</button>`).join("")}</div>`;
-  app.querySelectorAll(".guestbtn").forEach(b => b.onclick = () => pick(event.guests[+b.dataset.g]));
+  const draw = orders => {
+    app.innerHTML = header() + `<label>Wer bist du?</label><div class="guests">${event.guests.map((g, i) => {
+      const o = orders && orders[slug(g)];
+      const sub = orders === null ? "" : (o ? `<span class="ordered">✔ ${esc(orderText(o))}</span>` : `<span class="open">noch nichts bestellt</span>`);
+      return `<button class="guestbtn" data-g="${i}">${esc(g)}${sub}</button>`;
+    }).join("")}</div>`;
+    app.querySelectorAll(".guestbtn").forEach(b => b.onclick = () => pick(event.guests[+b.dataset.g]));
+  };
+  draw(null);                 // sofort anzeigen, Bestellungen danach nachladen
+  draw(await fetchOrders());
 }
 
 // Schritt 2: Pizzen wählen (eine frühere Bestellung wird geladen und angezeigt)
@@ -175,6 +202,7 @@ async function send() {
     body: JSON.stringify({fields: {data: {stringValue: JSON.stringify(order)}}})
   });
   msg.textContent = r.ok ? "Danke! Bestellung gespeichert ✔ (du kannst sie jederzeit erneut abschicken)" : "Fehler beim Senden – bitte nochmal versuchen.";
+  if (r.ok) setTimeout(showNames, 1500);
 }
 load().catch(() => app.textContent = "Fehler beim Laden.");
 </script>
