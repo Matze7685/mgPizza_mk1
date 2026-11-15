@@ -32,6 +32,7 @@ struct GuestOrder: Codable, Identifiable {
         var name: String          // Pizza
         var count: Int
         var without: [String]     // abgewählte Zutaten
+        var custom: [GuestEvent.Topping]?   // nur bei „Eigene Pizza“: gewählte Zutaten
     }
     var guest: String
     var lines: [Line]
@@ -96,23 +97,41 @@ struct GuestOrderService {
 }
 
 extension MenuPizza {
-    /// Bestellungen der Gäste in die Speisekarte übernehmen (Anzahl + abgewählte Zutaten)
-    static func apply(orders: [GuestOrder], to pizzas: [MenuPizza]) {
+    /// Bestellungen der Gäste übernehmen: Anzahl + abgewählte Zutaten; eigene Pizzen werden als eigene Einträge angelegt
+    static func apply(orders: [GuestOrder], to pizzas: [MenuPizza], context: ModelContext) {
         for pizza in pizzas {
             var count = 0
             var removed: [String: Int] = [:]
-            for line in orders.flatMap(\.lines) where line.name == pizza.name {
+            for line in orders.flatMap(\.lines) where line.custom == nil && line.name == pizza.name {
                 count += line.count
                 for name in line.without { removed[name, default: 0] += line.count }
             }
             pizza.orderCount = count
             pizza.removedToppings = removed
         }
+        // Frühere eigene Pizzen ersetzen
+        if let old = try? context.fetch(FetchDescriptor<MenuPizza>(predicate: #Predicate { $0.isGuestCustom == true })) {
+            old.forEach { context.delete($0) }
+        }
+        var index = 1000
+        for order in orders {
+            for line in order.lines {
+                guard let custom = line.custom, line.count > 0 else { continue }
+                let pizza = MenuPizza(name: String(localized: "Custom pizza – \(order.guest)"),
+                                      toppings: custom.map { Topping(name: $0.name, amount: $0.amount, unit: $0.unit) },
+                                      sortIndex: index)
+                pizza.isGuestCustom = true
+                pizza.orderCount = line.count
+                context.insert(pizza)
+                index += 1
+            }
+        }
     }
 }
 
 struct GuestLinkSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     var title: String
     var date: Date
     var pizzas: [MenuPizza]          // nur die auf der Karte
@@ -175,7 +194,7 @@ struct GuestLinkSheet: View {
                     ForEach(orders) { order in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(order.guest).font(.headline)
-                            Text(order.lines.map { "\($0.count)× \($0.name)" + ($0.without.isEmpty ? "" : " (\(String(localized: "without")) \($0.without.joined(separator: ", ")))") }
+                            Text(order.lines.map { "\($0.count)× \($0.name)" + ($0.custom.map { " (\($0.map(\.name).joined(separator: ", ")))" } ?? "") + ($0.without.isEmpty ? "" : " (\(String(localized: "without")) \($0.without.joined(separator: ", ")))") }
                                 .joined(separator: ", "))
                                 .font(.caption).foregroundStyle(.secondary)
                         }
@@ -186,7 +205,7 @@ struct GuestLinkSheet: View {
                     }
                     if !orders.isEmpty {
                         Button("Import into menu & toppings", systemImage: "square.and.arrow.down") {
-                            MenuPizza.apply(orders: orders, to: pizzas)
+                            MenuPizza.apply(orders: orders, to: pizzas, context: modelContext)
                             status = String(localized: "Orders imported. The needed toppings are updated below.")
                             dismiss()
                         }

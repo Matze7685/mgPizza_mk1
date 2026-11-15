@@ -26,6 +26,8 @@ class MenuPizza {
     var removedToppings: [String: Int] = [:]
     var sortIndex: Int = 0
     var isDetroit: Bool = false
+    /// Von einem Gast zusammengestellte eigene Pizza (wird beim Import angelegt, gehört nicht zur Speisekarte)
+    var isGuestCustom: Bool = false
 
     init(name: String, info: String = "", toppings: [Topping] = [], sortIndex: Int = 0, isDetroit: Bool = false) {
         self.name = name
