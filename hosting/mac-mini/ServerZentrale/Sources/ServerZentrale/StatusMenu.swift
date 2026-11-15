@@ -3,6 +3,8 @@ import AppKit
 
 struct StatusMenu: View {
     let model: ServerModel
+    let forwardCount: Int
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -34,6 +36,10 @@ struct StatusMenu: View {
 
             Divider()
 
+            Button("Weiterleitungen (\(forwardCount)) …", systemImage: "arrow.triangle.branch") {
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "forwards")
+            }
             Button("Pizzaseite aktualisieren", systemImage: "arrow.down.circle") {
                 Task { await model.updatePizzaPage() }
             }

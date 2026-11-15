@@ -248,6 +248,65 @@ Der restliche Mac ist nicht freigegeben.
 
 ---
 
+## Weg C+: Alles vom Raspberry auf den Mac mini umziehen (mit App „Server-Zentrale“)
+
+Gilt, wenn Port 443 bisher an einen Raspberry mit Caddy geht, der weitere Geräte
+(Home Assistant, Proxmox …) erreichbar macht. Danach läuft **alles** über den Mac mini,
+und die App „Server-Zentrale“ in der Menüleiste zeigt dir den Überblick.
+
+**Wichtig vorab:**
+- Der Mac mini muss im **gleichen Heimnetz** wie die Geräte stehen (hier `192.168.96.x`) und sie erreichen können.
+- Die Passwort-Hashes aus dem alten Caddyfile gehören **nicht** ins Repo. Die App liest dein Caddyfile direkt
+  von deinem Rechner ein, es wird nichts hochgeladen.
+- Ziele, die auf dem Raspberry **selbst** liegen (z. B. `127.0.0.1:80`), werden beim Import übersprungen,
+  weil sie auf dem Mac mini nicht existieren. Die App listet sie auf, dann entscheidest du, wohin sie sollen.
+
+### U1: Mac mini einrichten (Router noch nicht ändern)
+
+Schritt 1 bis 3 wie oben, dann:
+
+```
+cd ~/mgPizza_mk1
+bash hosting/mac-mini/einrichten.sh --domain guderjahn.homeip.net
+```
+
+### U2: App „Server-Zentrale“ bauen
+
+Braucht die Xcode-Befehlszeilenwerkzeuge (`xcode-select --install`, falls noch nicht da):
+
+```
+cd ~/mgPizza_mk1
+bash hosting/mac-mini/app-bauen.sh
+```
+
+Oben rechts in der Menüleiste erscheint ein Server-Symbol. Damit sie nach jedem Neustart startet:
+Systemeinstellungen → Allgemein → Anmeldeobjekte → **+** → „Server-Zentrale“.
+
+### U3: Weiterleitungen übernehmen
+
+1. Das Caddyfile vom Raspberry auf den Mac mini kopieren, z. B. im Terminal des Macs
+   (Benutzername und Adresse des Raspberry einsetzen):
+   ```
+   scp -O BENUTZER@RASPBERRY-ADRESSE:/etc/caddy/Caddyfile ~/Downloads/Caddyfile-raspberry
+   ```
+2. Menüleisten-Symbol → **Weiterleitungen …** → **Caddyfile importieren …** → die Datei wählen.
+3. Die App prüft jede Änderung mit Caddy, bevor sie sie übernimmt. Bei einem Fehler bleibt alles wie zuvor.
+   Die Punkte vorne zeigen, ob das Gerät im Heimnetz antwortet (grün) oder nicht (rot).
+4. Weitere Weiterleitungen später mit **Hinzufügen** anlegen, ändern oder löschen. Ein Passwortschutz geht dort per Häkchen.
+
+### U4: Router umstellen (der eigentliche Umzug)
+
+In UniFi die Portweiterleitungen ändern: außen **443 → Mac mini, Port 8443** und außen **80 → Mac mini, Port 8081**
+(statt zum Raspberry). Dann alle Adressen auf dem Handy im Mobilfunknetz testen.
+Beim ersten Aufruf jeder Adresse holt sich der Mac das Zertifikat, das dauert kurz.
+
+**Zurück, falls etwas nicht klappt:** die Portweiterleitungen in UniFi wieder auf den Raspberry stellen,
+der Raspberry ist unverändert und läuft sofort wie vorher weiter.
+
+Zum Schluss, wenn alles läuft, kann Caddy auf dem Raspberry ausgeschaltet werden.
+
+---
+
 ## Muss in Firebase eine Domain eingetragen werden?
 
 **Nein.** Ich habe die Seite geprüft: Sie spricht Firebase (Firestore) direkt über die normale Web-Schnittstelle
