@@ -17,6 +17,7 @@ struct MenuView: View {
     @State private var editingPizza: MenuPizza?
     @State private var addedToShopping = false
     @State private var pdfURL: URL?
+    @State private var isShowingGuestLink = false
 
     private var onMenu: [MenuPizza] { pizzas.filter(\.isOnMenu) }
     private var totalOrders: Int { onMenu.reduce(0) { $0 + $1.orderCount } }
@@ -41,6 +42,9 @@ struct MenuView: View {
                     ShareLink(item: pdfURL) {
                         Label("Send menu as PDF", systemImage: "doc.richtext")
                     }
+                }
+                Button("Guest link: guests order online", systemImage: "person.2.badge.plus") {
+                    isShowingGuestLink = true
                 }
             } footer: {
                 Text("Your guests reply with the number and count, e.g. “1×2, 3×1”. Enter the orders in the “Orders” tab.")
@@ -93,7 +97,7 @@ struct MenuView: View {
                               systemImage: addedToShopping ? "checkmark" : "cart.badge.plus")
                     }
                     Button("Reset orders", systemImage: "arrow.counterclockwise", role: .destructive) {
-                        pizzas.forEach { $0.orderCount = 0 }
+                        pizzas.forEach { $0.orderCount = 0; $0.removedToppings = [:] }
                         addedToShopping = false
                     }
                 } header: {
@@ -102,6 +106,9 @@ struct MenuView: View {
                     Text("Dough: \(roundCount) dough balls, \(detroitCount) Detroit pans – create the dough recipe with the + button.")
                 }
             }
+        }
+        .sheet(isPresented: $isShowingGuestLink) {
+            GuestLinkSheet(title: title, date: date, pizzas: onMenu)
         }
         .sheet(item: $editingPizza) { pizza in
             MenuPizzaEditor(pizza: pizza)
@@ -140,7 +147,8 @@ struct MenuView: View {
             for topping in pizza.toppings {
                 let key = "\(topping.name.lowercased())|\(topping.unit)"
                 if totals[key] == nil { order.append(key) }
-                totals[key, default: (topping.name, 0, topping.unit)].amount += topping.amount * Double(pizza.orderCount)
+                let count = max(0, pizza.orderCount - (pizza.removedToppings[topping.name] ?? 0))
+                if count > 0 { totals[key, default: (topping.name, 0, topping.unit)].amount += topping.amount * Double(count) }
             }
         }
         return order.compactMap { key -> (key: String, name: String, amount: Double, unit: String)? in
