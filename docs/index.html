@@ -55,7 +55,13 @@ const app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const slug = n => n.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "gast";
 const splitExtra = v => v.split(",").map(x => x.trim()).filter(Boolean);
-let event, guest = "", extras = [], customExtra = "", counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [], note = "", hadOrder = false;
+// Angehakte Zusatzzutaten + frei eingetippte, ohne Doppelte
+const mergeExtra = i => {
+  const out = [...extraSel[i]];
+  splitExtra(extras[i]).forEach(x => { if (!out.some(o => o.toLowerCase() === x.toLowerCase())) out.push(x); });
+  return out;
+};
+let event, guest = "", extras = [], extraSel = [], customExtra = "", counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [], note = "", hadOrder = false;
 
 async function load() {
   if (!eventId) { app.textContent = "Link unvollständig."; return; }
@@ -69,6 +75,12 @@ async function load() {
     const k = t.name.toLowerCase() + "|" + t.unit;
     if (!seen.has(k)) { seen.add(k); pool.push(t); }
   }));
+  // Zusatzzutaten, die zu einer Pizza dazugewählt werden können (alles aus der Karte, was nicht schon drauf ist)
+  event.pizzas.forEach(p => {
+    const own = new Set(p.toppings.map(t => t.name.toLowerCase()));
+    const names = new Set();
+    p.extraOptions = pool.filter(t => !own.has(t.name.toLowerCase()) && !names.has(t.name.toLowerCase()) && names.add(t.name.toLowerCase())).map(t => t.name);
+  });
   showNames();
 }
 
@@ -114,6 +126,7 @@ async function pick(name) {
   counts = event.pizzas.map(() => 0);
   without = event.pizzas.map(() => new Set());
   extras = event.pizzas.map(() => "");
+  extraSel = event.pizzas.map(() => new Set());
   customCount = 0; customToppings = new Set(); customExtra = ""; note = ""; hadOrder = false;
   app.innerHTML = header() + "<p style='margin:16px'>Lade deine Bestellung …</p>";
   try {
@@ -127,7 +140,11 @@ async function pick(name) {
           (l.custom || []).forEach(t => { const k = pool.findIndex(x => x.name === t.name && x.unit === t.unit); if (k >= 0) customToppings.add(k); });
         } else {
           const i = event.pizzas.findIndex(p => p.name === l.name);
-          if (i >= 0) { counts[i] = l.count; without[i] = new Set(l.without || []); extras[i] = (l.extra || []).join(", "); }
+          if (i >= 0) { counts[i] = l.count; without[i] = new Set(l.without || []); 
+            // Zusätze aus der Auswahlliste als Häkchen, alles andere ins freie Feld
+            const free = [];
+            (l.extra || []).forEach(x => { const o = event.pizzas[i].extraOptions.find(n => n.toLowerCase() === x.toLowerCase()); o ? extraSel[i].add(o) : free.push(x); });
+            extras[i] = free.join(", "); }
         }
       });
     }
@@ -149,7 +166,7 @@ const refreshSummary = () => {
 // Eine Pizza aus der Auswahl entfernen (Anzahl 0, abgewählte Zutaten und Zusätze zurücksetzen)
 function removeLine(i) {
   if (i === "custom") { customCount = 0; customToppings = new Set(); customExtra = ""; }
-  else { counts[+i] = 0; without[+i] = new Set(); extras[+i] = ""; }
+  else { counts[+i] = 0; without[+i] = new Set(); extras[+i] = ""; extraSel[+i] = new Set(); }
   render();
 }
 
@@ -170,7 +187,8 @@ function render() {
         <div class="count"><button data-d="-1" data-i="${i}">−</button><b id="c${i}">${counts[i]}</b><button data-d="1" data-i="${i}">+</button></div></div>
       <div class="info" style="margin-top:6px">${esc(p.toppings.map(t => t.name).join(", "))}</div>
       <div class="toppings" id="t${i}" ${counts[i] ? "" : "hidden"}>Abwählen, was du nicht möchtest:${p.toppings.map(t => `<label><input type="checkbox" style="width:auto" ${without[i].has(t.name) ? "" : "checked"} data-i="${i}" data-t="${esc(t.name)}"> ${esc(t.name)}</label>`).join("")}
-        <input placeholder="Zusatzzutat (optional, mehrere mit Komma)" data-x="${i}" value="${esc(extras[i])}" style="margin-top:8px"></div>
+        ${p.extraOptions.length ? `<div style="margin-top:8px">Extra dazu:</div>${p.extraOptions.map(n => `<label><input type="checkbox" style="width:auto" ${extraSel[i].has(n) ? "checked" : ""} data-ei="${i}" data-e="${esc(n)}"> ${esc(n)}</label>`).join("")}` : ""}
+        <input placeholder="Andere Zusatzzutat (optional, mehrere mit Komma)" data-x="${i}" value="${esc(extras[i])}" style="margin-top:8px"></div>
     </div>`).join("")}
     <div class="pizza">
       <div class="row"><div><div class="name">Eigene Pizza</div><div class="info">Zutaten selbst auswählen</div></div>
@@ -198,6 +216,9 @@ function render() {
   app.querySelectorAll("[data-t]").forEach(c => c.onchange = () => {
     const set = without[+c.dataset.i]; c.checked ? set.delete(c.dataset.t) : set.add(c.dataset.t);
   });
+  app.querySelectorAll("[data-e]").forEach(c => c.onchange = () => {
+    const set = extraSel[+c.dataset.ei]; c.checked ? set.add(c.dataset.e) : set.delete(c.dataset.e);
+  });
   app.querySelectorAll("[data-k]").forEach(c => c.onchange = () => {
     c.checked ? customToppings.add(+c.dataset.k) : customToppings.delete(+c.dataset.k);
   });
@@ -212,7 +233,7 @@ function render() {
 
 async function send() {
   const msg = document.getElementById("msg");
-  const lines = event.pizzas.map((p, i) => ({name: p.name, count: counts[i], without: [...without[i]], extra: splitExtra(extras[i])})).filter(l => l.count > 0);
+  const lines = event.pizzas.map((p, i) => ({name: p.name, count: counts[i], without: [...without[i]], extra: mergeExtra(i)})).filter(l => l.count > 0);
   if (customCount > 0) {
     const chosen = [...customToppings].sort((a, b) => a - b).map(k => pool[k]);
     const cx = splitExtra(customExtra);
