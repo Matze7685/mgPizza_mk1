@@ -165,12 +165,13 @@ struct MenuView: View {
                 if count > 0 { totals[key, default: (topping.name, 0, topping.unit)].amount += topping.amount * Double(count) }
             }
         }
-        // Zusatzzutaten der Gäste (Menge unbekannt: je 1 Stück pro Wunsch, in der Einkaufsliste anpassbar)
+        // Zusatzzutaten der Gäste mit Standardmenge pro Pizza (Einstellung „Extra amounts per pizza“)
         for pizza in onMenu where pizza.orderCount > 0 {
             for (name, count) in pizza.guestExtras.sorted(by: { $0.key < $1.key }) where count > 0 {
-                let key = "\(name.lowercased())|pcs"
+                let standard = ExtraDefaults.amount(for: name)
+                let key = "\(name.lowercased())|\(standard.unit)"
                 if totals[key] == nil { order.append(key) }
-                totals[key, default: (name, 0, "pcs")].amount += Double(count)
+                totals[key, default: (name, 0, standard.unit)].amount += standard.amount * Double(count)
             }
         }
         return order.compactMap { key -> (key: String, name: String, amount: Double, unit: String)? in
