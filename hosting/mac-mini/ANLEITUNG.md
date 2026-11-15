@@ -2,7 +2,8 @@
 
 Diese Anleitung macht deinen Mac mini zum Server für die Gäste-Speisekarte (`docs/index.html`).
 Gäste erreichen die Seite danach **von überall** über eine sichere **https-Adresse**.
-Am Router musst du nichts einstellen, und es kostet nichts.
+Bei Weg A und B musst du am Router nichts einstellen. Hast du schon eine eigene DynDNS-Adresse
+am Router (z. B. `guderjahn.homeip.net` auf der UniFi UDM), nimm **Weg C** weiter unten.
 
 **So funktioniert es, kurz erklärt:**
 
@@ -19,14 +20,19 @@ Am Router musst du nichts einstellen, und es kostet nichts.
 
 ## Welchen Weg nehmen?
 
-| | **Weg A: Schnell-Tunnel** (empfohlen zum Start) | **Weg B: Eigene Domain** |
-|---|---|---|
-| Kosten | kostenlos | Tunnel kostenlos, aber eigene Domain nötig (ca. 5–15 € pro Jahr) |
-| Konto | kein Cloudflare-Konto nötig | kostenloses Cloudflare-Konto |
-| Adresse | z. B. `https://lustige-worte-1234.trycloudflare.com` | z. B. `https://pizza.meinedomain.de` |
-| Nach Neustart des Macs | **neue Adresse**, muss in der App neu eingetragen werden | bleibt immer gleich |
+| | **Weg A: Schnell-Tunnel** | **Weg B: Tunnel + eigene Domain** | **Weg C: DynDNS-Adresse + Portweiterleitung** |
+|---|---|---|---|
+| Kosten | kostenlos | Tunnel kostenlos, eigene Domain ca. 5–15 € pro Jahr | kostenlos (DynDNS hast du schon) |
+| Konto | keins nötig | kostenloses Cloudflare-Konto | keins nötig |
+| Router | nichts einstellen | nichts einstellen | 2 Portweiterleitungen an der UDM |
+| Adresse | z. B. `https://lustige-worte-1234.trycloudflare.com` | z. B. `https://pizza.meinedomain.de` | `https://guderjahn.homeip.net` |
+| Nach Neustart des Macs | **neue Adresse**, muss in der App neu eingetragen werden | bleibt gleich | bleibt gleich |
 
-Für einen Pizzaabend reicht **Weg A** völlig. Wichtig ist nur: Wenn der Mac mini neu gestartet wurde,
+**Mit `guderjahn.homeip.net` ist Weg C der richtige.** Weg B geht mit dieser Adresse nicht, weil dafür
+die ganze Domain bei Cloudflare liegen müsste, und `homeip.net` gehört dem DynDNS-Anbieter.
+Schritt 1 bis 3 sind für alle Wege gleich, danach geht es bei Weg C mit dem Abschnitt „Weg C“ weiter.
+
+Ohne eigene Adresse reicht für einen Pizzaabend **Weg A** völlig. Wichtig ist nur: Wenn der Mac mini neu gestartet wurde,
 schaust du vor dem Verschicken des Links kurz nach der aktuellen Adresse (Schritt 7).
 Cloudflare nennt den Schnell-Tunnel selbst „zum Testen“: Es gibt keine Garantie, dass er immer läuft,
 und höchstens 200 gleichzeitige Anfragen. Für ein paar Gäste ist das kein Problem.
@@ -179,6 +185,69 @@ Zurück zu Weg A: einfach `bash hosting/mac-mini/einrichten.sh` ohne Zusätze au
 
 ---
 
+## Weg C: Eigene DynDNS-Adresse (z. B. guderjahn.homeip.net) mit UniFi UDM
+
+Hier läuft **kein Tunnel**. Stattdessen leitet deine UDM Anfragen aus dem Internet direkt an den Mac mini weiter.
+Der Webserver Caddy holt sich das https-Zertifikat dafür automatisch und kostenlos von „Let's Encrypt“
+und erneuert es selbst. Die Adresse bleibt immer gleich.
+
+**Voraussetzungen:**
+
+- Die DynDNS-Adresse zeigt auf deinen Anschluss (das macht die UDM, das hast du schon).
+- Dein Anschluss hat eine **eigene öffentliche IPv4-Adresse**. Bei manchen Glasfaser- und Kabelanschlüssen
+  teilst du dir eine IPv4 mit anderen („CGNAT“), dann funktioniert keine Portweiterleitung.
+  Prüfen: In UniFi steht bei der Internetverbindung (WAN) eine IP. Beginnt sie mit `100.64.` bis `100.127.`
+  oder `10.`, ist es CGNAT, dann bitte Weg A nehmen.
+- Die Ports **80 und 443** werden an der UDM noch nicht an ein anderes Gerät weitergeleitet.
+
+### C1: Dem Mac mini eine feste IP geben (UniFi)
+
+1. UniFi Network öffnen (App oder https://unifi.ui.com) → **Client Devices** (Geräte-Liste).
+2. Den Mac mini anklicken → **Settings** (Zahnrad) → **Fixed IP Address** einschalten.
+3. Die angezeigte IP notieren, z. B. `192.168.1.50`. Speichern.
+
+### C2: Portweiterleitungen an der UDM einrichten
+
+In UniFi Network: **Settings → Routing → Port Forwarding** (bei älteren Versionen
+**Settings → Firewall & Security → Port Forwarding**) → **Create Entry**. Zwei Einträge anlegen:
+
+| Name | WAN Port | Forward IP | Forward Port | Protocol |
+|---|---|---|---|---|
+| Pizza http | `80` | IP des Mac mini (aus C1) | `8081` | TCP |
+| Pizza https | `443` | IP des Mac mini (aus C1) | `8443` | TCP |
+
+„From“ bzw. „Source“ auf **Any** lassen. Speichern.
+
+*(Port 80 braucht Let's Encrypt, um zu prüfen, dass die Adresse wirklich dir gehört. Wer `http://` aufruft,
+wird automatisch auf `https://` umgeleitet.)*
+
+### C3: Auf dem Mac mini einrichten
+
+Schritt 1 bis 3 von oben erledigen, dann im Terminal:
+
+```
+cd ~/mgPizza_mk1
+bash hosting/mac-mini/einrichten.sh --domain guderjahn.homeip.net
+```
+
+Fragt macOS, ob „caddy“ eingehende Netzwerkverbindungen annehmen darf: **Erlauben** klicken.
+
+### C4: Testen und in der App eintragen
+
+1. Auf dem **Handy im Mobilfunknetz** (WLAN aus) `https://guderjahn.homeip.net/` öffnen.
+   Beim allerersten Aufruf holt der Mac das Zertifikat, das kann bis zu einer Minute dauern.
+   Es sollte „Link unvollständig.“ erscheinen, das ist richtig so.
+2. In der App unter **Menü → Guest link → Guest page address** `https://guderjahn.homeip.net/` eintragen.
+3. Zustand prüfen geht wie immer mit `bash hosting/mac-mini/status.sh`.
+
+Aktualisieren (`aktualisieren.sh`) und Ausschalten (`entfernen.sh`) funktionieren genauso wie oben.
+Beim Ausschalten bitte auch die zwei Portweiterleitungen in UniFi löschen oder deaktivieren.
+
+**Sicherheit:** Von außen erreichbar ist nur der Webserver, und der liefert nur den Ordner `docs/` aus.
+Der restliche Mac ist nicht freigegeben.
+
+---
+
 ## Muss in Firebase eine Domain eingetragen werden?
 
 **Nein.** Ich habe die Seite geprüft: Sie spricht Firebase (Firestore) direkt über die normale Web-Schnittstelle
@@ -188,7 +257,7 @@ Die Firestore-Regeln (siehe `docs/README.md`) prüfen keine Domain.
 
 Nur **eine Ausnahme**: Falls du den API-Key in der Google Cloud Console irgendwann selbst
 auf bestimmte Websites beschränkt hast („Anwendungseinschränkungen → Websites“), musst du dort die neue
-Adresse ergänzen, bei Weg A als `https://*.trycloudflare.com/*`, bei Weg B als `https://pizza.meinedomain.de/*`.
+Adresse ergänzen, bei Weg A als `https://*.trycloudflare.com/*`, bei Weg B als `https://pizza.meinedomain.de/*`, bei Weg C als `https://guderjahn.homeip.net/*`.
 Wenn du das nie eingestellt hast, ist nichts zu tun.
 
 Die bisherige Adresse über GitHub Pages funktioniert übrigens weiter, falls sie eingeschaltet ist.
@@ -207,12 +276,14 @@ Welche Seite die Gäste bekommen, bestimmt nur die Adresse, die du in der App ei
 | `status.sh` zeigt ❌ | Einfach `einrichten.sh` nochmal ausführen. Hilft das nicht, das angezeigte Protokoll ansehen, z. B. `tail -n 30 ~/Library/Logs/mgpizza/tunnel.log` |
 | Weg A: Tunnel startet nicht, Fehler mit „config“ | Liegt eine Datei `~/.cloudflared/config.yml` (oder `.yaml`) herum, stört sie den Schnell-Tunnel. Umbenennen, dann `einrichten.sh` erneut ausführen. |
 | Weg B: Fehler beim DNS-Eintrag („record already exists“) | Im Cloudflare-Dashboard unter **DNS** den alten Eintrag für `pizza` löschen und `einrichten.sh pizza pizza.meinedomain.de` erneut ausführen. |
+| Weg C: Seite von außen nicht erreichbar | Portweiterleitungen (C2) und feste IP (C1) prüfen. Ist die macOS-Firewall an: Systemeinstellungen → Netzwerk → Firewall → Optionen → „caddy“ auf „Eingehende Verbindungen erlauben“. Protokoll: `tail -n 30 ~/Library/Logs/mgpizza/webserver.log` |
+| Weg C: Browser meldet Zertifikatsfehler | Im Protokoll nach „certificate“ oder „acme“ suchen. Meist kommt Let's Encrypt über Port 80 nicht durch (C2 prüfen) oder es ist ein CGNAT-Anschluss. |
 | Bestellungen kommen nicht an, Seite lädt aber | Liegt nicht am Mac mini. In `docs/index.html` `PROJECT` und `API_KEY` prüfen und ob in der App *Publish menu* gemacht wurde. |
 
 ## Was die Skripte auf dem Mac anlegen
 
 - `~/Library/LaunchAgents/de.mgpizza.webserver.plist` und `de.mgpizza.tunnel.plist`: der automatische Start
 - `~/Library/Logs/mgpizza/`: Protokolle von Webserver und Tunnel
-- `~/.mgpizza/`: Einstellungen für Weg B
+- `~/.mgpizza/`: Einstellungen für Weg B und C (bei Weg C die Datei `Caddyfile`)
 - Der Webserver ist nur auf dem Mac selbst erreichbar (`127.0.0.1:8080`), nicht im Heimnetz.
   Von außen geht alles nur über den Tunnel.

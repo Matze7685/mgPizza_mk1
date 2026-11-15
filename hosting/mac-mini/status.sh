@@ -14,7 +14,11 @@ check() { # $1=label $2=Name
 
 echo
 check de.mgpizza.webserver "Webserver" "$LOGS/webserver.log"
-check de.mgpizza.tunnel    "Tunnel   " "$LOGS/tunnel.log"
+if [ -f "$STATE/eigene-domain" ]; then
+  echo "  ➖ Tunnel nicht nötig (eigene Domain)"
+else
+  check de.mgpizza.tunnel  "Tunnel   " "$LOGS/tunnel.log"
+fi
 
 if curl -fsS -o /dev/null http://127.0.0.1:8080/; then
   echo "  ✅ Seite antwortet lokal (http://127.0.0.1:8080/)"
@@ -22,7 +26,14 @@ else
   echo "  ❌ Seite antwortet lokal nicht"
 fi
 
-if [ -f "$STATE/fester-tunnel" ]; then
+if [ -f "$STATE/eigene-domain" ]; then
+  URL="https://$(cat "$STATE/eigene-domain")"
+  if curl -fsS -m 10 -o /dev/null "$URL/"; then
+    echo "  ✅ $URL antwortet mit gültigem Zertifikat"
+  else
+    echo "  ⚠️  $URL antwortet nicht. Portweiterleitung am Router prüfen, Protokoll: $LOGS/webserver.log"
+  fi
+elif [ -f "$STATE/fester-tunnel" ]; then
   URL="https://$(cat "$STATE/fester-tunnel")"
 else
   URL="$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOGS/tunnel.log" 2>/dev/null | tail -1)"
