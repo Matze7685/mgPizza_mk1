@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E1B2C3D4000000060000EE02 /* GuestMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B2C3D4000000060000EE01 /* GuestMenuView.swift */; };
+		E1B2C3D4000000050000EE02 /* GuestOrders.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B2C3D4000000050000EE01 /* GuestOrders.swift */; };
 		C7B149563066CFD20021AA7E /* RecipeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B149553066CFD20021AA7E /* RecipeDetailView.swift */; };
 		C7DC0DB73019FA16003738AA /* CalculateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DAE3019FA16003738AA /* CalculateView.swift */; };
 		C7DC0DBA3019FA16003738AA /* mgPizza_mk1App.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DB53019FA16003738AA /* mgPizza_mk1App.swift */; };
@@ -52,6 +54,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E1B2C3D4000000060000EE01 /* GuestMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestMenuView.swift; sourceTree = "<group>"; };
+		E1B2C3D4000000050000EE01 /* GuestOrders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestOrders.swift; sourceTree = "<group>"; };
 		C7B149553066CFD20021AA7E /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
 		C7DC0D8A3018C5A1003738AA /* mgPizza_mk1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = mgPizza_mk1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7DC0DAD3019FA16003738AA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -167,6 +171,8 @@
 			isa = PBXGroup;
 			children = (
 				D1B2C3D4000000020000DD01 /* MenuView.swift */,
+				E1B2C3D4000000060000EE01 /* GuestMenuView.swift */,
+				E1B2C3D4000000050000EE01 /* GuestOrders.swift */,
 				C1B2C3D400000001000CC000 /* Shared */,
 				B1B2C3D400000001000BB000 /* Bluetooth */,
 				A1B2C3D4000000060000AA01 /* ShoppingListView.swift */,
@@ -309,6 +315,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				D1B2C3D4000000020000DD02 /* MenuView.swift in Sources */,
+				E1B2C3D4000000060000EE02 /* GuestMenuView.swift in Sources */,
+				E1B2C3D4000000050000EE02 /* GuestOrders.swift in Sources */,
 				D1B2C3D4000000010000DD02 /* MenuPizza.swift in Sources */,
 				C1B2C3D4000000060000CC02 /* AppRouter.swift in Sources */,
 				C1B2C3D4000000050000CC02 /* SeedImporter.swift in Sources */,

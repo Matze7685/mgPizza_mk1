@@ -15,6 +15,7 @@ struct MenuView: View {
     @State private var editingPizza: MenuPizza?
     @State private var addedToShopping = false
     @State private var pdfURL: URL?
+    @State private var showingGuests = false
 
     private var onMenu: [MenuPizza] { pizzas.filter(\.isOnMenu) }
     private var totalOrders: Int { onMenu.reduce(0) { $0 + $1.orderCount } }
@@ -28,6 +29,16 @@ struct MenuView: View {
                 DatePicker("Date", selection: dateBinding, displayedComponents: [.date, .hourAndMinute])
             } header: {
                 Text("Event")
+            }
+
+            Section {
+                Button {
+                    showingGuests = true
+                } label: {
+                    Label("Guest link & replies", systemImage: "person.2.badge.plus")
+                }
+            } footer: {
+                Text("Enter your guests, send them a link – they pick their pizzas and send the order back.")
             }
 
             Section {
@@ -75,6 +86,7 @@ struct MenuView: View {
                     }
                     Button("Reset orders", systemImage: "arrow.counterclockwise", role: .destructive) {
                         pizzas.forEach { $0.orderCount = 0 }
+                        GuestMenuLink.saveGuests(GuestMenuLink.loadGuests().map { var g = $0; g.orders = [:]; g.note = ""; return g })
                         addedToShopping = false
                     }
                 } header: {
@@ -84,6 +96,7 @@ struct MenuView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingGuests) { GuestMenuView() }
         .sheet(item: $editingPizza) { pizza in
             MenuPizzaEditor(pizza: pizza)
         }

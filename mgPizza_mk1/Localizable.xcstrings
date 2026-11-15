@@ -4061,6 +4061,176 @@
           }
         }
       }
+    },
+    "Guest link & replies" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste-Link & Antworten"
+          }
+        }
+      }
+    },
+    "Enter your guests, send them a link – they pick their pizzas and send the order back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste eintragen, Link schicken – sie wählen ihre Pizzen und schicken die Bestellung zurück."
+          }
+        }
+      }
+    },
+    "Guest name" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name des Gastes"
+          }
+        }
+      }
+    },
+    "Guests" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste"
+          }
+        }
+      }
+    },
+    "Add your guests first, then send the link. Guests pick their name and pizzas." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erst die Gäste eintragen, dann den Link senden. Gäste wählen ihren Namen und ihre Pizzen."
+          }
+        }
+      }
+    },
+    "Guest page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästeseite"
+          }
+        }
+      }
+    },
+    "Send guest link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste-Link senden"
+          }
+        }
+      }
+    },
+    "Address of the hosted guest page (file guest-menu/index.html in the repository). The menu is part of the link, no server needed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse der gehosteten Gästeseite (Datei guest-menu/index.html im Repository). Die Speisekarte steckt im Link, kein Server nötig."
+          }
+        }
+      }
+    },
+    "Import reply from clipboard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antwort aus Zwischenablage importieren"
+          }
+        }
+      }
+    },
+    "Or paste a reply here" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oder Antwort hier einfügen"
+          }
+        }
+      }
+    },
+    "Import" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importieren"
+          }
+        }
+      }
+    },
+    "Replies" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antworten"
+          }
+        }
+      }
+    },
+    "Tapping the link in a guest's reply opens it directly in this app." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippt man in der Antwort eines Gastes auf den Link, öffnet sich direkt diese App."
+          }
+        }
+      }
+    },
+    "Guest menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste-Speisekarte"
+          }
+        }
+      }
+    },
+    "Order of %@ imported." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellung von %@ importiert."
+          }
+        }
+      }
+    },
+    "This reply belongs to a different menu." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Antwort gehört zu einer anderen Speisekarte."
+          }
+        }
+      }
+    },
+    "No order found in this text." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Bestellung in diesem Text gefunden."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

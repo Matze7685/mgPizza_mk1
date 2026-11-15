@@ -30,6 +30,6 @@ Activity (laufende Rezepte, Ofen, Timer-Status) · Dough (Rezepte) · Sauce · S
 ## Offene Ideen / Wünsche des Nutzers
 - Home-Assistant-Anbindung für zuverlässige HomePod-Ansagen (Nutzer: „später“).
 - Optional: Schritt „Teiglinge formen“ nach dem Kneten.
-- Optional: Bestellseite (Link) für Gäste statt Antwort per Nachricht.
+- Gäste-Link (serverlos): `guest-menu/index.html` (statische Seite, Karte steckt Base64 im #-Teil des Links) + `Model/GuestOrders.swift` + `GuestMenuView.swift`. Antwort der Gäste enthält `mgpizza://order?r=…` (URL-Scheme in Info.plist) bzw. wird per Zwischenablage importiert. Seite muss noch irgendwo gehostet werden (GitHub Pages braucht ein öffentliches Repo oder Bezahlplan; Alternativen: Netlify/Cloudflare Pages). UNGETESTET (kein Xcode).
 - ESP32-Eigenbau-Hub mit vorhandenem Ooni-Fühler (Thermistor, Klinke) – wartet auf Widerstands-Messwerte.
 - Bluetooth im Sperrbildschirm: Fix (State Restoration) noch vom Nutzer zu testen.

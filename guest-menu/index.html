@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pizzaabend</title>
+<style>
+  :root { color-scheme: light; --red:#c0392b; --bg:#fffaf0; }
+  body { font-family: Georgia, serif; background: var(--bg); margin: 0; padding: 20px; color: #222; }
+  main { max-width: 520px; margin: 0 auto; }
+  h1 { text-align: center; margin: 8px 0 0; }
+  .when { text-align: center; color: #666; margin-bottom: 18px; }
+  label.field { display: block; font-weight: bold; margin: 14px 0 6px; }
+  select, input[type=text], textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #fff; }
+  .pizza { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #eadfc8; }
+  .pizza .txt { flex: 1; }
+  .pizza .name { font-weight: bold; font-size: 1.1em; }
+  .pizza .top { font-size: .85em; color: #555; }
+  .pizza .info { font-size: .85em; font-style: italic; color: #777; }
+  .count { display: flex; align-items: center; gap: 10px; }
+  .count button { width: 40px; height: 40px; border-radius: 20px; border: 1px solid var(--red); background: #fff; color: var(--red); font-size: 22px; }
+  .count span { min-width: 18px; text-align: center; font-size: 1.2em; }
+  .send { display: block; width: 100%; margin-top: 20px; padding: 14px; font: inherit; font-size: 1.1em; background: var(--red); color: #fff; border: 0; border-radius: 10px; }
+  .hint { color: #777; font-size: .9em; margin-top: 14px; text-align: center; }
+  .error { color: var(--red); text-align: center; margin-top: 30px; }
+  #result { display: none; }
+  #result textarea { height: 150px; }
+</style>
+</head>
+<body>
+<main>
+  <div id="error" class="error" style="display:none">Dieser Link ist ungültig oder unvollständig. Bitte frag nach einem neuen Link.</div>
+  <div id="form" style="display:none">
+    <h1>🍕 <span id="title"></span></h1>
+    <div class="when" id="when"></div>
+
+    <label class="field" for="who">Wer bist du?</label>
+    <select id="who"></select>
+
+    <div id="pizzas"></div>
+
+    <label class="field" for="note">Wünsche / Unverträglichkeiten (optional)</label>
+    <input type="text" id="note" placeholder="z. B. ohne Zwiebeln">
+
+    <button class="send" id="send">Bestellung abschicken</button>
+    <div class="hint">Es öffnet sich eine Nachricht an den Gastgeber – einfach abschicken.</div>
+  </div>
+
+  <div id="result">
+    <h1>Fast geschafft 🎉</h1>
+    <p>Falls sich keine Nachricht geöffnet hat, kopiere diesen Text und schick ihn dem Gastgeber:</p>
+    <textarea id="reply" readonly></textarea>
+    <button class="send" id="copy">Text kopieren</button>
+  </div>
+</main>
+<script>
+(function () {
+  function b64urlDecode(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return decodeURIComponent(escape(atob(s)));
+  }
+  function b64urlEncode(str) {
+    return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  var menu;
+  try {
+    var m = /[#&]m=([A-Za-z0-9_-]+)/.exec(location.hash);
+    menu = JSON.parse(b64urlDecode(m[1]));
+    if (!menu.p || !menu.p.length) throw 0;
+  } catch (e) {
+    document.getElementById('error').style.display = 'block';
+    return;
+  }
+  document.title = menu.t;
+  document.getElementById('title').textContent = menu.t;
+  document.getElementById('when').textContent = new Date(menu.d * 1000).toLocaleString('de-DE',
+    { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+  var who = document.getElementById('who');
+  (menu.g && menu.g.length ? menu.g : []).forEach(function (g) {
+    var o = document.createElement('option'); o.value = o.textContent = g; who.appendChild(o);
+  });
+  var other = document.createElement('option'); other.value = ''; other.textContent = 'Anderer Name …'; who.appendChild(other);
+  who.addEventListener('change', function () {
+    if (who.value === '') {
+      var n = prompt('Dein Name?');
+      if (n) { var o = document.createElement('option'); o.value = o.textContent = n; who.insertBefore(o, other); who.value = n; }
+      else who.selectedIndex = 0;
+    }
+  });
+
+  var counts = {};
+  var box = document.getElementById('pizzas');
+  menu.p.forEach(function (p, i) {
+    counts[p.n] = 0;
+    var row = document.createElement('div'); row.className = 'pizza';
+    var txt = document.createElement('div'); txt.className = 'txt';
+    txt.innerHTML = '<div class="name"></div><div class="info"></div><div class="top"></div>';
+    txt.children[0].textContent = (i + 1) + '. ' + p.n;
+    txt.children[1].textContent = p.i || '';
+    txt.children[2].textContent = p.t || '';
+    var c = document.createElement('div'); c.className = 'count';
+    var minus = document.createElement('button'); minus.textContent = '−';
+    var num = document.createElement('span'); num.textContent = '0';
+    var plus = document.createElement('button'); plus.textContent = '+';
+    minus.onclick = function () { counts[p.n] = Math.max(0, counts[p.n] - 1); num.textContent = counts[p.n]; };
+    plus.onclick = function () { counts[p.n] = Math.min(9, counts[p.n] + 1); num.textContent = counts[p.n]; };
+    c.appendChild(minus); c.appendChild(num); c.appendChild(plus);
+    row.appendChild(txt); row.appendChild(c); box.appendChild(row);
+  });
+
+  document.getElementById('form').style.display = 'block';
+
+  document.getElementById('send').onclick = function () {
+    var o = {};
+    Object.keys(counts).forEach(function (k) { if (counts[k] > 0) o[k] = counts[k]; });
+    if (!who.value) { alert('Bitte wähle deinen Namen.'); return; }
+    if (!Object.keys(o).length) { alert('Bitte wähle mindestens eine Pizza.'); return; }
+    var note = document.getElementById('note').value.trim();
+    var reply = { v: 1, id: menu.id, g: who.value, o: o, n: note };
+    var code = b64urlEncode(JSON.stringify(reply));
+    var lines = ['🍕 ' + menu.t + ' – Bestellung von ' + who.value];
+    Object.keys(o).forEach(function (k) { lines.push(o[k] + '× ' + k); });
+    if (note) lines.push('Hinweis: ' + note);
+    lines.push('', 'mgpizza://order?r=' + code);
+    var text = lines.join('\n');
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('reply').value = text;
+    location.href = 'sms:&body=' + encodeURIComponent(text);   // Nachrichten-App; unten Fallback zum Kopieren
+  };
+  document.getElementById('copy').onclick = function () {
+    var t = document.getElementById('reply'); t.select();
+    if (navigator.clipboard) navigator.clipboard.writeText(t.value); else document.execCommand('copy');
+    this.textContent = 'Kopiert ✓';
+  };
+})();
+</script>
+</body>
+</html>

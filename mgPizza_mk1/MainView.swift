@@ -61,6 +61,12 @@ struct MainView: View {
             .navigationDestination(item: $router.openRecipe) { recipe in
                 RecipeDetailView(recipeData: recipe)
             }
+            .onOpenURL { url in
+                // mgpizza://order?r=… – Bestellung eines Gastes importieren
+                guard url.scheme == "mgpizza" else { return }
+                router.selectedTab = .shopping
+                _ = GuestMenuLink.importReply(url.absoluteString, context: modelContext)
+            }
             .onAppear {
                 SeedImporter.importIfNeeded(into: modelContext)
                 DoughAnnouncer.shared.start(context: modelContext)
