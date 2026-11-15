@@ -43,7 +43,11 @@ struct KneadSection: View {
             // Alarm, wenn der laufende Schritt abgelaufen ist und die App offen ist.
             // KneadAlarm klingelt pro Schritt nur einmal (auch wenn die Benachrichtigung gleichzeitig kommt
             // oder die Rezeptansicht zweimal im Navigationsstapel liegt).
-            guard let end = recipe.kneadStepEnd, now >= end, now.timeIntervalSince(end) < 30 else { return }
+            // Nur klingeln, wenn der Schritt gerade eben bei sichtbarer App abgelaufen ist. Läuft die App nur im
+            // Hintergrund weiter (Bluetooth/Audio) oder kommt man erst später zurück, hat die Benachrichtigung
+            // schon geklingelt – ein zweiter Ton wäre genau der Doppelalarm.
+            guard UIApplication.shared.applicationState == .active,
+                  let end = recipe.kneadStepEnd, now >= end, now.timeIntervalSince(end) < 3 else { return }
             if KneadAlarm.ring(for: recipe.uid.uuidString) {
                 VoiceControl.shared.stepFinished(for: recipe)
             }
