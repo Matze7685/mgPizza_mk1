@@ -25,6 +25,51 @@ struct GuestEvent: Codable {
     var date: Date
     var guests: [String]
     var pizzas: [PizzaDTO]
+    var intro: String?            // Begrüßungstext / Anlass auf der Gästeseite
+    var closed: Bool?             // true: Gäste sehen die Karte, können aber nicht mehr bestellen
+}
+
+/// Ein Abend/Anlass mit eigenem Gästelink. Die Liste liegt nur lokal in der App (Übersicht für den Gastgeber);
+/// Gäste sehen immer nur ihren eigenen Abend.
+struct GuestEvening: Codable, Identifiable, Hashable {
+    var id: String
+    var title: String
+    var date: Date
+    var intro: String = ""
+    var guests: [String] = []
+    var closed: Bool = false
+    var orderCount: Int?
+    var publishedAt: Date?
+}
+
+enum GuestEvenings {
+    private static let key = "guestEvenings_v1"
+
+    static var all: [GuestEvening] {
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let list = try? JSONDecoder().decode([GuestEvening].self, from: data) else { return [] }
+        return list
+    }
+
+    static var exists: Bool { UserDefaults.standard.data(forKey: key) != nil }
+
+    static func save(_ list: [GuestEvening]) {
+        UserDefaults.standard.set(try? JSONEncoder().encode(list), forKey: key)
+    }
+
+    /// Abend anlegen oder aktualisieren; bekannte Werte (Bestellanzahl, Veröffentlichung) bleiben erhalten, wenn nicht neu gesetzt
+    static func upsert(_ evening: GuestEvening) {
+        var list = all
+        if let i = list.firstIndex(where: { $0.id == evening.id }) {
+            var merged = evening
+            merged.orderCount = evening.orderCount ?? list[i].orderCount
+            merged.publishedAt = evening.publishedAt ?? list[i].publishedAt
+            list[i] = merged
+        } else {
+            list.append(evening)
+        }
+        save(list)
+    }
 }
 
 struct GuestOrder: Codable, Identifiable {
@@ -225,28 +270,61 @@ struct GuestLinkSheet: View {
     @AppStorage("guestPageURL") private var pageURL = ""
     @AppStorage("guestNames") private var guestNames = ""
     @AppStorage("menuEventID") private var eventID = ""
+    @AppStorage("menuTitle") private var menuTitle = ""
+    @AppStorage("menuDate") private var menuDate: Double = Date().timeIntervalSince1970
+    @AppStorage("guestIntro") private var intro = ""
+    @AppStorage("guestOrdersClosed") private var ordersClosed = false
     @State private var orders: [GuestOrder] = []
     @State private var status = ""
     @State private var isBusy = false
+    @State private var eveningCount = 0
 
     private var guests: [String] {
         guestNames.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
     }
 
-    private var guestLink: URL? {
-        guard !eventID.isEmpty, var parts = URLComponents(string: pageURL), !pageURL.isEmpty else { return nil }
-        parts.queryItems = [URLQueryItem(name: "e", value: eventID)]
+    private var guestLink: URL? { Self.link(pageURL: pageURL, id: eventID) }
+
+    static func link(pageURL: String, id: String) -> URL? {
+        guard !id.isEmpty, !pageURL.isEmpty, var parts = URLComponents(string: pageURL) else { return nil }
+        parts.queryItems = [URLQueryItem(name: "e", value: id)]
         return parts.url
+    }
+
+    /// Der aktuelle Abend, wie er in der Übersicht gespeichert wird
+    private var current: GuestEvening {
+        GuestEvening(id: eventID, title: title, date: date, intro: intro, guests: guests, closed: ordersClosed)
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title).font(.headline)
+                        Text(date.formatted(.dateTime.weekday(.wide).day().month().hour().minute()))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical)
+                        .lineLimit(1...5)
+                    Toggle("Orders closed", isOn: $ordersClosed)
+                    NavigationLink {
+                        GuestEveningsView(currentID: eventID, pageURL: pageURL, service: service) { switchTo($0) }
+                    } label: {
+                        LabeledContent("All evenings", value: "\(eveningCount)")
+                    }
+                    Button("New evening (new link)", systemImage: "sparkles") { startNewEvening() }
+                } header: {
+                    Text("Evening")
+                } footer: {
+                    Text("Title and date come from the menu. Each evening gets its own link; guests only ever see their own evening. Changes reach the guests after “Publish menu”.")
+                }
+
+                Section {
                     TextField("One name per line", text: $guestNames, axis: .vertical)
                         .lineLimit(3...12)
                 } header: {
-                    Text("Guests tonight")
+                    Text("Guests")
                 } footer: {
                     Text("Guests pick their name on the page, then choose pizzas and toppings.")
                 }
@@ -264,11 +342,6 @@ struct GuestLinkSheet: View {
                             status = String(localized: "Link copied.")
                         }
                         Text(link.absoluteString).font(.caption2).foregroundStyle(.secondary).textSelection(.enabled)
-                    }
-                    Button("New evening (new link, clears orders)", systemImage: "sparkles", role: .destructive) {
-                        eventID = Self.newID()
-                        orders = []
-                        status = String(localized: "New link created. Publish the menu again.")
                     }
                 }
 
@@ -324,7 +397,16 @@ struct GuestLinkSheet: View {
             .navigationTitle("Guest link")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
-            .onAppear { if eventID.isEmpty { eventID = Self.newID() } }
+            .onAppear {
+                if eventID.isEmpty { eventID = Self.newID() }
+                // Erster Start mit Übersicht: den bisher genutzten Abend übernehmen
+                if !GuestEvenings.exists {
+                    var old = current
+                    old.publishedAt = guests.isEmpty ? nil : .now
+                    GuestEvenings.save(guests.isEmpty ? [] : [old])
+                }
+                eveningCount = GuestEvenings.all.count
+            }
         }
     }
 
@@ -335,14 +417,42 @@ struct GuestLinkSheet: View {
     private var service: GuestOrderService { .init(project: project.trimmingCharacters(in: .whitespaces),
                                                    apiKey: apiKey.trimmingCharacters(in: .whitespaces)) }
 
+    /// Neuer Abend mit neuem Link; der bisherige bleibt in der Übersicht erhalten
+    private func startNewEvening() {
+        if GuestEvenings.all.contains(where: { $0.id == eventID }) { GuestEvenings.upsert(current) }
+        eventID = Self.newID()
+        orders = []
+        intro = ""
+        ordersClosed = false
+        status = String(localized: "New evening created. Set title and date in the menu, then publish.")
+    }
+
+    /// Zu einem anderen Abend aus der Übersicht wechseln (Link, Titel, Datum, Gäste, Text)
+    private func switchTo(_ evening: GuestEvening) {
+        if GuestEvenings.all.contains(where: { $0.id == eventID }) { GuestEvenings.upsert(current) }
+        eventID = evening.id
+        menuTitle = evening.title
+        menuDate = evening.date.timeIntervalSince1970
+        intro = evening.intro
+        ordersClosed = evening.closed
+        guestNames = evening.guests.joined(separator: "\n")
+        orders = []
+        status = String(localized: "Switched to “\(evening.title)”. Publishing sends the menu currently set up in the app.")
+    }
+
     private func publish() async {
         isBusy = true; defer { isBusy = false }
+        let text = intro.trimmingCharacters(in: .whitespacesAndNewlines)
         let event = GuestEvent(title: title, date: date, guests: guests, pizzas: pizzas.map { pizza in
             .init(name: pizza.name, info: pizza.info,
                   toppings: pizza.toppings.map { .init(name: $0.name, amount: $0.amount, unit: $0.unit) })
-        })
+        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil)
         do {
             try await service.publish(event, id: eventID)
+            var evening = current
+            evening.publishedAt = .now
+            GuestEvenings.upsert(evening)
+            eveningCount = GuestEvenings.all.count
             status = guestLink == nil ? String(localized: "Published. Enter the guest page address to get the link.")
                                       : String(localized: "Published. Send the guest link.")
         } catch { status = error.localizedDescription }
@@ -352,7 +462,110 @@ struct GuestLinkSheet: View {
         isBusy = true; defer { isBusy = false }
         do {
             orders = try await service.fetchOrders(id: eventID)
+            var evening = current
+            evening.orderCount = orders.count
+            GuestEvenings.upsert(evening)
+            eveningCount = GuestEvenings.all.count
             status = String(localized: "\(orders.count) orders received.")
         } catch { status = error.localizedDescription }
+    }
+}
+
+/// Übersicht aller Abende/Anlässe (nur für den Gastgeber): kommende und vergangene, mit Status und Anzahl Bestellungen
+struct GuestEveningsView: View {
+    @Environment(\.dismiss) private var dismiss
+    var currentID: String
+    var pageURL: String
+    var service: GuestOrderService
+    var onSelect: (GuestEvening) -> Void
+
+    @State private var evenings = GuestEvenings.all
+    @State private var isRefreshing = false
+
+    private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
+    private var upcoming: [GuestEvening] { evenings.filter { $0.date >= startOfToday }.sorted { $0.date < $1.date } }
+    private var past: [GuestEvening] { evenings.filter { $0.date < startOfToday }.sorted { $0.date > $1.date } }
+
+    var body: some View {
+        List {
+            if evenings.isEmpty {
+                Text("No evenings yet. Publish a menu to add one.").foregroundStyle(.secondary)
+            }
+            if !upcoming.isEmpty {
+                Section("Upcoming") { ForEach(upcoming) { row($0) } }
+            }
+            if !past.isEmpty {
+                Section("Past") { ForEach(past) { row($0) } }
+            }
+            Section {
+            } footer: {
+                Text("Tap an evening to work on it. Removing it here only hides it in the app; its guest link keeps working.")
+            }
+        }
+        .navigationTitle("All evenings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Refresh orders", systemImage: "arrow.clockwise") { Task { await refresh() } }
+                    .disabled(isRefreshing || evenings.isEmpty)
+            }
+        }
+        .refreshable { await refresh() }
+    }
+
+    private func row(_ evening: GuestEvening) -> some View {
+        Button {
+            onSelect(evening)
+            dismiss()
+        } label: {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack {
+                    Text(evening.title).font(.headline).foregroundStyle(.primary)
+                    Spacer()
+                    if evening.id == currentID {
+                        Text("Current").font(.caption.bold()).foregroundStyle(.tint)
+                    }
+                }
+                Text(evening.date.formatted(.dateTime.weekday(.abbreviated).day().month().year().hour().minute()))
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(details(evening)).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .swipeActions(edge: .trailing) {
+            Button("Remove", systemImage: "trash", role: .destructive) {
+                evenings.removeAll { $0.id == evening.id }
+                GuestEvenings.save(evenings)
+            }
+            .disabled(evening.id == currentID)
+        }
+        .swipeActions(edge: .leading) {
+            if let link = GuestLinkSheet.link(pageURL: pageURL, id: evening.id) {
+                Button("Copy link", systemImage: "doc.on.doc") { UIPasteboard.general.string = link.absoluteString }
+                    .tint(.blue)
+            }
+        }
+    }
+
+    private func details(_ evening: GuestEvening) -> String {
+        var parts = [String(localized: "\(evening.guests.count) guests")]
+        if let count = evening.orderCount { parts.append(String(localized: "\(count) orders")) }
+        if evening.publishedAt == nil {
+            parts.append(String(localized: "not published"))
+        } else if evening.closed {
+            parts.append(String(localized: "orders closed"))
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    /// Bestellanzahl aller Abende neu abholen
+    private func refresh() async {
+        isRefreshing = true; defer { isRefreshing = false }
+        for evening in evenings where evening.publishedAt != nil {
+            guard let orders = try? await service.fetchOrders(id: evening.id) else { continue }
+            var updated = evening
+            updated.orderCount = orders.count
+            GuestEvenings.upsert(updated)
+        }
+        evenings = GuestEvenings.all
     }
 }
