@@ -35,6 +35,9 @@
   .sum{margin:12px 16px 0;padding:12px 14px;background:#fff;border:1px dashed var(--green);border-radius:6px}
   .sum b{color:var(--red)}
   textarea{margin-top:12px}
+  .sline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+  button.del{width:auto;padding:4px 10px;font-size:.85em;background:#fff;border:1px solid var(--red);color:var(--red);border-radius:6px;cursor:pointer}
+  button.delorder{margin-top:14px;background:transparent;border:1px solid var(--red);color:var(--red)}
   .sum.empty{color:#7a6a55;font-style:italic}
 </style>
 </head>
@@ -133,12 +136,29 @@ async function pick(name) {
 }
 
 function summary() {
-  const parts = event.pizzas.map((p, i) => counts[i] > 0 ? `<b>${counts[i]}×</b> ${esc(p.name)}` : "").filter(Boolean);
-  if (customCount > 0) parts.push(`<b>${customCount}×</b> Eigene Pizza`);
-  return parts.length ? `<div class="sum">Deine Auswahl:<br>${parts.join("<br>")}</div>`
+  const parts = event.pizzas.map((p, i) => counts[i] > 0 ? `<div class="sline"><span><b>${counts[i]}×</b> ${esc(p.name)}</span><button class="del" data-del="${i}" title="Entfernen">✕ entfernen</button></div>` : "").filter(Boolean);
+  if (customCount > 0) parts.push(`<div class="sline"><span><b>${customCount}×</b> Eigene Pizza</span><button class="del" data-del="custom" title="Entfernen">✕ entfernen</button></div>`);
+  return parts.length ? `<div class="sum">Deine Auswahl:${parts.join("")}</div>`
                       : `<div class="sum empty">Noch keine Pizza ausgewählt.</div>`;
 }
-const refreshSummary = () => { document.getElementById("sum").innerHTML = summary(); };
+const refreshSummary = () => {
+  document.getElementById("sum").innerHTML = summary();
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => removeLine(b.dataset.del));
+};
+
+// Eine Pizza aus der Auswahl entfernen (Anzahl 0, abgewählte Zutaten und Zusätze zurücksetzen)
+function removeLine(i) {
+  if (i === "custom") { customCount = 0; customToppings = new Set(); customExtra = ""; }
+  else { counts[+i] = 0; without[+i] = new Set(); extras[+i] = ""; }
+  render();
+}
+
+// Die gespeicherte Bestellung des Gastes komplett löschen
+async function deleteOrder() {
+  if (!confirm("Deine gesamte Bestellung löschen?")) return;
+  const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
+  if (r.ok) showNames(); else document.getElementById("msg").textContent = "Löschen hat nicht geklappt – bitte nochmal versuchen.";
+}
 
 function render() {
   app.innerHTML = header() + `
@@ -159,7 +179,8 @@ function render() {
         <input placeholder="Eigene Zutat dazu (mehrere mit Komma)" id="cx" value="${esc(customExtra)}" style="margin-top:8px"></div>
     </div>
     <textarea id="note" rows="2" placeholder="Anmerkung (optional)">${esc(note)}</textarea>
-    <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>`;
+    <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>
+    ${hadOrder ? "<button class='delorder' id='delorder'>Gesamte Bestellung löschen</button>" : ""}`;
   document.getElementById("change").onclick = showNames;
   app.querySelectorAll(".count button").forEach(b => b.onclick = () => {
     const d = +b.dataset.d;
@@ -184,6 +205,9 @@ function render() {
   document.getElementById("cx").oninput = e => { customExtra = e.target.value; };
   document.getElementById("note").oninput = e => { note = e.target.value; };
   document.getElementById("send").onclick = send;
+  refreshSummary();
+  const del = document.getElementById("delorder");
+  if (del) del.onclick = deleteOrder;
 }
 
 async function send() {
