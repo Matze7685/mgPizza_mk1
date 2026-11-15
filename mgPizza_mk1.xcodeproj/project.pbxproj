@@ -43,6 +43,8 @@
 		B1B2C3D4000000050000BB02 /* OvenSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2C3D4000000050000BB01 /* OvenSpeaker.swift */; };
 		C1B2C3D4000000010000CC02 /* PizzaActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000010000CC01 /* PizzaActivityAttributes.swift */; };
 		C1B2C3D4000000020000CC02 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000020000CC01 /* LiveActivityManager.swift */; };
+		C1B2C3D4000000070000CC02 /* VoiceControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000070000CC01 /* VoiceControl.swift */; };
+		C1B2C3D4000000080000CC02 /* GuestOrders.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000080000CC01 /* GuestOrders.swift */; };
 		C1B2C3D4000000030000CC02 /* DoughAnnouncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000030000CC01 /* DoughAnnouncer.swift */; };
 		C1B2C3D4000000040000CC02 /* TimerStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000040000CC01 /* TimerStatusView.swift */; };
 		C1B2C3D4000000050000CC02 /* SeedImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000050000CC01 /* SeedImporter.swift */; };
@@ -91,6 +93,8 @@
 		B1B2C3D4000000050000BB01 /* OvenSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvenSpeaker.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000010000CC01 /* PizzaActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PizzaActivityAttributes.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000020000CC01 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		C1B2C3D4000000070000CC01 /* VoiceControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceControl.swift; sourceTree = "<group>"; };
+		C1B2C3D4000000080000CC01 /* GuestOrders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestOrders.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000030000CC01 /* DoughAnnouncer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughAnnouncer.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000040000CC01 /* TimerStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerStatusView.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000050000CC01 /* SeedImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedImporter.swift; sourceTree = "<group>"; };
@@ -119,6 +123,8 @@
 				C1B2C3D4000000010000CC01 /* PizzaActivityAttributes.swift */,
 				C1B2C3D4000000020000CC01 /* LiveActivityManager.swift */,
 				C1B2C3D4000000030000CC01 /* DoughAnnouncer.swift */,
+				C1B2C3D4000000070000CC01 /* VoiceControl.swift */,
+				C1B2C3D4000000080000CC01 /* GuestOrders.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -314,6 +320,8 @@
 				C1B2C3D4000000050000CC02 /* SeedImporter.swift in Sources */,
 				C1B2C3D4000000040000CC02 /* TimerStatusView.swift in Sources */,
 				C1B2C3D4000000030000CC02 /* DoughAnnouncer.swift in Sources */,
+				C1B2C3D4000000070000CC02 /* VoiceControl.swift in Sources */,
+				C1B2C3D4000000080000CC02 /* GuestOrders.swift in Sources */,
 				C1B2C3D4000000020000CC02 /* LiveActivityManager.swift in Sources */,
 				C1B2C3D4000000010000CC02 /* PizzaActivityAttributes.swift in Sources */,
 				B1B2C3D4000000050000BB02 /* OvenSpeaker.swift in Sources */,
@@ -369,6 +377,8 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Pizza;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Reads the temperature of your pizza oven thermometer.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Listens for voice commands like \"next step\" while you knead.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Recognizes voice commands like \"next step\" for the dough steps.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -406,6 +416,8 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Pizza;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Reads the temperature of your pizza oven thermometer.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Listens for voice commands like \"next step\" while you knead.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Recognizes voice commands like \"next step\" for the dough steps.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

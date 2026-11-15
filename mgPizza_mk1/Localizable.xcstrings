@@ -4061,6 +4061,596 @@
           }
         }
       }
+    },
+    "Voice control on." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprachsteuerung an."
+          }
+        }
+      }
+    },
+    "Voice control off." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprachsteuerung aus."
+          }
+        }
+      }
+    },
+    "Voice control" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprachsteuerung"
+          }
+        }
+      }
+    },
+    "Voice control on – listening" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprachsteuerung an – hört zu"
+          }
+        }
+      }
+    },
+    "Speech recognition is not allowed. Turn it on in the iOS Settings under Privacy → Speech Recognition." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spracherkennung ist nicht erlaubt. Aktiviere sie in den iOS-Einstellungen unter Datenschutz → Spracherkennung."
+          }
+        }
+      }
+    },
+    "Microphone access is not allowed. Turn it on in the iOS Settings under Privacy → Microphone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mikrofonzugriff ist nicht erlaubt. Aktiviere ihn in den iOS-Einstellungen unter Datenschutz → Mikrofon."
+          }
+        }
+      }
+    },
+    "Speech recognition is not available right now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spracherkennung ist gerade nicht verfügbar."
+          }
+        }
+      }
+    },
+    "Microphone could not be started: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mikrofon konnte nicht gestartet werden: %@"
+          }
+        }
+      }
+    },
+    "Timer started: %lld minutes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timer gestartet: %lld Minuten."
+          }
+        }
+      }
+    },
+    "Kneading is done. Say “fridge” to start the proofing timer." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kneten ist fertig. Sag „Kühlschrank“, um den Gärtimer zu starten."
+          }
+        }
+      }
+    },
+    "Into the fridge. Take the dough out on %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab in den Kühlschrank. Teig raus am %@."
+          }
+        }
+      }
+    },
+    "Proofing timer started." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gärtimer gestartet."
+          }
+        }
+      }
+    },
+    "%@ is finished. Say “next step”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist fertig. Sag „nächster Schritt“."
+          }
+        }
+      }
+    },
+    "Say “start” to begin." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sag „Start“, um zu beginnen."
+          }
+        }
+      }
+    },
+    "Step %lld of %lld: %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schritt %lld von %lld: %@."
+          }
+        }
+      }
+    },
+    "Add %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib %@ dazu."
+          }
+        }
+      }
+    },
+    "Say “start” when everything is in the machine." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sag „Start“, wenn alles in der Maschine ist."
+          }
+        }
+      }
+    },
+    "Batch %lld done. Say “next step” for the next batch." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchgang %lld fertig. Sag „nächster Schritt“ für den nächsten Durchgang."
+          }
+        }
+      }
+    },
+    "The step is finished. Say “next step”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Schritt ist fertig. Sag „nächster Schritt“."
+          }
+        }
+      }
+    },
+    "Still %lld minutes and %lld seconds." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch %lld Minuten und %lld Sekunden."
+          }
+        }
+      }
+    },
+    "The dough comes out of the fridge on %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Teig kommt am %@ aus dem Kühlschrank."
+          }
+        }
+      }
+    },
+    "Serving on %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servieren am %@."
+          }
+        }
+      }
+    },
+    "The dough is ready. Time to heat the oven." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Teig ist fertig. Zeit, den Ofen anzuheizen."
+          }
+        }
+      }
+    },
+    "No timer is running. Say “start”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es läuft kein Timer. Sag „Start“."
+          }
+        }
+      }
+    },
+    "Say: “next step”, “start”, “back”, “repeat”, “how long”, “fridge”, “voice control off”" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sag: „nächster Schritt“, „Start“, „zurück“, „wiederholen“, „wie lange“, „Kühlschrank“, „Sprachsteuerung aus“"
+          }
+        }
+      }
+    },
+    "Heard: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gehört: %@"
+          }
+        }
+      }
+    },
+    "Always show dough status" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teig-Status immer anzeigen"
+          }
+        }
+      }
+    },
+    "Pins the current step and countdown to the top of every screen while you prepare the dough (weighing, kneading) – not during proofing. Running timers move to the Dynamic Island when you leave the app." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heftet den aktuellen Schritt und Countdown oben auf jedem Bildschirm an, solange du den Teig zubereitest (Abwiegen, Kneten) – nicht während der Gare. Laufende Timer wandern in die Dynamic Island, sobald du die App verlässt."
+          }
+        }
+      }
+    },
+    "Weigh the ingredients" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zutaten abwiegen"
+          }
+        }
+      }
+    },
+    "Ready: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereit: %@"
+          }
+        }
+      }
+    },
+    "Start the next batch" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächsten Durchgang starten"
+          }
+        }
+      }
+    },
+    "Kneading done – into the fridge" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kneten fertig – ab in den Kühlschrank"
+          }
+        }
+      }
+    },
+    "Ready to serve" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereit zum Servieren"
+          }
+        }
+      }
+    },
+    "Enter the Firebase project ID, API key and page address first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trage zuerst Firebase-Projekt-ID, API-Key und Seitenadresse ein."
+          }
+        }
+      }
+    },
+    "Server error %lld. Check project ID, API key and the Firestore rules." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serverfehler %lld. Prüfe Projekt-ID, API-Key und die Firestore-Regeln."
+          }
+        }
+      }
+    },
+    "One name per line" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Name pro Zeile"
+          }
+        }
+      }
+    },
+    "Guests tonight" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste heute Abend"
+          }
+        }
+      }
+    },
+    "Guests pick their name on the page, then choose pizzas and toppings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste wählen auf der Seite ihren Namen und dann Pizzen und Zutaten."
+          }
+        }
+      }
+    },
+    "Publish menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speisekarte veröffentlichen"
+          }
+        }
+      }
+    },
+    "Send guest link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästelink senden"
+          }
+        }
+      }
+    },
+    "New evening (new link, clears orders)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Abend (neuer Link, Bestellungen löschen)"
+          }
+        }
+      }
+    },
+    "New link created. Publish the menu again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Link erstellt. Veröffentliche die Karte erneut."
+          }
+        }
+      }
+    },
+    "Fetch orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen abholen"
+          }
+        }
+      }
+    },
+    "without" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ohne"
+          }
+        }
+      }
+    },
+    "Still missing: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es fehlen noch: %@"
+          }
+        }
+      }
+    },
+    "Import into menu & toppings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Karte & Zutaten übernehmen"
+          }
+        }
+      }
+    },
+    "Orders imported. The needed toppings are updated below." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen übernommen. Die benötigten Zutaten sind unten aktualisiert."
+          }
+        }
+      }
+    },
+    "Orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen"
+          }
+        }
+      }
+    },
+    "Importing replaces the order counts in the menu." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Import ersetzt die Bestellmengen in der Speisekarte."
+          }
+        }
+      }
+    },
+    "Firebase project ID" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firebase-Projekt-ID"
+          }
+        }
+      }
+    },
+    "Firebase API key" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firebase-API-Key"
+          }
+        }
+      }
+    },
+    "Guest page address (https://…)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse der Gästeseite (https://…)"
+          }
+        }
+      }
+    },
+    "Setup (once)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einrichtung (einmalig)"
+          }
+        }
+      }
+    },
+    "Steps: see docs/README.md in the repository." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schritte: siehe docs/README.md im Repository."
+          }
+        }
+      }
+    },
+    "Guest link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästelink"
+          }
+        }
+      }
+    },
+    "Guest link: guests order online" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästelink: Gäste bestellen online"
+          }
+        }
+      }
+    },
+    "Published. Enter the guest page address to get the link." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veröffentlicht. Trage die Adresse der Gästeseite ein, um den Link zu erhalten."
+          }
+        }
+      }
+    },
+    "Published. Send the guest link." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veröffentlicht. Sende den Gästelink."
+          }
+        }
+      }
+    },
+    "%lld orders received." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Bestellungen erhalten."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

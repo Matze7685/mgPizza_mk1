@@ -168,3 +168,87 @@ struct ActiveDoughRow: View {
     NavigationStack { ActivityView() }
         .environmentObject(OvenMonitor())
 }
+
+/// Oben angeheftete Statusleiste (in der ganzen App) während der Zubereitung (Zutaten/Kneten) – nicht während der Garzeit.
+/// Ein-/ausschaltbar in den Einstellungen („Always show dough status“).
+struct DoughStatusBar: View {
+    @Query(filter: #Predicate<RecipeSetupData> { $0.isStarted == true || $0.isInProgress == true },
+           sort: \RecipeSetupData.dateSelection) private var activeRecipes: [RecipeSetupData]
+    @ObservedObject private var router = AppRouter.shared
+
+    /// Nur Rezepte in der Zubereitung (Gärphasen zeigt die Aktivitäts-Seite)
+    private var preparing: [RecipeSetupData] {
+        activeRecipes.filter { !$0.isStarted && $0.isInProgress }
+    }
+
+    var body: some View {
+        if let recipe = preparing.first {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Button {
+                    router.open(recipe)
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: icon(recipe, now: context.date)).foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(recipe.displayName).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                            Text(title(recipe, now: context.date)).font(.subheadline.weight(.semibold)).lineLimit(1)
+                        }
+                        Spacer()
+                        if let target = target(recipe, now: context.date) {
+                            let remaining = max(0, target.timeIntervalSince(context.date))
+                            Text(format(remaining)).font(.subheadline.weight(.bold)).monospacedDigit()
+                                .foregroundStyle(remaining == 0 ? .green : .primary)
+                        }
+                        if preparing.count > 1 {
+                            Text("+\(preparing.count - 1)").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(.horizontal, 12)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func target(_ recipe: RecipeSetupData, now: Date) -> Date? {
+        switch recipe.phase(now: now) {
+        case .knead: return recipe.kneadStepEnd
+        case .fridge: return recipe.fridgeOutDate
+        case .room: return recipe.servingDate
+        default: return nil
+        }
+    }
+
+    private func icon(_ recipe: RecipeSetupData, now: Date) -> String {
+        switch recipe.phase(now: now) {
+        case .ingredients: "scalemass"
+        case .knead: "timer"
+        case .fridge: "refrigerator"
+        case .room: "thermometer.medium"
+        default: "fork.knife"
+        }
+    }
+
+    private func title(_ recipe: RecipeSetupData, now: Date) -> String {
+        switch recipe.phase(now: now) {
+        case .ingredients: return String(localized: "Weigh the ingredients")
+        case .knead:
+            if let step = recipe.currentKneadStep {
+                return recipe.kneadStepEnd == nil ? String(localized: "Ready: \(recipe.kneadTitle(step))") : recipe.kneadTitle(step)
+            }
+            return recipe.hasMoreBatches ? String(localized: "Start the next batch") : String(localized: "Kneading done – into the fridge")
+        case .fridge: return String(localized: "Out of the fridge")
+        case .room: return String(localized: "Serving")
+        default: return String(localized: "Ready to serve")
+        }
+    }
+
+    private func format(_ interval: TimeInterval) -> String {
+        let total = Int(interval)
+        let d = total / 86400, h = (total % 86400) / 3600, m = (total % 3600) / 60, sec = total % 60
+        if d > 0 { return String(format: "%dd %02d:%02d", d, h, m) }
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec) : String(format: "%02d:%02d", m, sec)
+    }
+}

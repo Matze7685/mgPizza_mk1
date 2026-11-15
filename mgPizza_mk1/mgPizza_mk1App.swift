@@ -21,7 +21,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound, .list])
+        let id = notification.request.identifier
+        if id.hasPrefix("knead-") {
+            // Knet-Timer: Ton kommt vom App-Alarm (genau einmal), sonst klingeln beide gleichzeitig
+            let recipeID = String(id.dropFirst("knead-".count))
+            MainActor.assumeIsolated { KneadAlarm.ring(for: recipeID) }
+            completionHandler([.banner, .list])
+        } else {
+            completionHandler([.banner, .sound, .list])
+        }
     }
 }
 

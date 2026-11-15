@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("doughSpeak") private var doughSpeak = false
+    @AppStorage("showDoughStatus") private var showDoughStatus = true
     @AppStorage("mixerCapacity") private var mixerCapacity: Double = 2500
 
     var body: some View {
@@ -19,6 +20,11 @@ struct SettingsView: View {
                 } label: {
                     Label("Timer Status", systemImage: "checklist")
                 }
+            }
+            Section {
+                Toggle("Always show dough status", isOn: $showDoughStatus)
+            } footer: {
+                Text("Pins the current step and countdown to the top of every screen while you prepare the dough (weighing, kneading) – not during proofing. Running timers move to the Dynamic Island when you leave the app.")
             }
             Section {
                 Stepper("Max. dough per batch: \(Int(mixerCapacity)) g", value: $mixerCapacity, in: 500...10000, step: 100)

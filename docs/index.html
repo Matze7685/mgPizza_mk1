@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pizzaabend</title>
+<style>
+  body{font-family:-apple-system,system-ui,sans-serif;background:#fffaf0;margin:0;color:#222}
+  main{max-width:560px;margin:0 auto;padding:20px}
+  h1{margin:0 0 4px} .date{color:#777;margin-bottom:18px}
+  select,input,textarea,button{font:inherit;padding:10px;border-radius:10px;border:1px solid #ccc;width:100%;box-sizing:border-box}
+  .pizza{background:#fff;border-radius:14px;padding:12px 14px;margin:12px 0;box-shadow:0 1px 3px #0002}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .name{font-weight:600;font-size:1.1em} .info{color:#777;font-size:.9em}
+  .count{display:flex;align-items:center;gap:10px}
+  .count button{width:40px;padding:6px;font-size:1.2em;background:#f3f3f3}
+  .toppings{margin-top:8px;font-size:.95em}
+  .toppings label{display:block;padding:3px 0}
+  button.send{background:#d33;color:#fff;border:0;margin-top:14px;font-weight:600}
+  #msg{margin-top:12px;font-weight:600}
+</style>
+</head>
+<body>
+<main id="app">Lade …</main>
+<script>
+// === Einrichtung: Werte aus der Firebase-Konsole (siehe docs/README.md) ===
+const PROJECT = "DEIN-FIREBASE-PROJEKT";
+const API_KEY = "DEIN-API-KEY";
+// ==========================================================================
+
+const base = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
+const eventId = new URLSearchParams(location.search).get("e");
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const slug = n => n.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "gast";
+let event, counts = [], without = [];
+
+async function load() {
+  if (!eventId) { app.textContent = "Link unvollständig."; return; }
+  const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}?key=${API_KEY}`);
+  if (!r.ok) { app.textContent = "Speisekarte nicht gefunden."; return; }
+  event = JSON.parse((await r.json()).fields.data.stringValue);
+  counts = event.pizzas.map(() => 0);
+  without = event.pizzas.map(() => new Set());
+  render();
+}
+
+function render() {
+  const date = new Date(event.date).toLocaleString("de-AT", {weekday:"long", day:"numeric", month:"long", hour:"2-digit", minute:"2-digit"});
+  app.innerHTML = `<h1>🍕 ${esc(event.title)}</h1><div class="date">${esc(date)}</div>
+    <label>Wer bist du?</label>
+    <select id="guest">${event.guests.length ? "" : "<option value=''>–</option>"}${event.guests.map(g => `<option>${esc(g)}</option>`).join("")}</select>
+    <input id="custom" placeholder="… oder Name eingeben" style="margin-top:8px">
+    ${event.pizzas.map((p, i) => `<div class="pizza">
+      <div class="row"><div><div class="name">${esc(p.name)}</div><div class="info">${esc(p.info || "")}</div></div>
+        <div class="count"><button data-d="-1" data-i="${i}">−</button><b id="c${i}">0</b><button data-d="1" data-i="${i}">+</button></div></div>
+      <div class="toppings" id="t${i}" hidden>Ohne:${p.toppings.map(t => `<label><input type="checkbox" style="width:auto" data-i="${i}" data-t="${esc(t.name)}"> ${esc(t.name)}</label>`).join("")}</div>
+    </div>`).join("")}
+    <textarea id="note" rows="2" placeholder="Anmerkung (optional)"></textarea>
+    <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>`;
+  app.querySelectorAll(".count button").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i; counts[i] = Math.max(0, counts[i] + +b.dataset.d);
+    document.getElementById("c" + i).textContent = counts[i];
+    document.getElementById("t" + i).hidden = counts[i] === 0;
+  });
+  app.querySelectorAll("[data-t]").forEach(c => c.onchange = () => {
+    const set = without[+c.dataset.i]; c.checked ? set.add(c.dataset.t) : set.delete(c.dataset.t);
+  });
+  document.getElementById("send").onclick = send;
+}
+
+async function send() {
+  const msg = document.getElementById("msg");
+  const guest = (document.getElementById("custom").value.trim() || document.getElementById("guest").value).trim();
+  if (!guest) { msg.textContent = "Bitte Namen wählen."; return; }
+  const lines = event.pizzas.map((p, i) => ({name: p.name, count: counts[i], without: [...without[i]]})).filter(l => l.count > 0);
+  if (!lines.length) { msg.textContent = "Bitte mindestens eine Pizza wählen."; return; }
+  const order = {guest, lines, note: document.getElementById("note").value.trim()};
+  const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {
+    method: "PATCH", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({fields: {data: {stringValue: JSON.stringify(order)}}})
+  });
+  msg.textContent = r.ok ? "Danke! Bestellung gespeichert ✔ (du kannst sie jederzeit erneut abschicken)" : "Fehler beim Senden – bitte nochmal versuchen.";
+}
+load().catch(() => app.textContent = "Fehler beim Laden.");
+</script>
+</body>
+</html>
