@@ -106,6 +106,7 @@ struct MenuView: View {
                             } else {
                                 pizza.orderCount = 0
                                 pizza.removedToppings = [:]
+                                pizza.guestExtras = [:]
                             }
                         }
                         addedToShopping = false
@@ -124,7 +125,10 @@ struct MenuView: View {
             MenuPizzaEditor(pizza: pizza)
         }
         .task(id: shareText) { pdfURL = MenuPDF.render(title: title, date: date, pizzas: menuPizzas) }
-        .onAppear { MenuPizza.seedIfNeeded(into: modelContext) }
+        .onAppear {
+            MenuPizza.seedIfNeeded(into: modelContext)
+            MenuPizza.seedMoreIfNeeded(into: modelContext)
+        }
     }
 
     private var date: Date { Date(timeIntervalSince1970: menuDate) }
@@ -159,6 +163,14 @@ struct MenuView: View {
                 if totals[key] == nil { order.append(key) }
                 let count = max(0, pizza.orderCount - (pizza.removedToppings[topping.name] ?? 0))
                 if count > 0 { totals[key, default: (topping.name, 0, topping.unit)].amount += topping.amount * Double(count) }
+            }
+        }
+        // Zusatzzutaten der Gäste (Menge unbekannt: je 1 Stück pro Wunsch, in der Einkaufsliste anpassbar)
+        for pizza in onMenu where pizza.orderCount > 0 {
+            for (name, count) in pizza.guestExtras.sorted(by: { $0.key < $1.key }) where count > 0 {
+                let key = "\(name.lowercased())|pcs"
+                if totals[key] == nil { order.append(key) }
+                totals[key, default: (name, 0, "pcs")].amount += Double(count)
             }
         }
         return order.compactMap { key -> (key: String, name: String, amount: Double, unit: String)? in

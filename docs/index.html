@@ -33,7 +33,7 @@ const eventId = new URLSearchParams(location.search).get("e");
 const app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const slug = n => n.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "gast";
-let event, counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [];
+let event, extras = [], customExtra = "", counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [];
 
 async function load() {
   if (!eventId) { app.textContent = "Link unvollständig."; return; }
@@ -42,6 +42,7 @@ async function load() {
   event = JSON.parse((await r.json()).fields.data.stringValue);
   counts = event.pizzas.map(() => 0);
   without = event.pizzas.map(() => new Set());
+  extras = event.pizzas.map(() => "");
   // Alle Zutaten der Karte (einmal pro Name+Einheit) für die eigene Pizza
   const seen = new Set();
   pool = [];
@@ -62,12 +63,14 @@ function render() {
       <div class="row"><div><div class="name">${esc(p.name)}</div><div class="info">${esc(p.info || "")}</div></div>
         <div class="count"><button data-d="-1" data-i="${i}">−</button><b id="c${i}">0</b><button data-d="1" data-i="${i}">+</button></div></div>
       <div class="info" style="margin-top:6px">${esc(p.toppings.map(t => t.name).join(", "))}</div>
-      <div class="toppings" id="t${i}" hidden>Abwählen, was du nicht möchtest:${p.toppings.map(t => `<label><input type="checkbox" style="width:auto" checked data-i="${i}" data-t="${esc(t.name)}"> ${esc(t.name)}</label>`).join("")}</div>
+      <div class="toppings" id="t${i}" hidden>Abwählen, was du nicht möchtest:${p.toppings.map(t => `<label><input type="checkbox" style="width:auto" checked data-i="${i}" data-t="${esc(t.name)}"> ${esc(t.name)}</label>`).join("")}
+        <input placeholder="Zusatzzutat (optional, mehrere mit Komma)" data-x="${i}" style="margin-top:8px"></div>
     </div>`).join("")}
     <div class="pizza">
       <div class="row"><div><div class="name">Eigene Pizza</div><div class="info">Zutaten selbst auswählen</div></div>
         <div class="count"><button data-d="-1" data-i="custom">−</button><b id="cc">0</b><button data-d="1" data-i="custom">+</button></div></div>
-      <div class="toppings" id="tc" hidden>${pool.map((t, k) => `<label><input type="checkbox" style="width:auto" data-k="${k}"> ${esc(t.name)}</label>`).join("")}</div>
+      <div class="toppings" id="tc" hidden>${pool.map((t, k) => `<label><input type="checkbox" style="width:auto" data-k="${k}"> ${esc(t.name)}</label>`).join("")}
+        <input placeholder="Eigene Zutat dazu (mehrere mit Komma)" id="cx" style="margin-top:8px"></div>
     </div>
     <textarea id="note" rows="2" placeholder="Anmerkung (optional)"></textarea>
     <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>`;
@@ -89,18 +92,22 @@ function render() {
   app.querySelectorAll("[data-k]").forEach(c => c.onchange = () => {
     c.checked ? customToppings.add(+c.dataset.k) : customToppings.delete(+c.dataset.k);
   });
+  app.querySelectorAll("[data-x]").forEach(c => c.oninput = () => { extras[+c.dataset.x] = c.value; });
+  document.getElementById("cx").oninput = e => { customExtra = e.target.value; };
   document.getElementById("send").onclick = send;
 }
+const splitExtra = v => v.split(",").map(x => x.trim()).filter(Boolean);
 
 async function send() {
   const msg = document.getElementById("msg");
   const guest = document.getElementById("guest").value.trim();
   if (!guest) { msg.textContent = "Bitte Namen wählen."; return; }
-  const lines = event.pizzas.map((p, i) => ({name: p.name, count: counts[i], without: [...without[i]]})).filter(l => l.count > 0);
+  const lines = event.pizzas.map((p, i) => ({name: p.name, count: counts[i], without: [...without[i]], extra: splitExtra(extras[i])})).filter(l => l.count > 0);
   if (customCount > 0) {
     const chosen = [...customToppings].sort((a, b) => a - b).map(k => pool[k]);
-    if (!chosen.length) { msg.textContent = "Bitte Zutaten für die eigene Pizza wählen."; return; }
-    lines.push({name: "Eigene Pizza", count: customCount, without: [], custom: chosen});
+    const cx = splitExtra(customExtra);
+    if (!chosen.length && !cx.length) { msg.textContent = "Bitte Zutaten für die eigene Pizza wählen."; return; }
+    lines.push({name: "Eigene Pizza", count: customCount, without: [], custom: chosen, extra: cx});
   }
   if (!lines.length) { msg.textContent = "Bitte mindestens eine Pizza wählen."; return; }
   const order = {guest, lines, note: document.getElementById("note").value.trim()};

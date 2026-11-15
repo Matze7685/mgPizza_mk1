@@ -33,6 +33,7 @@ struct GuestOrder: Codable, Identifiable {
         var count: Int
         var without: [String]     // abgewählte Zutaten
         var custom: [GuestEvent.Topping]?   // nur bei „Eigene Pizza“: gewählte Zutaten
+        var extra: [String]?      // freie Zusatzzutaten des Gastes
     }
     var guest: String
     var lines: [Line]
@@ -102,12 +103,15 @@ extension MenuPizza {
         for pizza in pizzas {
             var count = 0
             var removed: [String: Int] = [:]
+            var extras: [String: Int] = [:]
             for line in orders.flatMap(\.lines) where line.custom == nil && line.name == pizza.name {
                 count += line.count
                 for name in line.without { removed[name, default: 0] += line.count }
+                for name in line.extra ?? [] { extras[name, default: 0] += line.count }
             }
             pizza.orderCount = count
             pizza.removedToppings = removed
+            pizza.guestExtras = extras
         }
         // Frühere eigene Pizzen ersetzen
         if let old = try? context.fetch(FetchDescriptor<MenuPizza>(predicate: #Predicate { $0.isGuestCustom == true })) {
@@ -118,7 +122,8 @@ extension MenuPizza {
             for line in order.lines {
                 guard let custom = line.custom, line.count > 0 else { continue }
                 let pizza = MenuPizza(name: String(localized: "Custom pizza – \(order.guest)"),
-                                      toppings: custom.map { Topping(name: $0.name, amount: $0.amount, unit: $0.unit) },
+                                      toppings: custom.map { Topping(name: $0.name, amount: $0.amount, unit: $0.unit) }
+                                          + (line.extra ?? []).map { Topping(name: $0, amount: 1, unit: "pcs") },
                                       sortIndex: index)
                 pizza.isGuestCustom = true
                 pizza.orderCount = line.count
@@ -194,7 +199,7 @@ struct GuestLinkSheet: View {
                     ForEach(orders) { order in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(order.guest).font(.headline)
-                            Text(order.lines.map { "\($0.count)× \($0.name)" + ($0.custom.map { " (\($0.map(\.name).joined(separator: ", ")))" } ?? "") + ($0.without.isEmpty ? "" : " (\(String(localized: "without")) \($0.without.joined(separator: ", ")))") }
+                            Text(order.lines.map { "\($0.count)× \($0.name)" + ($0.custom.map { " (\($0.map(\.name).joined(separator: ", ")))" } ?? "") + (($0.extra ?? []).isEmpty ? "" : " + \($0.extra!.joined(separator: ", "))") + ($0.without.isEmpty ? "" : " (\(String(localized: "without")) \($0.without.joined(separator: ", ")))") }
                                 .joined(separator: ", "))
                                 .font(.caption).foregroundStyle(.secondary)
                         }

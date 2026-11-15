@@ -24,6 +24,8 @@ class MenuPizza {
     var orderCount: Int = 0
     /// Zutaten, die Gäste abgewählt haben: Name -> wie oft (für die Einkaufsmenge)
     var removedToppings: [String: Int] = [:]
+    /// Zusatzzutaten, die Gäste zu dieser Pizza gewünscht haben: Name -> wie oft
+    var guestExtras: [String: Int] = [:]
     var sortIndex: Int = 0
     var isDetroit: Bool = false
     /// Von einem Gast zusammengestellte eigene Pizza (wird beim Import angelegt, gehört nicht zur Speisekarte)
@@ -57,6 +59,50 @@ extension MenuPizza {
     private static let seedKey = "seedMenuPizzas_v1"
 
     /// Klassiker als Startpunkt – Mengen pro Pizza (ca. 30–33 cm), alles anpassbar
+    /// Ein paar weitere Klassiker (einmalig, ohne vorhandene Pizzen zu verändern oder doppelt anzulegen)
+    static func seedMoreIfNeeded(into context: ModelContext) {
+        let key = "seedMenuPizzas_v2"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        let existing = (try? context.fetch(FetchDescriptor<MenuPizza>())) ?? []
+        let names = Set(existing.map { $0.name.lowercased() })
+        var index = (existing.map(\.sortIndex).max() ?? 0) + 1
+        let sauce = String(localized: "Tomato sauce")
+        let mozza = String(localized: "Mozzarella (fior di latte)")
+        let more: [MenuPizza] = [
+            MenuPizza(name: "Marinara", info: String(localized: "Without cheese"), toppings: [
+                Topping(name: sauce, amount: 90), Topping(name: String(localized: "Garlic"), amount: 1, unit: "pcs"),
+                Topping(name: String(localized: "Oregano"), amount: 0.5, unit: "tsp"),
+                Topping(name: String(localized: "Olive Oil"), amount: 5, unit: "ml")]),
+            MenuPizza(name: "Funghi", toppings: [
+                Topping(name: sauce, amount: 80), Topping(name: mozza, amount: 100),
+                Topping(name: String(localized: "Mushrooms"), amount: 70)]),
+            MenuPizza(name: "Schinken", toppings: [
+                Topping(name: sauce, amount: 80), Topping(name: mozza, amount: 100),
+                Topping(name: String(localized: "Cooked ham"), amount: 60)]),
+            MenuPizza(name: "Capricciosa", toppings: [
+                Topping(name: sauce, amount: 80), Topping(name: mozza, amount: 100),
+                Topping(name: String(localized: "Cooked ham"), amount: 40),
+                Topping(name: String(localized: "Mushrooms"), amount: 40),
+                Topping(name: String(localized: "Artichokes"), amount: 40),
+                Topping(name: String(localized: "Black olives"), amount: 15)]),
+            MenuPizza(name: "Peperoni", info: String(localized: "Spicy"), toppings: [
+                Topping(name: sauce, amount: 80), Topping(name: mozza, amount: 100),
+                Topping(name: String(localized: "Pepperoni"), amount: 50)]),
+            MenuPizza(name: "Rucola-Schinken", toppings: [
+                Topping(name: sauce, amount: 70), Topping(name: mozza, amount: 100),
+                Topping(name: String(localized: "Parma ham"), amount: 40),
+                Topping(name: String(localized: "Rocket"), amount: 15),
+                Topping(name: String(localized: "Parmesan"), amount: 15)]),
+        ]
+        for pizza in more where !names.contains(pizza.name.lowercased()) {
+            pizza.sortIndex = index
+            index += 1
+            context.insert(pizza)
+        }
+        try? context.save()
+        UserDefaults.standard.set(true, forKey: key)
+    }
+
     static func seedIfNeeded(into context: ModelContext) {
         guard !UserDefaults.standard.bool(forKey: seedKey) else { return }
         let sauce = String(localized: "Tomato sauce")
