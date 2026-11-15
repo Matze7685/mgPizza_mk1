@@ -454,6 +454,16 @@
         }
       }
     },
+    "Also running" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere laufende"
+          }
+        }
+      }
+    },
     "Amount" : {
       "localizations" : {
         "de" : {
@@ -932,12 +942,12 @@
         }
       }
     },
-    "Create one with … → New Recipe." : {
+    "Create one with the + button." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lege eines an über … → Neues Rezept."
+            "value" : "Lege eines über die Schaltfläche + an."
           }
         }
       }
@@ -1222,12 +1232,12 @@
         }
       }
     },
-    "Dough: %lld dough balls, %lld Detroit pans – create the dough recipe with … → New Recipe." : {
+    "Dough: %lld dough balls, %lld Detroit pans – create the dough recipe with the + button." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Teig: %lld Teiglinge, %lld Detroit-Pfannen – Teigrezept über … → Neues Rezept anlegen."
+            "value" : "Teig: %lld Teiglinge, %lld Detroit-Pfannen – Teigrezept über + anlegen."
           }
         }
       }
@@ -1988,6 +1998,16 @@
         }
       }
     },
+    "More: tips, feedback, recipe values" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr: Tipps, Feedback, Rezeptwerte"
+          }
+        }
+      }
+    },
     "Mozzarella (fior di latte)" : {
       "localizations" : {
         "de" : {
@@ -2126,6 +2146,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kein Teig aktiv"
+          }
+        }
+      }
+    },
+    "No pizzas on the menu yet – pick some in “Plan”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Pizzen auf der Karte – wähle welche unter „Planen“."
           }
         }
       }
@@ -2376,12 +2406,12 @@
         }
       }
     },
-    "Open a recipe and tap “Bake now”, or create a new one with … → New Recipe." : {
+    "Open a recipe and tap “Bake now”, or create a new one with the + button." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öffne ein Rezept und tippe auf „Jetzt backen“ oder lege über … → Neues Rezept ein neues an."
+            "value" : "Öffne ein Rezept und tippe auf „Jetzt backen“ oder lege über + ein neues an."
           }
         }
       }
@@ -2402,6 +2432,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Optional"
+          }
+        }
+      }
+    },
+    "Orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen"
           }
         }
       }
@@ -2606,6 +2646,16 @@
         }
       }
     },
+    "Pizzas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizzen"
+          }
+        }
+      }
+    },
     "Pizzas & orders" : {
       "localizations" : {
         "de" : {
@@ -2632,6 +2682,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pizzen: %lld"
+          }
+        }
+      }
+    },
+    "Plan" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planen"
           }
         }
       }
@@ -2752,6 +2812,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rezept"
+          }
+        }
+      }
+    },
+    "Recipes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rezepte"
           }
         }
       }
@@ -3804,6 +3874,16 @@
         }
       }
     },
+    "Type" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Art"
+          }
+        }
+      }
+    },
     "Typical ball weight is 230–280 g for a 30–33 cm pizza." : {
       "localizations" : {
         "de" : {
@@ -3992,12 +4072,12 @@
         }
       }
     },
-    "Your guests reply with the number and count, e.g. “1×2, 3×1”. Enter the orders below." : {
+    "Your guests reply with the number and count, e.g. “1×2, 3×1”. Enter the orders in the “Orders” tab." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deine Gäste antworten mit Nummer und Anzahl, z. B. „1×2, 3×1“. Trag die Bestellungen unten ein."
+            "value" : "Deine Gäste antworten mit Nummer und Anzahl, z. B. „1×2, 3×1“. Trag die Bestellungen im Tab „Bestellungen“ ein."
           }
         }
       }

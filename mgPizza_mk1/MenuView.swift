@@ -8,6 +8,8 @@ import SwiftUI
 
 /// Speisekarte für den Pizzaabend: an Gäste schicken, Bestellungen eintragen, Zutaten berechnen.
 struct MenuView: View {
+    enum Mode { case plan, orders }
+    var mode: Mode = .plan
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
     @AppStorage("menuTitle") private var menuTitle = ""
@@ -23,6 +25,7 @@ struct MenuView: View {
 
     var body: some View {
         List {
+            if mode == .plan {
             Section {
                 TextField("Pizza night", text: $menuTitle)
                 DatePicker("Date", selection: dateBinding, displayedComponents: [.date, .hourAndMinute])
@@ -40,12 +43,14 @@ struct MenuView: View {
                     }
                 }
             } footer: {
-                Text("Your guests reply with the number and count, e.g. “1×2, 3×1”. Enter the orders below.")
+                Text("Your guests reply with the number and count, e.g. “1×2, 3×1”. Enter the orders in the “Orders” tab.")
+            }
             }
 
+            if mode == .plan {
             Section {
                 ForEach(pizzas) { pizza in
-                    MenuPizzaRow(pizza: pizza, number: number(of: pizza)) { editingPizza = pizza }
+                    MenuPizzaRow(pizza: pizza, number: number(of: pizza), showsOrders: false) { editingPizza = pizza }
                 }
                 .onDelete { offsets in offsets.forEach { modelContext.delete(pizzas[$0]) } }
                 Button("Add pizza", systemImage: "plus") {
@@ -54,12 +59,26 @@ struct MenuView: View {
                     editingPizza = pizza
                 }
             } header: {
-                Text("Pizzas & orders")
+                Text("Pizzas")
             } footer: {
                 Text("Toggle the circle to put a pizza on or off the menu. Tap a pizza to edit its toppings.")
             }
+            }
 
-            if totalOrders > 0 {
+            if mode == .orders {
+                Section {
+                    ForEach(onMenu) { pizza in
+                        MenuPizzaRow(pizza: pizza, number: number(of: pizza), showsOrders: true) { editingPizza = pizza }
+                    }
+                    if onMenu.isEmpty {
+                        Text("No pizzas on the menu yet – pick some in “Plan”.").foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Orders")
+                }
+            }
+
+            if mode == .orders && totalOrders > 0 {
                 Section {
                     LabeledContent("Pizzas ordered", value: "\(totalOrders)")
                     ForEach(aggregatedToppings, id: \.key) { item in
@@ -80,7 +99,7 @@ struct MenuView: View {
                 } header: {
                     Text("Needed toppings")
                 } footer: {
-                    Text("Dough: \(roundCount) dough balls, \(detroitCount) Detroit pans – create the dough recipe with … → New Recipe.")
+                    Text("Dough: \(roundCount) dough balls, \(detroitCount) Detroit pans – create the dough recipe with the + button.")
                 }
             }
         }
@@ -134,18 +153,21 @@ struct MenuView: View {
 struct MenuPizzaRow: View {
     @Bindable var pizza: MenuPizza
     var number: Int?
+    var showsOrders = true
     var onEdit: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            Button {
-                pizza.isOnMenu.toggle()
-            } label: {
-                Image(systemName: pizza.isOnMenu ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(pizza.isOnMenu ? .green : .gray)
+            if !showsOrders {
+                Button {
+                    pizza.isOnMenu.toggle()
+                } label: {
+                    Image(systemName: pizza.isOnMenu ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(pizza.isOnMenu ? .green : .gray)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
             Button(action: onEdit) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -158,13 +180,13 @@ struct MenuPizzaRow: View {
             }
             .buttonStyle(.plain)
 
-            if pizza.isOnMenu {
+            if showsOrders {
                 Stepper("\(pizza.orderCount)", value: $pizza.orderCount, in: 0...99)
                     .fixedSize()
                     .monospacedDigit()
             }
         }
-        .opacity(pizza.isOnMenu ? 1 : 0.5)
+        .opacity(pizza.isOnMenu || showsOrders ? 1 : 0.5)
     }
 }
 
@@ -287,20 +309,22 @@ struct MenuCardView: View {
 
 /// Tab "Menü": Speisekarte und Einkaufsliste
 struct MenuAndShoppingView: View {
-    enum Page: Hashable { case menu, shopping }
-    @State private var page: Page = .menu
+    enum Page: Hashable { case plan, orders, shopping }
+    @State private var page: Page = .plan
 
     var body: some View {
         VStack(spacing: 0) {
             Picker("Page", selection: $page) {
-                Text("Menu").tag(Page.menu)
+                Text("Plan").tag(Page.plan)
+                Text("Orders").tag(Page.orders)
                 Text("Shopping list").tag(Page.shopping)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.bottom, 6)
             switch page {
-            case .menu: MenuView()
+            case .plan: MenuView(mode: .plan)
+            case .orders: MenuView(mode: .orders)
             case .shopping: ShoppingListView()
             }
         }

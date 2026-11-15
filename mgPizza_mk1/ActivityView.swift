@@ -16,30 +16,61 @@ struct ActivityView: View {
     @EnvironmentObject var ovenMonitor: OvenMonitor
     @Environment(\.scenePhase) private var scenePhase
 
+    /// Rezepte, die gerade Aufmerksamkeit brauchen (Zutaten/Kneten), zuerst; danach nach nächstem Termin.
+    private func prioritized(now: Date) -> [RecipeSetupData] {
+        activeRecipes.sorted { a, b in
+            let pa = a.phase(now: now), pb = b.phase(now: now)
+            let aBusy = pa == .ingredients || pa == .knead
+            let bBusy = pb == .ingredients || pb == .knead
+            if aBusy != bBusy { return aBusy }
+            return (a.nextEvent(now: now)?.date ?? .distantFuture) < (b.nextEvent(now: now)?.date ?? .distantFuture)
+        }
+    }
+
+    private func recipeLink<Label: View>(_ recipe: RecipeSetupData, @ViewBuilder label: () -> Label) -> some View {
+        NavigationLink {
+            RecipeDetailView(recipeData: recipe)
+        } label: {
+            label()
+        }
+        .swipeActions {
+            Button("Finish", systemImage: "stop.circle", role: .destructive) {
+                recipe.finishSession()
+            }
+        }
+    }
+
     var body: some View {
         List {
             if activeRecipes.isEmpty {
                 ContentUnavailableView("No dough running", systemImage: "timer",
-                                       description: Text("Open a recipe and tap “Bake now”, or create a new one with … → New Recipe."))
+                                       description: Text("Open a recipe and tap “Bake now”, or create a new one with the + button."))
             } else {
-                Section("Running") {
-                    ForEach(activeRecipes) { recipe in
-                        NavigationLink {
-                            RecipeDetailView(recipeData: recipe)
-                        } label: {
+                let ordered = prioritized(now: .now)
+                // Hero: das Wichtigste groß, der Rest kompakt darunter
+                if let hero = ordered.first {
+                    Section {
+                        recipeLink(hero) {
                             TimelineView(.periodic(from: .now, by: 1)) { context in
-                                ActiveRecipeCard(recipe: recipe, now: context.date)
+                                ActiveRecipeCard(recipe: hero, now: context.date)
                             }
                         }
                         .listRowBackground(Color.orange.opacity(0.12))
-                        .swipeActions {
-                            Button("Finish", systemImage: "stop.circle", role: .destructive) {
-                                recipe.finishSession()
+                    }
+                }
+                if ordered.count > 1 {
+                    Section("Also running") {
+                        ForEach(ordered.dropFirst()) { recipe in
+                            recipeLink(recipe) {
+                                TimelineView(.periodic(from: .now, by: 1)) { context in
+                                    CompactRecipeRow(recipe: recipe, now: context.date)
+                                }
                             }
                         }
                     }
                 }
             }
+            // Ofen als schmale Statuszeile (Timer-Status liegt jetzt in den Einstellungen)
             Section {
                 NavigationLink {
                     OvenView()
@@ -53,11 +84,6 @@ struct ActivityView: View {
                             Text(ovenMonitor.isActive ? LocalizedStringKey("…") : "Off").foregroundStyle(.secondary)
                         }
                     }
-                }
-                NavigationLink {
-                    TimerStatusView()
-                } label: {
-                    TimerStatusBadge()
                 }
             }
         }
@@ -86,7 +112,19 @@ struct ActiveRecipeCard: View {
             case .knead:
                 kneadInfo
             default:
-                ActiveDoughRow(recipe: recipe, now: now, showsName: false)
+                if let event = recipe.nextEvent(now: now) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Label(event.title, systemImage: event.icon)
+                        Spacer()
+                        Text(ActivityFormat.countdown(event.date.timeIntervalSince(now)))
+                            .font(.system(.title, design: .rounded).weight(.semibold))
+                            .monospacedDigit()
+                    }
+                    Text(event.date, format: .dateTime.weekday().hour().minute())
+                        .font(.caption).foregroundStyle(.secondary)
+                } else {
+                    ActiveDoughRow(recipe: recipe, now: now, showsName: false)
+                }
             }
         }
         .padding(.vertical, 4)
@@ -116,6 +154,56 @@ struct ActiveRecipeCard: View {
                 .font(.callout)
                 .foregroundStyle(.blue)
         }
+    }
+}
+
+/// Eine Zeile pro weiterem laufenden Rezept: Name, Phase, nächste Zeit.
+struct CompactRecipeRow: View {
+    var recipe: RecipeSetupData
+    var now: Date
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(recipe.displayName).font(.subheadline.weight(.semibold))
+                Text(phaseTitle).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if let event = recipe.nextEvent(now: now) {
+                Text(ActivityFormat.countdown(event.date.timeIntervalSince(now)))
+                    .monospacedDigit().bold()
+            }
+        }
+    }
+
+    private var phaseTitle: LocalizedStringKey {
+        switch recipe.phase(now: now) {
+        case .ingredients: return "Ingredients"
+        case .knead: return "Knead"
+        case .fridge: return "Fridge"
+        case .room: return "Room"
+        case .serve: return "Serve"
+        case nil: return ""
+        }
+    }
+}
+
+enum ActivityFormat {
+    static func countdown(_ interval: TimeInterval) -> String {
+        let total = max(0, Int(interval))
+        let d = total / 86400, h = (total % 86400) / 3600, m = (total % 3600) / 60, s = total % 60
+        return d > 0 ? String(format: "%dd %02d:%02d:%02d", d, h, m, s) : String(format: "%02d:%02d:%02d", h, m, s)
+    }
+}
+
+extension RecipeSetupData {
+    /// Nächstes zeitgesteuertes Ereignis (Teig raus / Servieren)
+    func nextEvent(now: Date) -> (title: LocalizedStringKey, icon: String, date: Date)? {
+        if isStarted {
+            if let out = fridgeOutDate, coolTime > 0, out > now { return ("Out of the fridge", "refrigerator", out) }
+            if let serving = servingDate, serving > now { return ("Serving", "fork.knife", serving) }
+        }
+        return nil
     }
 }
 

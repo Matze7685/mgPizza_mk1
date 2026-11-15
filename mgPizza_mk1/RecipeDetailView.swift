@@ -15,6 +15,8 @@ struct RecipeDetailView: View {
     @State private var isShowingShoppingPicker = false
     @State private var checkedIngredients: Set<String> = []
     @State private var shownBatch = 0
+    /// Aufgeklappte Bereiche: 1 Zutaten, 2 Kneten, 3 Gare & Timer, 4 Mehr
+    @State private var expanded: Set<Int> = [1]
 
     private var isShowingTemplate: Binding<Bool> {
         Binding { templateRecipe != nil } set: { if !$0 { templateRecipe = nil } }
@@ -23,18 +25,21 @@ struct RecipeDetailView: View {
     var body: some View {
         Form {
             phaseSection
+            DoughWarningsSection(recipe: recipeData)
             ingredientsSection
-            KneadSection(recipe: recipeData)
+            KneadSection(recipe: recipeData, isExpanded: expanded.contains(2)) { toggle(2) }
             timerSection
-            tipsSections
-            feedbackSection
-            settingsSection
+            moreSection
         }
         .navigationTitle(recipeData.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: recipeData.displayName) { recipeData.refreshScheduledTexts() }
         // Zutaten zeigen automatisch den aktuellen Knet-Durchgang
-        .onAppear { shownBatch = recipeData.currentBatch }
+        .onAppear {
+            shownBatch = recipeData.currentBatch
+            expanded = [currentGroup]
+        }
+        .onChange(of: currentGroup) { expanded = [currentGroup] }
         .onChange(of: recipeData.kneadBatch) { shownBatch = recipeData.currentBatch }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -53,6 +58,38 @@ struct RecipeDetailView: View {
     }
 
     // MARK: 0 · Status
+
+    /// Bereich der aktuellen Phase (ohne laufendes Rezept: Zutaten)
+    private var currentGroup: Int {
+        switch recipeData.phase() {
+        case nil, .ingredients: return 1
+        case .knead: return 2
+        default: return 3
+        }
+    }
+
+    private func toggle(_ group: Int) {
+        withAnimation {
+            if expanded.contains(group) { expanded.remove(group) } else { expanded.insert(group) }
+        }
+    }
+
+    private func sectionHeader(_ group: Int, _ title: LocalizedStringKey, summary: String? = nil) -> some View {
+        Button { toggle(group) } label: {
+            HStack {
+                Text(title)
+                if let summary, !expanded.contains(group) {
+                    Text(summary).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .rotationEffect(.degrees(expanded.contains(group) ? 90 : 0))
+            }
+            .textCase(nil)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
 
     var phaseSection: some View {
         Section {
@@ -88,6 +125,7 @@ struct RecipeDetailView: View {
 
     var ingredientsSection: some View {
         Section {
+            if expanded.contains(1) {
             if recipeData.batchCount > 1 {
                 Label("Too much for the mixer – kneaded in \(recipeData.batchCount) batches (max. \(Int(RecipeSetupData.mixerCapacity)) g each).",
                       systemImage: "square.split.2x1")
@@ -133,10 +171,11 @@ struct RecipeDetailView: View {
             Button("Add to shopping list", systemImage: "cart.badge.plus") {
                 isShowingShoppingPicker = true
             }
+            }
         } header: {
-            Text("1 · Ingredients")
+            sectionHeader(1, "1 · Ingredients", summary: "\(Int(recipeData.totalDoughWeight)) g")
         } footer: {
-            Text("Tap to tick off what you have weighed.")
+            if expanded.contains(1) { Text("Tap to tick off what you have weighed.") }
         }
     }
 
@@ -154,7 +193,9 @@ struct RecipeDetailView: View {
 
     var timerSection: some View {
         Section {
-            if recipeData.isStarted {
+            if !expanded.contains(3) {
+                EmptyView()
+            } else if recipeData.isStarted {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     ActiveDoughRow(recipe: recipeData, now: context.date, showsName: false)
                 }
@@ -189,9 +230,9 @@ struct RecipeDetailView: View {
                 .tint(recipeData.isKneadFinished ? .blue : .gray)
             }
         } header: {
-            Text("3 · Proof & timer")
+            sectionHeader(3, "3 · Proof & timer", summary: timerSummary)
         } footer: {
-            if !recipeData.isStarted {
+            if expanded.contains(3) && !recipeData.isStarted {
                 Text("Start when kneading is done. Reminders: 1 h before and when the dough comes out of the fridge, and at serving time.")
             }
         }
@@ -199,12 +240,33 @@ struct RecipeDetailView: View {
 
     // MARK: Tipps
 
+    private var timerSummary: String? {
+        guard let serving = recipeData.servingDate, recipeData.isStarted else { return nil }
+        return serving.formatted(.dateTime.weekday().hour().minute())
+    }
+
+    /// Selten gebrauchtes (Mehl-Tipp, Detroit-Anleitung, Feedback, Rezeptwerte) eingeklappt am Ende
     @ViewBuilder
-    var tipsSections: some View {
-        FlourHintSection(totalHours: recipeData.roomTime + (recipeData.isStarted ? recipeData.coolTime : recipeData.effectiveCoolTime()))
-        DoughWarningsSection(recipe: recipeData)
-        if recipeData.isDetroit {
-            DetroitTipsSection()
+    var moreSection: some View {
+        Section {
+            Button { toggle(4) } label: {
+                HStack {
+                    Label("More: tips, feedback, recipe values", systemImage: "ellipsis.circle")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .rotationEffect(.degrees(expanded.contains(4) ? 90 : 0))
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        if expanded.contains(4) {
+            FlourHintSection(totalHours: recipeData.roomTime + (recipeData.isStarted ? recipeData.coolTime : recipeData.effectiveCoolTime()))
+            if recipeData.isDetroit {
+                DetroitTipsSection()
+            }
+            feedbackSection
+            settingsSection
         }
     }
 
@@ -233,9 +295,6 @@ struct RecipeDetailView: View {
             if recipeData.oilRatio > 0 { LabeledContent("Olive Oil", value: String(format: "%.1f %%", recipeData.oilRatio)) }
             if recipeData.sugarRatio > 0 { LabeledContent("Sugar", value: String(format: "%.1f %%", recipeData.sugarRatio)) }
             LabeledContent("Yeast Correction", value: "\(Int(recipeData.yeastCorrection)) %")
-            Button("Use as template", systemImage: "doc.on.doc") {
-                templateRecipe = recipeData.copyAsTemplate()
-            }
         }
     }
 }

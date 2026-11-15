@@ -11,6 +11,8 @@ import SwiftUI
 /// Jeder Schritt wird von Hand gestartet, sobald alles in der Maschine ist.
 struct KneadSection: View {
     @Bindable var recipe: RecipeSetupData
+    var isExpanded = true
+    var onToggle: () -> Void = {}
     @State private var isEditing = false
     @State private var alarmedFor: Date?
 
@@ -18,32 +20,45 @@ struct KneadSection: View {
 
     var body: some View {
         Section {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                currentStepView(now: context.date)
-            }
-            ForEach(Array(recipe.kneadSteps.enumerated()), id: \.element.id) { index, step in
-                stepRow(index: index, step: step)
+            if isExpanded {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    currentStepView(now: context.date)
+                }
+                ForEach(Array(recipe.kneadSteps.enumerated()), id: \.element.id) { index, step in
+                    stepRow(index: index, step: step)
+                }
             }
         } header: {
+            // Alarm & Editor hängen am Header, damit sie auch eingeklappt funktionieren
             HStack {
-                Text("2 · Knead")
-                if !recipe.batchLabel.isEmpty {
-                    Text("· \(recipe.batchLabel)").foregroundStyle(.orange)
+                Button(action: onToggle) {
+                    HStack {
+                        Text("2 · Knead")
+                        if !recipe.batchLabel.isEmpty {
+                            Text("· \(recipe.batchLabel)").foregroundStyle(.orange)
+                        }
+                        Image(systemName: "chevron.right")
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
                 }
-                Spacer()
-                Button("Edit") { isEditing = true }
-                    .font(.caption)
-                    .textCase(nil)
+                .buttonStyle(.plain)
+                if isExpanded {
+                    Button("Edit") { isEditing = true }
+                        .font(.caption)
+                }
             }
-        }
-        .sheet(isPresented: $isEditing) {
-            KneadStepsEditor(steps: $recipe.kneadSteps, defaultPlan: KneadStep.plan(forStyle: recipe.style))
-        }
-        .onReceive(tick) { now in
-            // Alarm, wenn der laufende Schritt abgelaufen ist und die App offen ist
-            guard let end = recipe.kneadStepEnd, now >= end, alarmedFor != end else { return }
-            alarmedFor = end
-            KneadAlarm.ring()   // Sprachansage übernimmt ggf. der DoughAnnouncer
+            .textCase(nil)
+            .sheet(isPresented: $isEditing) {
+                KneadStepsEditor(steps: $recipe.kneadSteps, defaultPlan: KneadStep.plan(forStyle: recipe.style))
+            }
+            .onReceive(tick) { now in
+                // Alarm, wenn der laufende Schritt abgelaufen ist und die App offen ist
+                guard let end = recipe.kneadStepEnd, now >= end, alarmedFor != end else { return }
+                alarmedFor = end
+                KneadAlarm.ring()   // Sprachansage übernimmt ggf. der DoughAnnouncer
+            }
         }
     }
 
