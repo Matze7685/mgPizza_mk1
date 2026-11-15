@@ -12,6 +12,16 @@ struct ShoppingListView: View {
     @State private var newName = ""
     @State private var newAmount = ""
 
+    private var groups: [(source: String, items: [ShoppingItem])] {
+        var order: [String] = []
+        var map: [String: [ShoppingItem]] = [:]
+        for item in items {
+            if map[item.source] == nil { order.append(item.source) }
+            map[item.source, default: []].append(item)
+        }
+        return order.map { ($0, map[$0] ?? []) }
+    }
+
     var body: some View {
         List {
             Section {
@@ -30,29 +40,33 @@ struct ShoppingListView: View {
                 ContentUnavailableView("Nothing to buy", systemImage: "cart",
                                        description: Text("Add items here or from a dough / sauce recipe."))
             }
-            Section {
-                ForEach(items) { item in
-                    Button {
-                        item.isDone.toggle()
-                    } label: {
-                        HStack {
-                            Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(item.isDone ? .green : .gray)
-                            VStack(alignment: .leading) {
+            // Ein Ordner pro Abend/Event bzw. Rezept (Quelle), in der Reihenfolge des Eintragens
+            ForEach(groups, id: \.source) { group in
+                Section {
+                    ForEach(group.items) { item in
+                        Button {
+                            item.isDone.toggle()
+                        } label: {
+                            HStack {
+                                Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(item.isDone ? .green : .gray)
                                 Text(LocalizedStringKey(item.name))
                                     .strikethrough(item.isDone)
-                                if !item.source.isEmpty {
-                                    Text(item.source).font(.caption2).foregroundStyle(.secondary)
-                                }
+                                Spacer()
+                                Text(item.amount).foregroundStyle(.secondary)
                             }
-                            Spacer()
-                            Text(item.amount).foregroundStyle(.secondary)
                         }
+                        .foregroundStyle(.primary)
                     }
-                    .foregroundStyle(.primary)
-                }
-                .onDelete { offsets in
-                    offsets.forEach { modelContext.delete(items[$0]) }
+                    .onDelete { offsets in
+                        offsets.forEach { modelContext.delete(group.items[$0]) }
+                    }
+                } header: {
+                    HStack {
+                        Label(group.source.isEmpty ? String(localized: "Other") : group.source, systemImage: "folder")
+                        Spacer()
+                        Text("\(group.items.filter(\.isDone).count)/\(group.items.count)")
+                    }
                 }
             }
             if items.contains(where: \.isDone) {

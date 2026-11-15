@@ -5201,6 +5201,16 @@
           }
         }
       }
+    },
+    "Other" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonstiges"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
