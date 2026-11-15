@@ -10,8 +10,6 @@ import SwiftUI
 struct DoughSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @State private var yeastSelection: Int = 0
-    
     @Bindable var recipeSetupData: RecipeSetupData
     @Binding var path: NavigationPath
     @Binding var isShowingNewRecipeView: Bool
@@ -19,10 +17,35 @@ struct DoughSettingsView: View {
     var body: some View {
         Form {
             Section("Step 1 of 3") {
-                Stepper("Dough Balls: \(Int(recipeSetupData.doughBallsCount))", value: $recipeSetupData.doughBallsCount, in: 1...60)
-                VStack(alignment: .leading) {
-                    Text("Dough Weight: \(Int(recipeSetupData.doughWeight)) g")
-                    Slider(value: $recipeSetupData.doughWeight, in: 100...2000, step: 10)
+                TextField(recipeSetupData.autoName, text: $recipeSetupData.name)
+                Picker("Style", selection: $recipeSetupData.style) {
+                    Text("Round").tag("round")
+                    Text("Detroit").tag("detroit")
+                }
+                .pickerStyle(.segmented)
+                if recipeSetupData.isDetroit {
+                    Stepper("Pans: \(Int(recipeSetupData.doughBallsCount))", value: $recipeSetupData.doughBallsCount, in: 1...20)
+                    VStack(alignment: .leading) {
+                        Text("Pan Width: \(Int(recipeSetupData.panWidth)) cm")
+                        Slider(value: $recipeSetupData.panWidth, in: 10...50, step: 1)
+                    }
+                    VStack(alignment: .leading) {
+                        Text("Pan Length: \(Int(recipeSetupData.panLength)) cm")
+                        Slider(value: $recipeSetupData.panLength, in: 10...60, step: 1)
+                    }
+                    VStack(alignment: .leading) {
+                        Text("Dough Thickness: \(recipeSetupData.doughThickness, specifier: "%.1f") mm")
+                        Slider(value: $recipeSetupData.doughThickness, in: 3...25, step: 0.5)
+                        Text("Raw dough pressed into the pan. ~5–6 mm = classic (rises to ~2.5–3 cm), 8–12 mm = thick, 15+ mm = very thick / focaccia-like.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    LabeledContent("Dough per Pan", value: "\(Int(recipeSetupData.doughWeight)) g")
+                } else {
+                    Stepper("Dough Balls: \(Int(recipeSetupData.doughBallsCount))", value: $recipeSetupData.doughBallsCount, in: 1...60)
+                    VStack(alignment: .leading) {
+                        Text("Dough Weight: \(Int(recipeSetupData.doughWeight)) g")
+                        Slider(value: $recipeSetupData.doughWeight, in: 100...2000, step: 10)
+                    }
                 }
                 VStack(alignment: .leading) {
                     Text("Water: \(Int(recipeSetupData.waterRatio)) %")
@@ -31,6 +54,16 @@ struct DoughSettingsView: View {
                 VStack(alignment: .leading) {
                     Text("Salt: \(recipeSetupData.saltRatio, specifier: "%.1f") %")
                     Slider(value: $recipeSetupData.saltRatio, in: 1.0...4.0, step: 0.1)
+                }
+            }
+            Section(header: Text("Optional"), footer: Text("Oil and sugar help browning in home ovens / gas grills below ~400 °C. Leave at 0 for Neapolitan style.")) {
+                VStack(alignment: .leading) {
+                    Text("Olive Oil: \(recipeSetupData.oilRatio, specifier: "%.1f") %")
+                    Slider(value: $recipeSetupData.oilRatio, in: 0...5, step: 0.5)
+                }
+                VStack(alignment: .leading) {
+                    Text("Sugar: \(recipeSetupData.sugarRatio, specifier: "%.1f") %")
+                    Slider(value: $recipeSetupData.sugarRatio, in: 0...3, step: 0.5)
                 }
             }
             Section("Yeast") {
@@ -44,8 +77,34 @@ struct DoughSettingsView: View {
                         .pickerStyle(.segmented)
                     }
                 }
+                VStack(alignment: .leading) {
+                    Text("Yeast Correction: \(Int(recipeSetupData.yeastCorrection)) %")
+                    Slider(value: $recipeSetupData.yeastCorrection, in: 25...200, step: 5)
+                    Text("Lower it if your dough over-proofs, raise it if it stays too flat.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
+        .onChange(of: recipeSetupData.style) { _, newStyle in
+            if newStyle == "detroit" {
+                // Typische Detroit-Werte: hohe Hydration, etwas Öl
+                recipeSetupData.waterRatio = 72
+                recipeSetupData.saltRatio = 2.5
+                recipeSetupData.oilRatio = 2
+                recipeSetupData.doughBallsCount = 1
+                recipeSetupData.applyDetroitWeight()
+            } else {
+                recipeSetupData.doughWeight = 250
+                recipeSetupData.waterRatio = 65
+                recipeSetupData.saltRatio = 3
+                recipeSetupData.oilRatio = 0
+            }
+            recipeSetupData.kneadSteps = KneadStep.plan(forStyle: newStyle)
+        }
+        .onChange(of: recipeSetupData.panWidth) { recipeSetupData.applyDetroitWeight() }
+        .onChange(of: recipeSetupData.panLength) { recipeSetupData.applyDetroitWeight() }
+        .onChange(of: recipeSetupData.doughThickness) { recipeSetupData.applyDetroitWeight() }
         .navigationTitle("Dough Settings").font(.subheadline)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

@@ -19,16 +19,28 @@ struct FermentFridgeTimeTempView: View {
             Section("Step 3 of 3") {
                 Stepper("Cool Temperature: \(Int(recipeSetupData.coolTemp)) °C", value: $recipeSetupData.coolTemp, in: 1...10)
             }
-            Section("") {
-                Picker("Fridge Time Mode", selection: $recipeSetupData.fridgeTimeMode) {
-                    Text("AUTO").tag("AUTO")
-                    Text("MANUAL").tag("MAN")
+            if recipeSetupData.fridgeTimeMode == "OUT" {
+                Section(footer: Text("Set in step 2 – change it there.")) {
+                    LabeledContent("Out of the fridge") {
+                        Text(recipeSetupData.fridgeOutSelection, format: .dateTime.weekday().day().month().hour().minute())
+                    }
+                    LabeledContent("Serving") {
+                        Text(recipeSetupData.dateSelection, format: .dateTime.weekday().day().month().hour().minute())
+                    }
+                    LabeledContent("Fridge Time", value: "\(Int(recipeSetupData.effectiveCoolTime().rounded())) h")
                 }
-                .pickerStyle(.segmented)
-                if recipeSetupData.fridgeTimeMode == "AUTO" {
-                    fridgeTimeAuto
-                } else {
-                    fridgeTimeManual
+            } else {
+                Section("") {
+                    Picker("Fridge Time Mode", selection: $recipeSetupData.fridgeTimeMode) {
+                        Text("AUTO").tag("AUTO")
+                        Text("MANUAL").tag("MAN")
+                    }
+                    .pickerStyle(.segmented)
+                    if recipeSetupData.fridgeTimeMode == "AUTO" {
+                        fridgeTimeAuto
+                    } else {
+                        fridgeTimeManual
+                    }
                 }
             }
         }

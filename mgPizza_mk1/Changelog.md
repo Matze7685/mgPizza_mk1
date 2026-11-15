@@ -17,3 +17,11 @@
 ## Gasgrill Temp. Alarm aktivieren (Home Assistant, HomePod)
     -> Mehrere Temp.
 
+
+## v0.2
+- Dough: optional oil/sugar, yeast correction, name, ratio check, fixed AUTO fridge time in yeast calc
+- Timers: notifications 1 h before / when dough comes out of the fridge and at serving time
+- Knead timer with manually started, editable steps
+- Saved recipes list with rating & notes, "use as template"
+- Sauce calculator (ingredients in % of tomatoes) with feedback
+- Shopping list (manual + from dough/sauce recipes)

@@ -7,12 +7,43 @@
 
 import SwiftData
 import SwiftUI
+import UserNotifications
+
+/// Zeigt Benachrichtigungen auch an, wenn die App gerade offen ist (z. B. Knet-Timer).
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        _ = OvenMonitor.shared   // Bluetooth sofort wiederherstellen, auch wenn iOS die App im Hintergrund startet
+        return true
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        let id = notification.request.identifier
+        if id.hasPrefix("knead-") {
+            // Knet-Timer: Ton kommt vom App-Alarm (genau einmal), sonst klingeln beide gleichzeitig
+            let recipeID = String(id.dropFirst("knead-".count))
+            MainActor.assumeIsolated { KneadAlarm.ring(for: recipeID) }
+            completionHandler([.banner, .list])
+        } else {
+            completionHandler([.banner, .sound, .list])
+        }
+    }
+}
 
 @main
 struct mgPizza_mk1App: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @ObservedObject private var ovenMonitor = OvenMonitor.shared
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             RecipeSetupData.self,
+            SauceRecipe.self,
+            ShoppingItem.self,
+            MenuPizza.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -27,6 +58,7 @@ struct mgPizza_mk1App: App {
         WindowGroup {
             MainView()
                 .environmentObject(TimerLogic())
+                .environmentObject(ovenMonitor)
         }
 //        .modelContainer(for: RecipeSetupData.self)
         .modelContainer(sharedModelContainer)
