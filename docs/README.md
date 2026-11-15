@@ -20,3 +20,5 @@
 6. GitHub → Repo **Settings → Pages → Branch wählen, Ordner `/docs`**. Adresse: `https://<user>.github.io/<repo>/`.
 7. In der App: Menü → *Guest link* → Projekt-ID, API-Key und Seitenadresse eintragen (einmalig), Gäste eintragen, *Publish menu*, Link teilen.
 8. Später: *Fetch orders* → *Import into menu & toppings* → Zutaten landen in der Einkaufsliste-Funktion.
+
+**Alternative zu GitHub Pages:** Die Seite kann auch auf einem Mac mini laufen und über einen Cloudflare Tunnel per https erreichbar sein. Anleitung: [`hosting/mac-mini/ANLEITUNG.md`](../hosting/mac-mini/ANLEITUNG.md).
