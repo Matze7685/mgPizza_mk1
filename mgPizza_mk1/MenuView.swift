@@ -197,7 +197,9 @@ extension MenuPizza {
     }
 
     private static func normalized(_ name: String) -> String {
-        name.lowercased().replacingOccurrences(of: "\\(.*?\\)", with: "", options: .regularExpression)
+        // Namen im Belag sind oft englische Schlüssel („Cooked ham“), die App zeigt sie übersetzt („Schinken“)
+        Bundle.main.localizedString(forKey: name, value: nil, table: nil)
+            .lowercased().replacingOccurrences(of: "\\(.*?\\)", with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespaces)
     }
 
