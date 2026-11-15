@@ -6,7 +6,8 @@ iOS-App (SwiftUI, SwiftData, iOS 26.4) zum Planen von Pizzateig & Sauce. UI-Spra
 ungetestet gepusht, der Nutzer baut selbst.
 
 ## Tabs
-Activity (laufende Rezepte, Ofen, Timer-Status) · Dough (Rezepte) · Sauce · Speisekarte/Einkaufsliste · Settings
+Aktiv (Hero-Karte + kompakte Zeilen, Ofen) · Rezepte (Umschalter Teig/Sauce) · Speisekarte (Planen/Bestellungen/Einkaufsliste). Settings per Zahnrad (Sheet), neues Rezept per „+“.
+Rezeptdetail: nur Bereich der aktuellen Phase aufgeklappt, Tipps/Feedback/Rezeptwerte unter „Mehr“.
 
 ## Wichtige Dateien
 - `Model/RecipeSetupData.swift` – Teigrezept (@Model): Berechnung (Mehl/Wasser/Salz/Öl/Zucker/Hefe-Formel + Hefe-Korrektur),

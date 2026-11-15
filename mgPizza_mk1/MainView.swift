@@ -9,11 +9,12 @@ import SwiftData
 import SwiftUI
 
 enum MainTab: Hashable {
-    case activity, recipes, sauce, shopping, settings
+    case activity, recipes, menu
 }
 
 struct MainView: View {
     @State private var isShowingNewRecipeView: Bool = false
+    @State private var isShowingSettings: Bool = false
     @ObservedObject private var router = AppRouter.shared
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
@@ -29,26 +30,16 @@ struct MainView: View {
                         Label("Activity", systemImage: "house")
                     }
                     .tag(MainTab.activity)
-                RecipesView()
+                RecipesAndSaucesView()
                     .tabItem {
-                        Label("Dough", systemImage: "book")
+                        Label("Recipes", systemImage: "book")
                     }
                     .tag(MainTab.recipes)
-                SauceListView()
-                    .tabItem {
-                        Label("Sauce", systemImage: "drop")
-                    }
-                    .tag(MainTab.sauce)
                 MenuAndShoppingView()
                     .tabItem {
                         Label("Menu", systemImage: "menucard")
                     }
-                    .tag(MainTab.shopping)
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gear")
-                    }
-                    .tag(MainTab.settings)
+                    .tag(MainTab.menu)
             }
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showDoughStatus {
@@ -61,14 +52,14 @@ struct MainView: View {
                 if phase != .active { moveTimersToDynamicIsland() }
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Settings", systemImage: "gearshape") {
+                        isShowingSettings = true
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu("Actions", systemImage: "ellipsis") {
-                        Button("New Recipe", systemImage: "square.and.pencil") {
-                            isShowingNewRecipeView.toggle()
-                        }
-                        Button("Open Recipe", systemImage: "folder") {
-                            router.selectedTab = .recipes
-                        }
+                    Button("New Recipe", systemImage: "plus") {
+                        isShowingNewRecipeView.toggle()
                     }
                 }
             }
@@ -79,8 +70,40 @@ struct MainView: View {
                 SeedImporter.importIfNeeded(into: modelContext)
                 DoughAnnouncer.shared.start(context: modelContext)
             }
+            .sheet(isPresented: $isShowingSettings) {
+                NavigationStack {
+                    SettingsView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { isShowingSettings = false }
+                            }
+                        }
+                }
+            }
             .sheet(isPresented: $isShowingNewRecipeView) {
                 RecipeContainerView(recipeSetupData: RecipeSetupData(), isShowingNewRecipeView: $isShowingNewRecipeView)
+            }
+        }
+    }
+}
+
+/// Ein Tab für Teig- und Saucenrezepte, per Umschalter getrennt.
+struct RecipesAndSaucesView: View {
+    enum Kind: Hashable { case dough, sauce }
+    @State private var kind: Kind = .dough
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("Type", selection: $kind) {
+                Text("Dough").tag(Kind.dough)
+                Text("Sauce").tag(Kind.sauce)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            .padding(.bottom, 6)
+            switch kind {
+            case .dough: RecipesView()
+            case .sauce: SauceListView()
             }
         }
     }

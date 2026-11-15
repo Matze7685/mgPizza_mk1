@@ -11,45 +11,60 @@ import SwiftUI
 /// Jeder Schritt wird von Hand gestartet, sobald alles in der Maschine ist.
 struct KneadSection: View {
     @Bindable var recipe: RecipeSetupData
+    var isExpanded = true
+    var onToggle: () -> Void = {}
     @State private var isEditing = false
 
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         Section {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                currentStepView(now: context.date)
-            }
-            VoiceControlRow(recipe: recipe)
-            ForEach(Array(recipe.kneadSteps.enumerated()), id: \.element.id) { index, step in
-                stepRow(index: index, step: step)
+            if isExpanded {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    currentStepView(now: context.date)
+                }
+                VoiceControlRow(recipe: recipe)
+                ForEach(Array(recipe.kneadSteps.enumerated()), id: \.element.id) { index, step in
+                    stepRow(index: index, step: step)
+                }
             }
         } header: {
+            // Alarm & Editor hängen am Header, damit sie auch eingeklappt funktionieren
             HStack {
-                Text("2 · Knead")
-                if !recipe.batchLabel.isEmpty {
-                    Text("· \(recipe.batchLabel)").foregroundStyle(.orange)
+                Button(action: onToggle) {
+                    HStack {
+                        Text("2 · Knead")
+                        if !recipe.batchLabel.isEmpty {
+                            Text("· \(recipe.batchLabel)").foregroundStyle(.orange)
+                        }
+                        Image(systemName: "chevron.right")
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
                 }
-                Spacer()
-                Button("Edit") { isEditing = true }
-                    .font(.caption)
-                    .textCase(nil)
+                .buttonStyle(.plain)
+                if isExpanded {
+                    Button("Edit") { isEditing = true }
+                        .font(.caption)
+                }
             }
-        }
-        .sheet(isPresented: $isEditing) {
-            KneadStepsEditor(steps: $recipe.kneadSteps, defaultPlan: KneadStep.plan(forStyle: recipe.style))
-        }
-        .onReceive(tick) { now in
-            // Alarm, wenn der laufende Schritt abgelaufen ist und die App offen ist.
-            // KneadAlarm klingelt pro Schritt nur einmal (auch wenn die Benachrichtigung gleichzeitig kommt
-            // oder die Rezeptansicht zweimal im Navigationsstapel liegt).
-            // Nur klingeln, wenn der Schritt gerade eben bei sichtbarer App abgelaufen ist. Läuft die App nur im
-            // Hintergrund weiter (Bluetooth/Audio) oder kommt man erst später zurück, hat die Benachrichtigung
-            // schon geklingelt – ein zweiter Ton wäre genau der Doppelalarm.
-            guard UIApplication.shared.applicationState == .active,
-                  let end = recipe.kneadStepEnd, now >= end, now.timeIntervalSince(end) < 3 else { return }
-            if KneadAlarm.ring(for: recipe.uid.uuidString) {
-                VoiceControl.shared.stepFinished(for: recipe)
+            .textCase(nil)
+            .sheet(isPresented: $isEditing) {
+                KneadStepsEditor(steps: $recipe.kneadSteps, defaultPlan: KneadStep.plan(forStyle: recipe.style))
+            }
+            .onReceive(tick) { now in
+                // Alarm, wenn der laufende Schritt abgelaufen ist und die App offen ist.
+                // KneadAlarm klingelt pro Schritt nur einmal (auch wenn die Benachrichtigung gleichzeitig kommt
+                // oder die Rezeptansicht zweimal im Navigationsstapel liegt).
+                // Nur klingeln, wenn der Schritt gerade eben bei sichtbarer App abgelaufen ist. Läuft die App nur im
+                // Hintergrund weiter (Bluetooth/Audio) oder kommt man erst später zurück, hat die Benachrichtigung
+                // schon geklingelt – ein zweiter Ton wäre genau der Doppelalarm.
+                guard UIApplication.shared.applicationState == .active,
+                      let end = recipe.kneadStepEnd, now >= end, now.timeIntervalSince(end) < 3 else { return }
+                if KneadAlarm.ring(for: recipe.uid.uuidString) {
+                    VoiceControl.shared.stepFinished(for: recipe)
+                }
             }
         }
     }

@@ -41,7 +41,7 @@ struct RecipesView: View {
 
             if recipes.isEmpty {
                 ContentUnavailableView("No recipes yet", systemImage: "book",
-                                       description: Text("Create one with … → New Recipe."))
+                                       description: Text("Create one with the + button."))
             }
             ForEach(sortedRecipes) { recipe in
                 NavigationLink {
