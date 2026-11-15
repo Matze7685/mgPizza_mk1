@@ -211,6 +211,53 @@ struct GuestOrderService {
         .sorted { $0.guest.localizedCaseInsensitiveCompare($1.guest) == .orderedAscending }
     }
 
+    /// Dokument-ID einer Bestellung, gleich wie `slug()` in docs/index.html
+    private static let letters: ClosedRange<Unicode.Scalar> = "a"..."z"
+    private static let digits: ClosedRange<Unicode.Scalar> = "0"..."9"
+
+    static func slug(_ name: String) -> String {
+        var out = ""
+        var dash = false
+        for scalar in name.lowercased().decomposedStringWithCompatibilityMapping.unicodeScalars {
+            if Self.letters.contains(scalar) || Self.digits.contains(scalar) {
+                if dash && !out.isEmpty { out.append("-") }
+                dash = false
+                out.unicodeScalars.append(scalar)
+            } else {
+                dash = true
+            }
+        }
+        return out.isEmpty ? "gast" : out
+    }
+
+    /// Bestellung eines Gastes unter neuem Namen speichern und die alte entfernen (falls vorhanden)
+    func renameOrder(id: String, from old: String, to new: String) async throws {
+        let oldPath = "events/\(id)/orders/\(Self.slug(old))"
+        let (data, response) = try await URLSession.shared.data(from: try url(oldPath))
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
+        try check(response)
+        struct Doc: Decodable { struct Field: Decodable { var stringValue: String? }; var fields: [String: Field] }
+        guard let json = try JSONDecoder().decode(Doc.self, from: data).fields["data"]?.stringValue,
+              var order = try? JSONDecoder().decode(GuestOrder.self, from: Data(json.utf8)) else { return }
+        order.guest = new
+        var request = URLRequest(url: try url("events/\(id)/orders/\(Self.slug(new))"))
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let newJSON = String(decoding: try JSONEncoder().encode(order), as: UTF8.self)
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["fields": ["data": ["stringValue": newJSON]]])
+        let (_, saved) = try await URLSession.shared.data(for: request)
+        try check(saved)
+        if Self.slug(old) != Self.slug(new) { try await deleteOrder(id: id, guest: old) }
+    }
+
+    func deleteOrder(id: String, guest: String) async throws {
+        var request = URLRequest(url: try url("events/\(id)/orders/\(Self.slug(guest))"))
+        request.httpMethod = "DELETE"
+        let (_, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
+        try check(response)
+    }
+
     private func check(_ response: URLResponse) throws {
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw GuestOrderError.server(http.statusCode)
@@ -278,6 +325,10 @@ struct GuestLinkSheet: View {
     @State private var status = ""
     @State private var isBusy = false
     @State private var eveningCount = 0
+    @State private var newGuest = ""
+    @State private var renaming: String?
+    @State private var renameText = ""
+    @State private var removing: String?
 
     private var guests: [String] {
         guestNames.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -321,12 +372,34 @@ struct GuestLinkSheet: View {
                 }
 
                 Section {
-                    TextField("One name per line", text: $guestNames, axis: .vertical)
-                        .lineLimit(3...12)
+                    ForEach(guests, id: \.self) { name in
+                        Button {
+                            renameText = name
+                            renaming = name
+                        } label: {
+                            HStack {
+                                Text(name).foregroundStyle(.primary)
+                                Spacer()
+                                if orders.contains(where: { $0.guest == name }) {
+                                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                                }
+                            }
+                        }
+                        .swipeActions {
+                            Button("Remove", systemImage: "trash", role: .destructive) { removing = name }
+                        }
+                    }
+                    HStack {
+                        TextField("Add guest", text: $newGuest)
+                            .onSubmit(addGuests)
+                        Button("Add", systemImage: "plus.circle.fill", action: addGuests)
+                            .labelStyle(.iconOnly)
+                            .disabled(newGuest.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 } header: {
-                    Text("Guests")
+                    Text("Guests (\(guests.count))")
                 } footer: {
-                    Text("Guests pick their name on the page, then choose pizzas and toppings.")
+                    Text("Tap a name to rename, swipe to remove. An existing order moves with the new name; removing a guest deletes their order. Several names at once: separate with commas.")
                 }
 
                 Section {
@@ -400,6 +473,23 @@ struct GuestLinkSheet: View {
             .navigationTitle("Guest link")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+            .alert("Rename guest", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }) {
+                TextField("Name", text: $renameText)
+                Button("Cancel", role: .cancel) { renaming = nil }
+                Button("Save") {
+                    if let old = renaming { Task { await rename(old, to: renameText) } }
+                    renaming = nil
+                }
+            }
+            .confirmationDialog("Remove \(removing ?? "")?", isPresented: Binding { removing != nil } set: { if !$0 { removing = nil } },
+                                titleVisibility: .visible) {
+                Button("Remove guest and order", role: .destructive) {
+                    if let name = removing { Task { await remove(name) } }
+                    removing = nil
+                }
+            } message: {
+                Text("If this guest has already ordered, the order is deleted too.")
+            }
             .onAppear {
                 if eventID.isEmpty { eventID = Self.newID() }
                 // Erster Start mit Übersicht: den bisher genutzten Abend übernehmen
@@ -441,6 +531,50 @@ struct GuestLinkSheet: View {
         guestNames = evening.guests.joined(separator: "\n")
         orders = []
         status = String(localized: "Switched to “\(evening.title)”. Publishing sends the menu currently set up in the app.")
+    }
+
+    private func setGuests(_ list: [String]) {
+        guestNames = list.joined(separator: "\n")
+    }
+
+    /// Ein oder mehrere Namen (mit Komma oder Zeilenumbruch getrennt) hinzufügen, ohne Doppelte
+    private func addGuests() {
+        var list = guests
+        for name in newGuest.split(whereSeparator: { $0 == "," || $0 == "\n" }).map({ $0.trimmingCharacters(in: .whitespaces) })
+        where !name.isEmpty && !list.contains(where: { $0.caseInsensitiveCompare(name) == .orderedSame }) {
+            list.append(name)
+        }
+        setGuests(list)
+        newGuest = ""
+    }
+
+    /// Wurde der aktuelle Abend schon veröffentlicht? Dann Änderungen an der Gästeliste gleich hochladen.
+    private var isPublished: Bool { GuestEvenings.all.contains { $0.id == eventID && $0.publishedAt != nil } }
+
+    private func rename(_ old: String, to newName: String) async {
+        let name = newName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, name != old else { return }
+        if guests.contains(where: { $0 != old && $0.caseInsensitiveCompare(name) == .orderedSame }) {
+            status = String(localized: "“\(name)” is already on the list.")
+            return
+        }
+        setGuests(guests.map { $0 == old ? name : $0 })
+        if let i = orders.firstIndex(where: { $0.guest == old }) { orders[i].guest = name }
+        guard isPublished else { return }
+        do {
+            try await service.renameOrder(id: eventID, from: old, to: name)
+            await publish()
+        } catch { status = error.localizedDescription }
+    }
+
+    private func remove(_ name: String) async {
+        setGuests(guests.filter { $0 != name })
+        orders.removeAll { $0.guest == name }
+        guard isPublished else { return }
+        do {
+            try await service.deleteOrder(id: eventID, guest: name)
+            await publish()
+        } catch { status = error.localizedDescription }
     }
 
     private func publish() async {

@@ -5091,6 +5091,96 @@
           }
         }
       }
+    },
+    "Add guest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gast hinzufügen"
+          }
+        }
+      }
+    },
+    "Guests (%lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste (%lld)"
+          }
+        }
+      }
+    },
+    "Tap a name to rename, swipe to remove. An existing order moves with the new name; removing a guest deletes their order. Several names at once: separate with commas." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name antippen zum Umbenennen, wischen zum Entfernen. Eine vorhandene Bestellung wandert zum neuen Namen mit; beim Entfernen wird die Bestellung gelöscht. Mehrere Namen auf einmal: mit Komma trennen."
+          }
+        }
+      }
+    },
+    "Rename guest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gast umbenennen"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern"
+          }
+        }
+      }
+    },
+    "Remove %@?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ entfernen?"
+          }
+        }
+      }
+    },
+    "Remove guest and order" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gast und Bestellung entfernen"
+          }
+        }
+      }
+    },
+    "If this guest has already ordered, the order is deleted too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falls dieser Gast schon bestellt hat, wird die Bestellung mitgelöscht."
+          }
+        }
+      }
+    },
+    "“%@” is already on the list." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ steht schon auf der Liste."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
