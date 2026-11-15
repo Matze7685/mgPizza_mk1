@@ -4811,6 +4811,56 @@
           }
         }
       }
+    },
+    "Extra amounts per pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengen der Zusatzzutaten pro Pizza"
+          }
+        }
+      }
+    },
+    "Extra amounts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusatzzutaten-Mengen"
+          }
+        }
+      }
+    },
+    "How much of an ingredient one pizza needs when a guest types it in as an extra." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie viel von einer Zutat eine Pizza braucht, wenn ein Gast sie als Zusatz eintippt."
+          }
+        }
+      }
+    },
+    "Amount per pizza. Used when guests type their own extra ingredients. Unknown ingredients count as 1 piece." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menge pro Pizza. Gilt für Zutaten, die Gäste selbst als Zusatz eintippen. Unbekannte Zutaten zählen als 1 Stück."
+          }
+        }
+      }
+    },
+    "Restore defaults" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard wiederherstellen"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

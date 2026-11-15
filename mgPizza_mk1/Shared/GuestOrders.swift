@@ -51,6 +51,82 @@ enum GuestOrderError: LocalizedError {
     }
 }
 
+/// Standardmenge pro Pizza für Zusatzzutaten, die Gäste frei eintippen (z. B. „Ananas“ -> 50 g)
+struct ExtraAmount: Codable, Identifiable, Hashable {
+    var id = UUID()
+    var name: String
+    var amount: Double
+    var unit: String = "g"
+}
+
+enum ExtraDefaults {
+    private static let key = "extraDefaults_v1"
+
+    static let builtIn: [ExtraAmount] = [
+        .init(name: "Ananas", amount: 50), .init(name: "Champignons", amount: 60), .init(name: "Pilze", amount: 60),
+        .init(name: "Oliven", amount: 15), .init(name: "Mais", amount: 30), .init(name: "Paprika", amount: 40),
+        .init(name: "Speck", amount: 40), .init(name: "Zwiebel", amount: 20), .init(name: "Rucola", amount: 15),
+        .init(name: "Salami", amount: 50), .init(name: "Schinken", amount: 50), .init(name: "Thunfisch", amount: 60),
+        .init(name: "Knoblauch", amount: 1, unit: "pcs"), .init(name: "Parmesan", amount: 15),
+        .init(name: "Gorgonzola", amount: 30), .init(name: "Mozzarella", amount: 50), .init(name: "Basilikum", amount: 3, unit: "pcs"),
+        .init(name: "Artischocken", amount: 40), .init(name: "Peperoni", amount: 30), .init(name: "Dönerfleisch", amount: 60),
+        .init(name: "Tomaten", amount: 50), .init(name: "Ei", amount: 1, unit: "pcs"), .init(name: "Chili", amount: 0.25, unit: "tsp"),
+    ]
+
+    static var all: [ExtraAmount] {
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let list = try? JSONDecoder().decode([ExtraAmount].self, from: data) else { return builtIn }
+        return list
+    }
+
+    static func save(_ list: [ExtraAmount]) {
+        UserDefaults.standard.set(try? JSONEncoder().encode(list), forKey: key)
+    }
+
+    /// Menge pro Pizza für einen frei eingetippten Namen; unbekannt -> 1 Stück
+    static func amount(for name: String) -> (amount: Double, unit: String) {
+        let wanted = name.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !wanted.isEmpty else { return (1, "pcs") }
+        let list = all.filter { !$0.name.isEmpty }
+        let match = list.first { $0.name.lowercased() == wanted }
+            ?? list.first { wanted.contains($0.name.lowercased()) || $0.name.lowercased().contains(wanted) }
+        return match.map { ($0.amount, $0.unit) } ?? (1, "pcs")
+    }
+}
+
+struct ExtraDefaultsEditor: View {
+    @State private var items = ExtraDefaults.all
+
+    var body: some View {
+        List {
+            Section {
+                ForEach($items) { $item in
+                    HStack {
+                        TextField("Ingredient", text: $item.name)
+                        TextField("Amount", value: $item.amount, format: .number.precision(.fractionLength(0...2)))
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 60)
+                        Picker("Unit", selection: $item.unit) {
+                            ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                }
+                .onDelete { items.remove(atOffsets: $0) }
+                Button("Add ingredient", systemImage: "plus") { items.append(ExtraAmount(name: "", amount: 30)) }
+                Button("Restore defaults", systemImage: "arrow.uturn.backward") { items = ExtraDefaults.builtIn }
+            } footer: {
+                Text("Amount per pizza. Used when guests type their own extra ingredients. Unknown ingredients count as 1 piece.")
+            }
+        }
+        .navigationTitle("Extra amounts")
+        .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: items) { _, new in ExtraDefaults.save(new) }
+    }
+}
+
 struct GuestOrderService {
     var project: String
     var apiKey: String
@@ -123,7 +199,10 @@ extension MenuPizza {
                 guard let custom = line.custom, line.count > 0 else { continue }
                 let pizza = MenuPizza(name: String(localized: "Custom pizza – \(order.guest)"),
                                       toppings: custom.map { Topping(name: $0.name, amount: $0.amount, unit: $0.unit) }
-                                          + (line.extra ?? []).map { Topping(name: $0, amount: 1, unit: "pcs") },
+                                          + (line.extra ?? []).map { extra in
+                                              let standard = ExtraDefaults.amount(for: extra)
+                                              return Topping(name: extra, amount: standard.amount, unit: standard.unit)
+                                          },
                                       sortIndex: index)
                 pizza.isGuestCustom = true
                 pizza.orderCount = line.count
@@ -219,6 +298,12 @@ struct GuestLinkSheet: View {
                     Text("Orders")
                 } footer: {
                     Text("Importing replaces the order counts in the menu.")
+                }
+
+                Section {
+                    NavigationLink("Extra amounts per pizza") { ExtraDefaultsEditor() }
+                } footer: {
+                    Text("How much of an ingredient one pizza needs when a guest types it in as an extra.")
                 }
 
                 Section {
