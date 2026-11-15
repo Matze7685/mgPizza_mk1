@@ -125,6 +125,7 @@ if [ -z "$DOMAIN" ]; then
 else
   # Weg C: Caddy mit eigener Domain und automatischem https-Zertifikat (Let's Encrypt)
   CADDYFILE="$STATE/Caddyfile"
+  mkdir -p "$STATE/sites"
   cat > "$CADDYFILE" <<CADDY
 {
 	http_port $HTTP_PORT
@@ -143,6 +144,9 @@ http://127.0.0.1:$PORT {
 	root * "$SITE"
 	file_server
 }
+
+# Weitere Seiten und Weiterleitungen (z. B. vom Raspberry übernommen), je eine Datei *.caddy
+import "$STATE/sites/*.caddy"
 CADDY
   "$CADDY" validate --config "$CADDYFILE" --adapter caddyfile >/dev/null 2>&1 \
     || fail "Die Caddy-Einstellungen sind ungültig. Prüfen mit: $CADDY validate --config $CADDYFILE --adapter caddyfile"
