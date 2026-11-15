@@ -172,18 +172,64 @@ extension MenuPizza {
                 if count > 0 { totals[key, default: (topping.name, 0, topping.unit)].amount += topping.amount * Double(count) }
             }
         }
-        // Zusatzzutaten der Gäste mit Standardmenge pro Pizza (Einstellung „Extra amounts per pizza“)
+        // Zusatzzutaten der Gäste mit Standardmenge pro Pizza (Einstellung „Extra amounts per pizza“).
+        // Gibt es die Zutat schon im Belag (z. B. „Mozzarella“ ↔ „Mozzarella (fior di latte)“), wird sie dort dazugerechnet,
+        // bei anderer Einheit (g ↔ Stück) umgerechnet; sonst entstehen doppelte Einträge.
         for pizza in onMenu where pizza.orderCount > 0 {
             for (name, count) in pizza.guestExtras.sorted(by: { $0.key < $1.key }) where count > 0 {
                 let standard = ExtraDefaults.amount(for: name)
-                let key = "\(name.lowercased())|\(standard.unit)"
+                var amount = standard.amount * Double(count)
+                var key = "\(name.lowercased())|\(standard.unit)"
+                if totals[key] == nil, let match = existingKey(for: name, unit: standard.unit, in: totals, order: order) {
+                    key = match.key
+                    if match.unit != standard.unit, let converted = convert(amount, from: standard.unit, to: match.unit, name: name) {
+                        amount = converted
+                    }
+                }
                 if totals[key] == nil { order.append(key) }
-                totals[key, default: (name, 0, standard.unit)].amount += standard.amount * Double(count)
+                totals[key, default: (name, 0, standard.unit)].amount += amount
             }
         }
         return order.compactMap { key -> (key: String, name: String, amount: Double, unit: String)? in
             guard let item = totals[key] else { return nil }
             return (key, item.name, item.amount, item.unit)
+        }
+    }
+
+    private static func normalized(_ name: String) -> String {
+        // Namen im Belag sind oft englische Schlüssel („Cooked ham“), die App zeigt sie übersetzt („Schinken“)
+        Bundle.main.localizedString(forKey: name, value: nil, table: nil)
+            .lowercased().replacingOccurrences(of: "\\(.*?\\)", with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+    }
+
+    /// Schon vorhandener Eintrag für dieselbe Zutat (Namen enthalten sich gegenseitig); gleiche Einheit hat Vorrang
+    private static func existingKey(for name: String, unit: String, in totals: [String: (name: String, amount: Double, unit: String)],
+                                    order: [String]) -> (key: String, unit: String)? {
+        let wanted = normalized(name)
+        guard !wanted.isEmpty else { return nil }
+        let matches = order.compactMap { key -> (key: String, unit: String)? in
+            guard let item = totals[key] else { return nil }
+            let have = normalized(item.name)
+            guard !have.isEmpty, have.contains(wanted) || wanted.contains(have) else { return nil }
+            // andere Einheit nur, wenn umrechenbar
+            if item.unit != unit, convert(1, from: unit, to: item.unit, name: name) == nil { return nil }
+            return (key, item.unit)
+        }
+        return matches.first { $0.unit == unit } ?? matches.first
+    }
+
+    /// Gewicht eines Stücks in Gramm für gängige Zutaten (zum Umrechnen zwischen g und Stück)
+    private static let pieceGrams: [String: Double] = ["zwiebel": 150, "onion": 150, "knoblauch": 5, "garlic": 5,
+                                                       "ei": 60, "egg": 60, "tomate": 100, "paprika": 150]
+
+    private static func convert(_ amount: Double, from: String, to: String, name: String) -> Double? {
+        let words = normalized(name).split(whereSeparator: { $0 == " " || $0 == "-" }).map(String.init)
+        guard let grams = pieceGrams.first(where: { words.contains($0.key) })?.value else { return nil }
+        switch (from, to) {
+        case ("g", "pcs"): return amount / grams
+        case ("pcs", "g"): return amount * grams
+        default: return nil
         }
     }
 }
