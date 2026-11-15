@@ -22,6 +22,8 @@ class MenuPizza {
     var toppings: [Topping] = []
     var isOnMenu: Bool = true
     var orderCount: Int = 0
+    /// Zutaten, die Gäste abgewählt haben: Name -> wie oft (für die Einkaufsmenge)
+    var removedToppings: [String: Int] = [:]
     var sortIndex: Int = 0
     var isDetroit: Bool = false
 

@@ -4391,6 +4391,266 @@
           }
         }
       }
+    },
+    "Enter the Firebase project ID, API key and page address first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trage zuerst Firebase-Projekt-ID, API-Key und Seitenadresse ein."
+          }
+        }
+      }
+    },
+    "Server error %lld. Check project ID, API key and the Firestore rules." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serverfehler %lld. Prüfe Projekt-ID, API-Key und die Firestore-Regeln."
+          }
+        }
+      }
+    },
+    "One name per line" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Name pro Zeile"
+          }
+        }
+      }
+    },
+    "Guests tonight" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste heute Abend"
+          }
+        }
+      }
+    },
+    "Guests pick their name on the page, then choose pizzas and toppings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste wählen auf der Seite ihren Namen und dann Pizzen und Zutaten."
+          }
+        }
+      }
+    },
+    "Publish menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speisekarte veröffentlichen"
+          }
+        }
+      }
+    },
+    "Send guest link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästelink senden"
+          }
+        }
+      }
+    },
+    "New evening (new link, clears orders)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Abend (neuer Link, Bestellungen löschen)"
+          }
+        }
+      }
+    },
+    "New link created. Publish the menu again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Link erstellt. Veröffentliche die Karte erneut."
+          }
+        }
+      }
+    },
+    "Fetch orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen abholen"
+          }
+        }
+      }
+    },
+    "without" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ohne"
+          }
+        }
+      }
+    },
+    "Still missing: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es fehlen noch: %@"
+          }
+        }
+      }
+    },
+    "Import into menu & toppings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Karte & Zutaten übernehmen"
+          }
+        }
+      }
+    },
+    "Orders imported. The needed toppings are updated below." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen übernommen. Die benötigten Zutaten sind unten aktualisiert."
+          }
+        }
+      }
+    },
+    "Orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen"
+          }
+        }
+      }
+    },
+    "Importing replaces the order counts in the menu." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Import ersetzt die Bestellmengen in der Speisekarte."
+          }
+        }
+      }
+    },
+    "Firebase project ID" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firebase-Projekt-ID"
+          }
+        }
+      }
+    },
+    "Firebase API key" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firebase-API-Key"
+          }
+        }
+      }
+    },
+    "Guest page address (https://…)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse der Gästeseite (https://…)"
+          }
+        }
+      }
+    },
+    "Setup (once)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einrichtung (einmalig)"
+          }
+        }
+      }
+    },
+    "Steps: see docs/README.md in the repository." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schritte: siehe docs/README.md im Repository."
+          }
+        }
+      }
+    },
+    "Guest link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästelink"
+          }
+        }
+      }
+    },
+    "Guest link: guests order online" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästelink: Gäste bestellen online"
+          }
+        }
+      }
+    },
+    "Published. Enter the guest page address to get the link." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veröffentlicht. Trage die Adresse der Gästeseite ein, um den Link zu erhalten."
+          }
+        }
+      }
+    },
+    "Published. Send the guest link." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veröffentlicht. Sende den Gästelink."
+          }
+        }
+      }
+    },
+    "%lld orders received." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Bestellungen erhalten."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

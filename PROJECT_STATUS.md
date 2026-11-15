@@ -24,6 +24,7 @@ Activity (laufende Rezepte, Ofen, Timer-Status) · Dough (Rezepte) · Sauce · S
 - `Shared/VoiceControl.swift` – Sprachsteuerung (Deutsch/Englisch) für den Knetablauf: „nächster Schritt“, „Start“, „zurück“, „wiederholen“, „wie lange“, „Kühlschrank“, „Sprachsteuerung aus“. Mikrofon-Schalter im Knet-Abschnitt.
 - `ActivityView.swift` enthält `DoughStatusBar` (oben angeheftete Statusleiste nur während Zutaten/Kneten, Option „Always show dough status“); `MainView` schiebt Timer beim Verlassen der App in die Dynamic Island.
 - Knet-Alarm: `KneadAlarm.ring(for:)` entprellt; Benachrichtigung ohne eigenen Ton im Vordergrund (AppDelegate).
+- `Shared/GuestOrders.swift` + `docs/` – Gäste-Speisekartenlink (Firebase Firestore REST, Webseite `docs/index.html`, Einrichtung `docs/README.md`); Import setzt Bestellmengen + abgewählte Zutaten (`MenuPizza.removedToppings`).
 - `Shared/TimerStatusView.swift` – Kontrolle geplanter Erinnerungen/Berechtigungen.
 - `Shared/SeedImporter.swift` – einmaliger Import der Rezepte aus „Pizzarezepte.numbers“.
 - `Bluetooth/OvenMonitor.swift` – Ooni Digital Temperature Hub (BLE, Name „Ooni_DT_Hub“, Service 69400001-…, Notify 69400002-…,
