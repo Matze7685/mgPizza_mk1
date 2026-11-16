@@ -7,15 +7,49 @@
    rules_version = '2';
    service cloud.firestore {
      match /databases/{db}/documents {
+       function sha(k) { return hashing.sha256(k).toHexString().lower(); }
+       function proofPath(e, id) { return /databases/$(db)/documents/events/$(e)/proofs/$(id); }
+       // Gültiger Nachweis: wird im selben Schritt geschrieben (neuer Nonce) und passt zum Hash des Besitzers bzw. Gastgebers
+       function proved(e, id, hash) {
+         return existsAfter(proofPath(e, id))
+           && getAfter(proofPath(e, id)).data.nonce != resource.data.get('nonce', '')
+           && sha(getAfter(proofPath(e, id)).data.key) == hash;
+       }
+       function hostHash(e) { return get(/databases/$(db)/documents/events/$(e)).data.get('hostHash', '#'); }
+
        match /events/{event} {
-         allow get, write: if true;   // nur einzelne Abende per ID, keine Liste aller Abende
-         match /orders/{order} { allow read, write: if true; }
+         allow get: if true;       // nur einzelne Abende per ID, keine Liste aller Abende
+         allow create: if true;
+         // Abend ändern: nur der Gastgeber (oder solange der Abend noch keinen Gastgeber-Hash hat)
+         allow update, delete: if resource.data.get('hostHash', '') == ''
+           || proved(event, '_event', resource.data.hostHash);
+
+         match /proofs/{id} { allow write: if true; allow read: if false; }   // Schlüssel sind nie lesbar
+
+         match /orders/{order} {
+           allow read: if true;      // alle sehen alle Bestellungen (nur ansehen)
+           allow create: if true;
+           // Ändern: Gerät des Gasts, Gastgeber, oder (alte/freigegebene Bestellung ohne Kennung) das erste Gerät, das speichert
+           allow update: if resource.data.get('ownerHash', '') == ''
+             || (proved(event, order, resource.data.ownerHash) && request.resource.data.ownerHash == resource.data.ownerHash
+                 && request.resource.data.nonce == getAfter(proofPath(event, order)).data.nonce)
+             || (proved(event, order, hostHash(event)));
+           // Löschen: Gerät des Gasts oder Gastgeber (alte Bestellungen ohne Kennung nur der Gastgeber)
+           allow delete: if resource == null
+             || (resource.data.get('ownerHash', '') != '' && proved(event, order, resource.data.ownerHash))
+             || proved(event, order, hostHash(event));
+         }
        }
      }
    }
    ```
+   **So funktioniert der Schutz:** Jedes Gästegerät erzeugt beim ersten Besuch einen zufälligen Schlüssel (nur im Browser, kein Login).
+   An der Bestellung steht nur dessen Hash. Zum Ändern/Löschen schickt die Seite den Schlüssel als nicht lesbaren „Nachweis“ im selben
+   Schritt mit; die Regeln prüfen ihn serverseitig. Fremde Bestellungen sind nur sichtbar. Der Gastgeber hat einen eigenen Schlüssel in der App
+   (Hash am Abend) und kann so jede Bestellung löschen oder freigeben (Menü → Guest link → Bestellung nach links wischen).
+   Eine freigegebene oder alte Bestellung (ohne Kennung) übernimmt das nächste Gerät, das sie speichert.
    Die Event-ID im Link ist lang und zufällig (unerratbar), sonst ist nichts geschützt – für einen Pizzaabend okay.
-   `get` statt `read` sorgt dafür, dass niemand die Liste aller Abende abrufen kann: Wer einen Link hat, sieht nur diesen einen Abend.
+   Hinweis: Einmal im **Regeln-Simulator** der Firebase-Konsole testen. Ohne die neuen Regeln läuft alles weiter wie bisher, nur ohne Schutz.
 4. **Projekteinstellungen → Allgemein**: *Projekt-ID* und unter *Ihre Apps → Web-App* den *apiKey* notieren (App registrieren, Hosting nicht nötig).
 5. In `docs/index.html` oben `PROJECT` und `API_KEY` eintragen, pushen.
 6. GitHub → Repo **Settings → Pages → Branch wählen, Ordner `/docs`**. Adresse: `https://<user>.github.io/<repo>/`.

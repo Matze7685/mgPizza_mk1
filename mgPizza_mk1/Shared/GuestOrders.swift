@@ -3,6 +3,7 @@
 //  mgPizza_mk1
 //
 
+import CryptoKit
 import SwiftData
 import SwiftUI
 
@@ -83,14 +84,37 @@ struct GuestOrder: Codable, Identifiable {
     var guest: String
     var lines: [Line]
     var note: String?
+    /// Nur lokal aus dem Server-Dokument gesetzt: Bestellung ist an ein Gästegerät gebunden
+    var claimed: Bool? = nil
     var id: String { guest }
+    private enum CodingKeys: String, CodingKey { case guest, lines, note }
+}
+
+/// Gastgeber-Schlüssel (einmal pro App-Installation). Nur der Hash steht auf dem Server (`hostHash` im Abend);
+/// mit dem Schlüssel selbst darf der Gastgeber jede Bestellung ändern, löschen oder freigeben.
+enum GuestHostKey {
+    private static let storeKey = "guestHostKey_v1"
+
+    static var secret: String {
+        if let saved = UserDefaults.standard.string(forKey: storeKey) { return saved }
+        let new = (UUID().uuidString + UUID().uuidString).replacingOccurrences(of: "-", with: "").lowercased()
+        UserDefaults.standard.set(new, forKey: storeKey)
+        return new
+    }
+
+    static var hash: String { sha256Hex(secret) }
+
+    static func sha256Hex(_ text: String) -> String {
+        SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
 }
 
 enum GuestOrderError: LocalizedError {
-    case notConfigured, server(Int)
+    case notConfigured, forbidden, server(Int)
     var errorDescription: String? {
         switch self {
         case .notConfigured: String(localized: "Enter the Firebase project ID, API key and page address first.")
+        case .forbidden: String(localized: "Not allowed: this evening was published from another device, or the Firestore rules are not updated yet (see docs/README.md).")
         case .server(let code): String(localized: "Server error \(code). Check project ID, API key and the Firestore rules.")
         }
     }
@@ -183,17 +207,39 @@ struct GuestOrderService {
         return url
     }
 
+    private var docRoot: String { "projects/\(project)/databases/(default)/documents" }
+
+    private func string(_ value: String) -> [String: Any] { ["stringValue": value] }
+
+    /// Nachweis für die Firestore-Regeln: wird im selben Schritt wie die eigentliche Änderung geschrieben und ist nicht lesbar
+    private func proofWrite(event: String, id: String, nonce: String) -> [String: Any] {
+        ["update": ["name": "\(docRoot)/events/\(event)/proofs/\(id)",
+                    "fields": ["key": string(GuestHostKey.secret), "nonce": string(nonce)]]]
+    }
+
+    private func commit(_ writes: [[String: Any]]) async throws {
+        guard !project.isEmpty, !apiKey.isEmpty,
+              let url = URL(string: "https://firestore.googleapis.com/v1/\(docRoot):commit?key=\(apiKey)")
+        else { throw GuestOrderError.notConfigured }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["writes": writes])
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try check(response)
+    }
+
     /// Speisekarte + Gäste hochladen (überschreibt die Karte unter derselben ID)
     func publish(_ event: GuestEvent, id: String) async throws {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         let json = String(decoding: try encoder.encode(event), as: UTF8.self)
-        var request = URLRequest(url: try url("events/\(id)"))
-        request.httpMethod = "PATCH"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["fields": ["data": ["stringValue": json]]])
-        let (_, response) = try await URLSession.shared.data(for: request)
-        try check(response)
+        let nonce = UUID().uuidString
+        try await commit([
+            proofWrite(event: id, id: "_event", nonce: nonce),
+            ["update": ["name": "\(docRoot)/events/\(id)",
+                        "fields": ["data": string(json), "hostHash": string(GuestHostKey.hash), "nonce": string(nonce)]]],
+        ])
     }
 
     func fetchOrders(id: String) async throws -> [GuestOrder] {
@@ -206,7 +252,10 @@ struct GuestOrderService {
         }
         let list = try JSONDecoder().decode(List.self, from: data)
         return (list.documents ?? []).compactMap { doc in
-            doc.fields["data"]?.stringValue.flatMap { try? JSONDecoder().decode(GuestOrder.self, from: Data($0.utf8)) }
+            guard var order = doc.fields["data"]?.stringValue.flatMap({ try? JSONDecoder().decode(GuestOrder.self, from: Data($0.utf8)) })
+            else { return nil }
+            order.claimed = !(doc.fields["ownerHash"]?.stringValue ?? "").isEmpty
+            return order
         }
         .sorted { $0.guest.localizedCaseInsensitiveCompare($1.guest) == .orderedAscending }
     }
@@ -230,36 +279,52 @@ struct GuestOrderService {
         return out.isEmpty ? "gast" : out
     }
 
-    /// Bestellung eines Gastes unter neuem Namen speichern und die alte entfernen (falls vorhanden)
+    /// Bestellung eines Gastes unter neuem Namen speichern und die alte entfernen (falls vorhanden). Das Gerät des Gasts bleibt zugeordnet.
     func renameOrder(id: String, from old: String, to new: String) async throws {
         let oldPath = "events/\(id)/orders/\(Self.slug(old))"
         let (data, response) = try await URLSession.shared.data(from: try url(oldPath))
         if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
         try check(response)
         struct Doc: Decodable { struct Field: Decodable { var stringValue: String? }; var fields: [String: Field] }
-        guard let json = try JSONDecoder().decode(Doc.self, from: data).fields["data"]?.stringValue,
+        let fields = try JSONDecoder().decode(Doc.self, from: data).fields
+        guard let json = fields["data"]?.stringValue,
               var order = try? JSONDecoder().decode(GuestOrder.self, from: Data(json.utf8)) else { return }
         order.guest = new
-        var request = URLRequest(url: try url("events/\(id)/orders/\(Self.slug(new))"))
-        request.httpMethod = "PATCH"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let newJSON = String(decoding: try JSONEncoder().encode(order), as: UTF8.self)
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["fields": ["data": ["stringValue": newJSON]]])
-        let (_, saved) = try await URLSession.shared.data(for: request)
-        try check(saved)
-        if Self.slug(old) != Self.slug(new) { try await deleteOrder(id: id, guest: old) }
+        let nonce = UUID().uuidString
+        var newFields: [String: Any] = ["data": string(newJSON), "nonce": string(nonce)]
+        if let owner = fields["ownerHash"]?.stringValue, !owner.isEmpty { newFields["ownerHash"] = string(owner) }
+        let newSlug = Self.slug(new)
+        try await commit([
+            proofWrite(event: id, id: newSlug, nonce: nonce),
+            ["update": ["name": "\(docRoot)/events/\(id)/orders/\(newSlug)", "fields": newFields]],
+        ])
+        if Self.slug(old) != newSlug { try await deleteOrder(id: id, guest: old) }
     }
 
+    /// Als Gastgeber jede Bestellung löschen
     func deleteOrder(id: String, guest: String) async throws {
-        var request = URLRequest(url: try url("events/\(id)/orders/\(Self.slug(guest))"))
-        request.httpMethod = "DELETE"
-        let (_, response) = try await URLSession.shared.data(for: request)
-        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
-        try check(response)
+        let slug = Self.slug(guest)
+        try await commit([
+            proofWrite(event: id, id: slug, nonce: UUID().uuidString),
+            ["delete": "\(docRoot)/events/\(id)/orders/\(slug)"],
+        ])
+    }
+
+    /// Bestellung für ein neues Gerät freigeben: Die Bestellung bleibt, das nächste Gerät, das sie speichert, übernimmt sie
+    func releaseOrder(id: String, guest: String) async throws {
+        let slug = Self.slug(guest)
+        let nonce = UUID().uuidString
+        try await commit([
+            proofWrite(event: id, id: slug, nonce: nonce),
+            ["update": ["name": "\(docRoot)/events/\(id)/orders/\(slug)", "fields": ["nonce": string(nonce)]],
+             "updateMask": ["fieldPaths": ["ownerHash", "nonce"]]],
+        ])
     }
 
     private func check(_ response: URLResponse) throws {
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            if http.statusCode == 403 { throw GuestOrderError.forbidden }
             throw GuestOrderError.server(http.statusCode)
         }
     }
@@ -329,6 +394,7 @@ struct GuestLinkSheet: View {
     @State private var renaming: String?
     @State private var renameText = ""
     @State private var removing: String?
+    @State private var deletingOrder: String?
 
     private var guests: [String] {
         guestNames.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -426,10 +492,20 @@ struct GuestLinkSheet: View {
                         .disabled(isBusy)
                     ForEach(orders) { order in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(order.guest).font(.headline)
+                            HStack(spacing: 4) {
+                                Text(order.guest).font(.headline)
+                                if order.claimed == true { Image(systemName: "lock.fill").font(.caption).foregroundStyle(.secondary) }
+                            }
                             Text(order.lines.map { "\($0.count)× \($0.name)" + ($0.custom.map { " (\($0.map(\.name).joined(separator: ", ")))" } ?? "") + (($0.extra ?? []).isEmpty ? "" : " + \($0.extra!.joined(separator: ", "))") + ($0.without.isEmpty ? "" : " (\(String(localized: "without")) \($0.without.joined(separator: ", ")))") }
                                 .joined(separator: ", "))
                                 .font(.caption).foregroundStyle(.secondary)
+                        }
+                        .swipeActions {
+                            Button("Delete order", systemImage: "trash", role: .destructive) { deletingOrder = order.guest }
+                            if order.claimed == true {
+                                Button("Release for new device", systemImage: "lock.open") { Task { await release(order.guest) } }
+                                    .tint(.orange)
+                            }
                         }
                     }
                     let missing = guests.filter { name in !orders.contains { $0.guest == name } }
@@ -446,7 +522,7 @@ struct GuestLinkSheet: View {
                 } header: {
                     Text("Orders")
                 } footer: {
-                    Text("Importing replaces the order counts in the menu.")
+                    Text("Importing replaces the order counts in the menu. A lock means the order belongs to the guest's device. Swipe to release it (e.g. new phone) or delete it.")
                 }
 
                 Section {
@@ -489,6 +565,13 @@ struct GuestLinkSheet: View {
                 }
             } message: {
                 Text("If this guest has already ordered, the order is deleted too.")
+            }
+            .confirmationDialog("Delete the order of \(deletingOrder ?? \"\")?", isPresented: Binding { deletingOrder != nil } set: { if !$0 { deletingOrder = nil } },
+                                titleVisibility: .visible) {
+                Button("Delete order", role: .destructive) {
+                    if let name = deletingOrder { Task { await deleteGuestOrder(name) } }
+                    deletingOrder = nil
+                }
             }
             .onAppear {
                 if eventID.isEmpty { eventID = Self.newID() }
@@ -574,6 +657,21 @@ struct GuestLinkSheet: View {
         do {
             try await service.deleteOrder(id: eventID, guest: name)
             await publish()
+        } catch { status = error.localizedDescription }
+    }
+
+    private func release(_ name: String) async {
+        do {
+            try await service.releaseOrder(id: eventID, guest: name)
+            orders = try await service.fetchOrders(id: eventID)
+            status = String(localized: "Order of \(name) released. The next device that saves it takes it over.")
+        } catch { status = error.localizedDescription }
+    }
+
+    private func deleteGuestOrder(_ name: String) async {
+        do {
+            try await service.deleteOrder(id: eventID, guest: name)
+            orders.removeAll { $0.guest == name }
         } catch { status = error.localizedDescription }
     }
 

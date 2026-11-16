@@ -4612,16 +4612,6 @@
         }
       }
     },
-    "Importing replaces the order counts in the menu." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Import ersetzt die Bestellmengen in der Speisekarte."
-          }
-        }
-      }
-    },
     "Firebase project ID" : {
       "localizations" : {
         "de" : {
@@ -5208,6 +5198,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonstiges"
+          }
+        }
+      }
+    },
+    "Not allowed: this evening was published from another device, or the Firestore rules are not updated yet (see docs/README.md)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht erlaubt: Dieser Abend wurde von einem anderen Gerät veröffentlicht, oder die Firestore-Regeln sind noch nicht aktualisiert (siehe docs/README.md)."
+          }
+        }
+      }
+    },
+    "Delete order" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellung löschen"
+          }
+        }
+      }
+    },
+    "Release for new device" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für neues Gerät freigeben"
+          }
+        }
+      }
+    },
+    "Importing replaces the order counts in the menu. A lock means the order belongs to the guest's device. Swipe to release it (e.g. new phone) or delete it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Übernehmen werden die Bestellmengen in der Karte ersetzt. Ein Schloss heißt: Die Bestellung gehört zum Gerät des Gasts. Wische, um sie freizugeben (z. B. neues Handy) oder zu löschen."
+          }
+        }
+      }
+    },
+    "Delete the order of %@?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellung von %@ löschen?"
+          }
+        }
+      }
+    },
+    "Order of %@ released. The next device that saves it takes it over." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellung von %@ freigegeben. Das nächste Gerät, das sie speichert, übernimmt sie."
           }
         }
       }
