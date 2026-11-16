@@ -75,12 +75,30 @@ const mergeExtra = i => {
   splitExtra(extras[i]).forEach(x => { if (!out.some(o => o.toLowerCase() === x.toLowerCase())) out.push(x); });
   return out;
 };
+// Gerätekennung: zufälliger Schlüssel, nur auf diesem Gerät. Auf dem Server liegt nur der Hash (ownerHash an der Bestellung);
+// Ändern/Löschen prüfen die Firestore-Regeln (siehe docs/README.md). Kein Login, keine Mailadresse.
+const rnd = () => [...crypto.getRandomValues(new Uint8Array(32))].map(b => b.toString(16).padStart(2, "0")).join("");
+const sha256 = async t => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, "0")).join("");
+let deviceKey = "";
+try { deviceKey = localStorage.getItem("pizzaDeviceKey") || ""; if (!deviceKey) { deviceKey = rnd(); localStorage.setItem("pizzaDeviceKey", deviceKey); } }
+catch (e) { deviceKey = deviceKey || rnd(); }   // ohne Speicher: gilt nur bis zum Schließen der Seite
+let myHash = "", currentOwner = "";
+const docRoot = `projects/${PROJECT}/databases/(default)/documents`;
+const orderName = o => `${docRoot}/events/${eventId}/orders/${slug(o)}`;
+const str = v => ({stringValue: v});
+// Schreiben/Löschen als ein Schritt: Nachweis (nicht lesbar) + Bestellung
+async function commit(writes) {
+  return fetch(`https://firestore.googleapis.com/v1/${docRoot}:commit?key=${API_KEY}`, {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({writes})});
+}
+const proof = (name, nonce) => ({update: {name: `${docRoot}/events/${eventId}/proofs/${slug(name)}`, fields: {key: str(deviceKey), nonce: str(nonce)}}});
 let event, guest = "", extras = [], extraSel = [], customExtra = "", counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [], note = "", hadOrder = false;
 
 async function load() {
   if (!eventId) { app.textContent = "Link unvollständig."; return; }
   const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}?key=${API_KEY}`);
   if (!r.ok) { app.textContent = "Speisekarte nicht gefunden."; return; }
+  myHash = await sha256(deviceKey);
   event = JSON.parse((await r.json()).fields.data.stringValue);
   document.title = event.title || "Pizza";
   // Alle Zutaten der Karte (einmal pro Name+Einheit) für die eigene Pizza
@@ -139,7 +157,7 @@ async function fetchOrders() {
     if (!r.ok) return {};
     const out = {};
     ((await r.json()).documents || []).forEach(d => {
-      try { const o = JSON.parse(d.fields.data.stringValue); out[slug(o.guest)] = o; } catch (e) {}
+      try { const o = JSON.parse(d.fields.data.stringValue); o.owner = (d.fields.ownerHash || {}).stringValue || ""; out[slug(o.guest)] = o; } catch (e) {}
     });
     return out;
   } catch (e) { return {}; }
@@ -150,11 +168,13 @@ async function showNames() {
   const draw = orders => {
     app.innerHTML = header() + `<label>${event.closed ? "Bestellungen" : "Wer bist du?"}</label><div class="guests">${event.guests.map((g, i) => {
       const o = orders && orders[slug(g)];
+      const foreign = !!(o && o.owner && o.owner !== myHash);   // gehört zu einem anderen Gerät: nur ansehen
       const sub = orders === null ? "" : (o ? `<span class="ordered">✔ bestellt:${orderHTML(o)}</span>` : `<span class="open">noch nichts bestellt</span>`);
-      return `<button class="guestbtn" data-g="${i}" ${event.closed ? "disabled" : ""}>${esc(g)}${sub}</button>`;
+      const lock = foreign ? `<span class="open">🔒 Bestellung eines anderen Geräts – nur ansehen. Anderes Handy? Frag den Gastgeber.</span>` : "";
+      return `<button class="guestbtn" data-g="${i}" ${event.closed || foreign ? "disabled" : ""}>${esc(g)}${sub}${lock}</button>`;
     }).join("")}</div>`;
     // Geschlossener Abend: Bestellungen nur anzeigen, nicht mehr ändern
-    if (!event.closed) app.querySelectorAll(".guestbtn").forEach(b => b.onclick = () => pick(event.guests[+b.dataset.g]));
+    if (!event.closed) app.querySelectorAll(".guestbtn:not(:disabled)").forEach(b => b.onclick = () => pick(event.guests[+b.dataset.g]));
   };
   draw(null);                 // sofort anzeigen, Bestellungen danach nachladen
   draw(await fetchOrders());
@@ -167,12 +187,15 @@ async function pick(name) {
   without = event.pizzas.map(() => new Set());
   extras = event.pizzas.map(() => "");
   extraSel = event.pizzas.map(() => new Set());
-  customCount = 0; customToppings = new Set(); customExtra = ""; note = ""; hadOrder = false;
+  customCount = 0; customToppings = new Set(); customExtra = ""; note = ""; hadOrder = false; currentOwner = "";
   app.innerHTML = header() + "<p style='margin:16px'>Lade deine Bestellung …</p>";
   try {
     const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`);
     if (r.ok) {
-      const o = JSON.parse((await r.json()).fields.data.stringValue);
+      const doc = await r.json();
+      currentOwner = (doc.fields.ownerHash || {}).stringValue || "";
+      if (currentOwner && currentOwner !== myHash) { showNames(); return; }   // fremde Bestellung: nicht bearbeitbar
+      const o = JSON.parse(doc.fields.data.stringValue);
       hadOrder = true; note = o.note || "";
       (o.lines || []).forEach(l => {
         if (l.custom || l.name === "Eigene Pizza") {
@@ -216,8 +239,10 @@ async function removeLine(i) {
 // Die gespeicherte Bestellung des Gastes komplett löschen
 async function deleteOrder() {
   if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, "Ja, Bestellung löschen")) return;
-  const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
-  if (r.ok) showNames(); else document.getElementById("msg").textContent = "Löschen hat nicht geklappt – bitte nochmal versuchen.";
+  const r = await commit([proof(guest, rnd()), {delete: orderName(guest)}]);
+  if (r.ok) showNames(); else document.getElementById("msg").textContent = r.status === 403
+    ? "Das ist die Bestellung eines anderen Geräts – nur der Gastgeber kann sie löschen."
+    : "Löschen hat nicht geklappt – bitte nochmal versuchen.";
 }
 
 function render() {
@@ -285,11 +310,12 @@ async function send() {
   }
   if (!lines.length) { msg.textContent = "Bitte mindestens eine Pizza wählen."; return; }
   const order = {guest, lines, note: note.trim()};
-  const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {
-    method: "PATCH", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({fields: {data: {stringValue: JSON.stringify(order)}}})
-  });
-  msg.textContent = r.ok ? "Danke! Bestellung gespeichert ✔ (du kannst sie jederzeit erneut abschicken)" : "Fehler beim Senden – bitte nochmal versuchen.";
+  // Bestellung gehört diesem Gerät (neu oder frei/alt: wird jetzt übernommen)
+  const nonce = rnd();
+  const r = await commit([proof(guest, nonce), {update: {name: orderName(guest), fields: {data: str(JSON.stringify(order)), ownerHash: str(myHash), nonce: str(nonce)}}}]);
+  msg.textContent = r.ok ? "Danke! Bestellung gespeichert ✔ (du kannst sie jederzeit erneut abschicken)"
+    : r.status === 403 ? "Diese Bestellung gehört einem anderen Gerät – nur der Gastgeber kann sie freigeben."
+    : "Fehler beim Senden – bitte nochmal versuchen.";
   if (r.ok) setTimeout(showNames, 1500);
 }
 load().catch(() => app.textContent = "Fehler beim Laden.");
