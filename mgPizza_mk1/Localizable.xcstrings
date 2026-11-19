@@ -5211,6 +5211,186 @@
           }
         }
       }
+    },
+    "Split view: orders on top" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilte Ansicht: Bestellungen oben"
+          }
+        }
+      }
+    },
+    "For a foldable iPhone in laptop posture: the orders fill the upper screen, the controls stay on the lower one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für ein faltbares iPhone in Laptop-Stellung: Oben stehen groß die Bestellungen, unten bleibt die Bedienung."
+          }
+        }
+      }
+    },
+    "%lld round · %lld Detroit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld rund · %lld Detroit"
+          }
+        }
+      }
+    },
+    "No orders yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Bestellungen."
+          }
+        }
+      }
+    },
+    "Custom pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigene Pizza"
+          }
+        }
+      }
+    },
+    "without %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ohne %@"
+          }
+        }
+      }
+    },
+    "%lld× without %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld× ohne %@"
+          }
+        }
+      }
+    },
+    "Fetch the guest orders below to see who ordered what." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lade unten die Gästebestellungen, dann siehst du hier, wer was bestellt hat."
+          }
+        }
+      }
+    },
+    "Show on top" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oben anzeigen"
+          }
+        }
+      }
+    },
+    "By pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Pizza"
+          }
+        }
+      }
+    },
+    "By guest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Gast"
+          }
+        }
+      }
+    },
+    "Swap top and bottom" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oben und unten tauschen"
+          }
+        }
+      }
+    },
+    "Gap for the fold" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstand am Knick"
+          }
+        }
+      }
+    },
+    "None" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keiner"
+          }
+        }
+      }
+    },
+    "Small" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klein"
+          }
+        }
+      }
+    },
+    "Large" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groß"
+          }
+        }
+      }
+    },
+    "Reset baked" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebacken zurücksetzen"
+          }
+        }
+      }
+    },
+    "Fetch guest orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästebestellungen laden"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

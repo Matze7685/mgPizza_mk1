@@ -50,6 +50,7 @@
 		C1B2C3D4000000050000CC02 /* SeedImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000050000CC01 /* SeedImporter.swift */; };
 		C1B2C3D4000000060000CC02 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000060000CC01 /* AppRouter.swift */; };
 		D1B2C3D4000000010000DD02 /* MenuPizza.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B2C3D4000000010000DD01 /* MenuPizza.swift */; };
+		F0D0F0D0000000010000FF02 /* OrdersFoldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D0F0D0000000010000FF01 /* OrdersFoldView.swift */; };
 		D1B2C3D4000000020000DD02 /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B2C3D4000000020000DD01 /* MenuView.swift */; };
 /* End PBXBuildFile section */
 
@@ -100,6 +101,7 @@
 		C1B2C3D4000000050000CC01 /* SeedImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedImporter.swift; sourceTree = "<group>"; };
 		C1B2C3D4000000060000CC01 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		D1B2C3D4000000010000DD01 /* MenuPizza.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuPizza.swift; sourceTree = "<group>"; };
+		F0D0F0D0000000010000FF01 /* OrdersFoldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersFoldView.swift; sourceTree = "<group>"; };
 		D1B2C3D4000000020000DD01 /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -173,6 +175,7 @@
 			isa = PBXGroup;
 			children = (
 				D1B2C3D4000000020000DD01 /* MenuView.swift */,
+				F0D0F0D0000000010000FF01 /* OrdersFoldView.swift */,
 				C1B2C3D400000001000CC000 /* Shared */,
 				B1B2C3D400000001000BB000 /* Bluetooth */,
 				A1B2C3D4000000060000AA01 /* ShoppingListView.swift */,
@@ -315,6 +318,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D1B2C3D4000000020000DD02 /* MenuView.swift in Sources */,
+				F0D0F0D0000000010000FF02 /* OrdersFoldView.swift in Sources */,
 				D1B2C3D4000000010000DD02 /* MenuPizza.swift in Sources */,
 				C1B2C3D4000000060000CC02 /* AppRouter.swift in Sources */,
 				C1B2C3D4000000050000CC02 /* SeedImporter.swift in Sources */,
