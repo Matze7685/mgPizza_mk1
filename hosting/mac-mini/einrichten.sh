@@ -7,6 +7,11 @@
 # Aufruf:
 #   bash hosting/mac-mini/einrichten.sh                          -> Schnell-Tunnel (kostenlos, Adresse ändert sich nach Neustart)
 #   bash hosting/mac-mini/einrichten.sh pizza pizza.meinedomain.de -> fester Tunnel mit eigener Domain (siehe ANLEITUNG.md, Weg B)
+#   bash hosting/mac-mini/einrichten.sh --domain guderjahn.homeip.net [--ohne-port-80]
+#        (mit --ohne-port-80 bleibt Port 80 am Router bei einem anderen Gerät, das Zertifikat
+#         wird dann nur über Port 443 geholt)
+#        -> ohne Tunnel: eigene DynDNS-Adresse + Portweiterleitung am Router, Caddy holt das
+#           https-Zertifikat selbst (siehe ANLEITUNG.md, Weg C)
 set -euo pipefail
 
 PORT=8080
@@ -16,8 +21,21 @@ AGENTS="$HOME/Library/LaunchAgents"
 LOGS="$HOME/Library/Logs/mgpizza"
 STATE="$HOME/.mgpizza"
 
-TUNNEL_NAME="${1:-}"
-TUNNEL_HOST="${2:-}"
+# Ports für Weg C (am Router: außen 80 -> Mac 8081, außen 443 -> Mac 8443)
+HTTP_PORT=8081
+HTTPS_PORT=8443
+
+DOMAIN=""
+NO_PORT_80=""
+[ "${3:-}" = "--ohne-port-80" ] && NO_PORT_80=1
+TUNNEL_NAME=""
+TUNNEL_HOST=""
+if [ "${1:-}" = "--domain" ]; then
+  DOMAIN="${2:-}"
+else
+  TUNNEL_NAME="${1:-}"
+  TUNNEL_HOST="${2:-}"
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -29,6 +47,9 @@ fail() { printf '\n\033[31mFehler: %s\033[0m\n' "$*" >&2; exit 1; }
 [ "$(uname)" = "Darwin" ] || fail "Dieses Skript ist nur für macOS gedacht."
 [ -f "$SITE/index.html" ] || fail "Keine Gästeseite gefunden unter $SITE/index.html"
 
+if [ "${1:-}" = "--domain" ] && [ -z "$DOMAIN" ]; then
+  fail "Bitte die Adresse angeben, z. B.: bash $0 --domain guderjahn.homeip.net"
+fi
 if [ -n "$TUNNEL_NAME" ] && [ -z "$TUNNEL_HOST" ]; then
   fail "Für den festen Tunnel bitte Name UND Adresse angeben, z. B.: bash $0 pizza pizza.meinedomain.de"
 fi
@@ -102,7 +123,49 @@ PLIST
 }
 
 say "2/4  Webserver einrichten (Ordner: $SITE) …"
-write_plist "$LABEL_WEB" webserver "$CADDY" file-server --root "$SITE" --listen "127.0.0.1:$PORT"
+if [ -z "$DOMAIN" ]; then
+  rm -f "$STATE/eigene-domain"
+  write_plist "$LABEL_WEB" webserver "$CADDY" file-server --root "$SITE" --listen "127.0.0.1:$PORT"
+else
+  # Weg C: Caddy mit eigener Domain und automatischem https-Zertifikat (Let's Encrypt)
+  CADDYFILE="$STATE/Caddyfile"
+  mkdir -p "$STATE/sites"
+  ACME_BLOCK=""
+  if [ -n "$NO_PORT_80" ]; then
+    # Zertifikat nur über Port 443 (TLS-ALPN) holen, Port 80 wird nicht gebraucht
+    ACME_BLOCK="	cert_issuer acme {
+		disable_http_challenge
+		alternate_tlsalpn_port $HTTPS_PORT
+	}
+"
+  fi
+  cat > "$CADDYFILE" <<CADDY
+{
+	http_port $HTTP_PORT
+	https_port $HTTPS_PORT
+	admin off
+${ACME_BLOCK}}
+
+# Von außen: https://$DOMAIN (Router leitet 443 -> $HTTPS_PORT weiter, ohne --ohne-port-80 auch 80 -> $HTTP_PORT)
+$DOMAIN {
+	root * "$SITE"
+	file_server
+}
+
+# Nur auf dem Mac selbst, für status.sh
+http://127.0.0.1:$PORT {
+	root * "$SITE"
+	file_server
+}
+
+# Weitere Seiten und Weiterleitungen (z. B. vom Raspberry übernommen), je eine Datei *.caddy
+import "$STATE/sites/*.caddy"
+CADDY
+  "$CADDY" validate --config "$CADDYFILE" --adapter caddyfile >/dev/null 2>&1 \
+    || fail "Die Caddy-Einstellungen sind ungültig. Prüfen mit: $CADDY validate --config $CADDYFILE --adapter caddyfile"
+  echo "$DOMAIN" > "$STATE/eigene-domain"
+  write_plist "$LABEL_WEB" webserver "$CADDY" run --config "$CADDYFILE" --adapter caddyfile
+fi
 : > "$LOGS/webserver.log"
 launchctl bootstrap "gui/$(id -u)" "$AGENTS/$LABEL_WEB.plist"
 
@@ -114,10 +177,35 @@ done
 [ -n "$ok" ] || fail "Der Webserver antwortet nicht. Protokoll: $LOGS/webserver.log"
 echo "  Webserver läuft: http://127.0.0.1:$PORT/"
 
+if [ -n "$DOMAIN" ]; then
+  # Weg C braucht keinen Tunnel
+  rm -f "$AGENTS/$LABEL_TUN.plist" "$STATE/fester-tunnel"
+  say "3/4  Kein Tunnel nötig (Weg C)."
+  say "4/4  Fertig eingerichtet!"
+  cat <<TXT
+
+Deine Gästeseite wird erreichbar unter:
+
+    https://$DOMAIN/
+
+Damit das klappt, muss am Router (UDM) die Portweiterleitung eingerichtet sein
+(siehe ANLEITUNG.md, Weg C):
+    außen TCP 443 -> dieser Mac, Port $HTTPS_PORT
+    $( [ -n "$NO_PORT_80" ] && echo "(Port 80 bleibt wie bisher bei einem anderen Gerät.)" || echo "außen TCP 80  -> dieser Mac, Port $HTTP_PORT" )
+
+Beim ersten Aufruf holt sich der Webserver das https-Zertifikat. Das kann eine Minute dauern.
+Fragt macOS, ob „caddy“ eingehende Verbindungen annehmen darf: „Erlauben“ klicken.
+
+Diese Adresse in der App eintragen: Menü → Guest link → Guest page address.
+Zustand prüfen: bash $SCRIPT_DIR/status.sh
+TXT
+  exit 0
+fi
+
 say "3/4  Cloudflare Tunnel einrichten …"
 if [ -z "$TUNNEL_NAME" ]; then
   # Schnell-Tunnel (trycloudflare.com), braucht kein Konto
-  rm -f "$STATE/fester-tunnel"
+  rm -f "$STATE/fester-tunnel" "$STATE/eigene-domain"
   write_plist "$LABEL_TUN" tunnel "$CLOUDFLARED" tunnel --no-autoupdate --url "http://127.0.0.1:$PORT"
 else
   # Fester Tunnel mit eigener Domain
@@ -139,6 +227,7 @@ ingress:
   - service: http_status:404
 YML
   echo "$TUNNEL_HOST" > "$STATE/fester-tunnel"
+  rm -f "$STATE/eigene-domain"
   write_plist "$LABEL_TUN" tunnel "$CLOUDFLARED" tunnel --no-autoupdate --config "$CONFIG" run "$TUNNEL_NAME"
 fi
 : > "$LOGS/tunnel.log"
