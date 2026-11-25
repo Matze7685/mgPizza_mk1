@@ -15,8 +15,10 @@ struct RecipeDetailView: View {
     @State private var isShowingShoppingPicker = false
     @State private var checkedIngredients: Set<String> = []
     @State private var shownBatch = 0
-    /// Aufgeklappte Bereiche: 1 Zutaten, 2 Kneten, 3 Gare & Timer, 4 Mehr
-    @State private var expanded: Set<Int> = [1]
+    /// Aufgeklappte Bereiche: 2 Abwiegen & Kneten, 3 Gare & Timer, 4 Mehr
+    @State private var expanded: Set<Int> = [2]
+    /// Abwiege-Liste im Knet-Bereich (aufgeklappt, solange noch nicht geknetet wird)
+    @State private var isWeighExpanded = true
 
     private var isShowingTemplate: Binding<Bool> {
         Binding { templateRecipe != nil } set: { if !$0 { templateRecipe = nil } }
@@ -26,8 +28,8 @@ struct RecipeDetailView: View {
         Form {
             phaseSection
             DoughWarningsSection(recipe: recipeData)
-            ingredientsSection
-            KneadSection(recipe: recipeData, isExpanded: expanded.contains(2)) { toggle(2) }
+            KneadSection(recipe: recipeData, isExpanded: expanded.contains(2), onToggle: { toggle(2) },
+                         ingredients: AnyView(weighGroup))
             timerSection
             moreSection
         }
@@ -38,8 +40,10 @@ struct RecipeDetailView: View {
         .onAppear {
             shownBatch = recipeData.currentBatch
             expanded = [currentGroup]
+            isWeighExpanded = recipeData.phase() != .knead
         }
         .onChange(of: currentGroup) { expanded = [currentGroup] }
+        .onChange(of: recipeData.phase()) { isWeighExpanded = recipeData.phase() != .knead }
         .onChange(of: recipeData.kneadBatch) { shownBatch = recipeData.currentBatch }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -59,11 +63,10 @@ struct RecipeDetailView: View {
 
     // MARK: 0 · Status
 
-    /// Bereich der aktuellen Phase (ohne laufendes Rezept: Zutaten)
+    /// Bereich der aktuellen Phase (ohne laufendes Rezept: Abwiegen & Kneten)
     private var currentGroup: Int {
         switch recipeData.phase() {
-        case nil, .ingredients: return 1
-        case .knead: return 2
+        case nil, .ingredients, .knead: return 2
         default: return 3
         }
     }
@@ -121,11 +124,11 @@ struct RecipeDetailView: View {
         }
     }
 
-    // MARK: 1 · Zutaten
+    // MARK: 1 · Abwiegen (im Knet-Bereich)
 
-    var ingredientsSection: some View {
-        Section {
-            if expanded.contains(1) {
+    /// Abhak-Liste zum Abwiegen, aufklappbar oben im Bereich „Abwiegen & Kneten“
+    var weighGroup: some View {
+        DisclosureGroup(isExpanded: $isWeighExpanded) {
             if recipeData.batchCount > 1 {
                 Label("Too much for the mixer – kneaded in \(recipeData.batchCount) batches (max. \(Int(RecipeSetupData.mixerCapacity)) g each).",
                       systemImage: "square.split.2x1")
@@ -155,12 +158,6 @@ struct RecipeDetailView: View {
                 }
                 .foregroundStyle(.primary)
             }
-            HStack {
-                Text(recipeData.batchCount > 1 ? LocalizedStringKey("Batch total") : "Total")
-                Spacer()
-                Text("\(recipeData.totalDoughWeight * recipeData.batchFraction(min(shownBatch, recipeData.batchCount - 1)), specifier: "%.0f") g")
-                    .foregroundStyle(.secondary)
-            }
             if recipeData.batchCount > 1 {
                 HStack {
                     Text("Total (all batches)")
@@ -168,14 +165,13 @@ struct RecipeDetailView: View {
                     Text("\(recipeData.totalDoughWeight, specifier: "%.0f") g").foregroundStyle(.secondary)
                 }
             }
-            Button("Add to shopping list", systemImage: "cart.badge.plus") {
-                isShowingShoppingPicker = true
+        } label: {
+            HStack {
+                Label("Weigh ingredients", systemImage: "scalemass")
+                Spacer()
+                Text("\(recipeData.totalDoughWeight * recipeData.batchFraction(min(shownBatch, recipeData.batchCount - 1)), specifier: "%.0f") g")
+                    .foregroundStyle(.secondary)
             }
-            }
-        } header: {
-            sectionHeader(1, "1 · Ingredients", summary: "\(Int(recipeData.totalDoughWeight)) g")
-        } footer: {
-            if expanded.contains(1) { Text("Tap to tick off what you have weighed.") }
         }
     }
 
@@ -230,7 +226,7 @@ struct RecipeDetailView: View {
                 .tint(recipeData.isKneadFinished ? .blue : .gray)
             }
         } header: {
-            sectionHeader(3, "3 · Proof & timer", summary: timerSummary)
+            sectionHeader(3, "2 · Proof & timer", summary: timerSummary)
         } footer: {
             if expanded.contains(3) && !recipeData.isStarted {
                 Text("Start when kneading is done. Reminders: 1 h before and when the dough comes out of the fridge, and at serving time.")
@@ -251,7 +247,7 @@ struct RecipeDetailView: View {
         Section {
             Button { toggle(4) } label: {
                 HStack {
-                    Label("More: tips, feedback, recipe values", systemImage: "ellipsis.circle")
+                    Label("More: shopping list, tips, feedback, recipe values", systemImage: "ellipsis.circle")
                     Spacer()
                     Image(systemName: "chevron.right")
                         .rotationEffect(.degrees(expanded.contains(4) ? 90 : 0))
@@ -261,6 +257,11 @@ struct RecipeDetailView: View {
             .buttonStyle(.plain)
         }
         if expanded.contains(4) {
+            Section {
+                Button("Add to shopping list", systemImage: "cart.badge.plus") {
+                    isShowingShoppingPicker = true
+                }
+            }
             FlourHintSection(totalHours: recipeData.roomTime + (recipeData.isStarted ? recipeData.coolTime : recipeData.effectiveCoolTime()))
             if recipeData.isDetroit {
                 DetroitTipsSection()

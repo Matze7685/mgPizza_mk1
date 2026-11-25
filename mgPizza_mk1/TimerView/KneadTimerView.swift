@@ -13,6 +13,8 @@ struct KneadSection: View {
     @Bindable var recipe: RecipeSetupData
     var isExpanded = true
     var onToggle: () -> Void = {}
+    /// Abwiegen der Zutaten, oben im Bereich (aus der Rezeptansicht)
+    var ingredients: AnyView? = nil
     @State private var isEditing = false
 
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -20,6 +22,7 @@ struct KneadSection: View {
     var body: some View {
         Section {
             if isExpanded {
+                if let ingredients { ingredients }
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     currentStepView(now: context.date)
                 }
@@ -33,7 +36,7 @@ struct KneadSection: View {
             HStack {
                 Button(action: onToggle) {
                     HStack {
-                        Text("2 · Knead")
+                        Text("1 · Weigh & knead")
                         if !recipe.batchLabel.isEmpty {
                             Text("· \(recipe.batchLabel)").foregroundStyle(.orange)
                         }

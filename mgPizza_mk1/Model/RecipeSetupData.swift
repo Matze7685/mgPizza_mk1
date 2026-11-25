@@ -373,9 +373,3 @@ extension RecipeSetupData {
         return items
     }
 }
-
-enum RecipeSetupStep: Hashable {
-    case fermentRoomTimeTemp
-    case fermentFridgeTimeTemp
-    case doughResult
-}
