@@ -1,17 +1,12 @@
 # PizzaWidget – Live Activity (Dynamic Island)
 
-Einmalig in Xcode einrichten:
+Das Widget-Extension-Target `PizzaWidget` ist bereits im Xcode-Projekt eingetragen
+(Quellen: `PizzaLiveActivity.swift` + `../mgPizza_mk1/Shared/PizzaActivityAttributes.swift`,
+eingebettet in die App unter „Embed Foundation Extensions“). Es ist **kein manueller Schritt in Xcode** mehr nötig.
 
-1. **File → New → Target… → Widget Extension**
-   - Product Name: `PizzaWidget`
-   - Haken bei **Include Live Activity** setzen, die anderen (Control, Configuration Intent) weglassen
-   - „Activate scheme?“ → Activate
-2. Xcode erzeugt einen Ordner `PizzaWidget` mit Beispieldateien. **Alle erzeugten `.swift`-Dateien löschen**
-   (Move to Trash) und stattdessen `PizzaWidget/PizzaLiveActivity.swift` aus diesem Ordner zum Target `PizzaWidget` hinzufügen
-   (Rechtsklick auf den Ordner → Add Files… → Target: nur *PizzaWidget*).
-3. `mgPizza_mk1/Shared/PizzaActivityAttributes.swift` auswählen → rechts im File Inspector unter
-   **Target Membership** zusätzlich **PizzaWidget** anhaken (mgPizza_mk1 bleibt angehakt).
-4. Beim Target `PizzaWidget` → General → **Minimum Deployments** auf dieselbe iOS-Version wie die App stellen (26.4).
-5. App-Schema auswählen und auf dem iPhone starten.
+Falls Xcode beim ersten Bauen meckert:
+- Target **PizzaWidget** → *Signing & Capabilities* → Team auswählen (wie bei der App), „Automatically manage signing“ an.
+- Auf dem iPhone: Einstellungen → Pizza → **Live-Aktivitäten** an.
 
-`NSSupportsLiveActivities` ist in der App bereits eingetragen.
+Hinweis: Solange die App im Vordergrund ist, zeigt iOS die eigene Live Activity nicht in der Dynamic Island –
+sie erscheint, sobald man die App verlässt (und auf dem Sperrbildschirm).

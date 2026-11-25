@@ -9,11 +9,12 @@ import SwiftData
 import SwiftUI
 import UserNotifications
 
-/// Zeigt Benachrichtigungen auch an, wenn die App gerade offen ist (z. B. Knet-Timer).
+/// Zeigt Benachrichtigungen (mit Ton) auch an, wenn die App gerade offen ist (z. B. Knet-Timer).
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        DoughNotifications.refreshAuthorizationStatus()
         _ = OvenMonitor.shared   // Bluetooth sofort wiederherstellen, auch wenn iOS die App im Hintergrund startet
         return true
     }
@@ -21,15 +22,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        let id = notification.request.identifier
-        if id.hasPrefix("knead-") {
-            // Knet-Timer: Ton kommt vom App-Alarm (genau einmal), sonst klingeln beide gleichzeitig
-            let recipeID = String(id.dropFirst("knead-".count))
-            MainActor.assumeIsolated { KneadAlarm.ring(for: recipeID) }
-            completionHandler([.banner, .list])
-        } else {
-            completionHandler([.banner, .sound, .list])
-        }
+        // Alle Erinnerungen – auch der Knet-Timer – klingeln über den Ton der Benachrichtigung.
+        // Die App selbst klingelt nur noch, wenn Benachrichtigungen ausgeschaltet sind (KneadSection).
+        // Vorher klingelten App-Alarm und Benachrichtigung getrennt, was trotz Entprellung doppelt zu hören war.
+        completionHandler([.banner, .sound, .list])
     }
 }
 

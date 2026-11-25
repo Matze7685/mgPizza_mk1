@@ -49,7 +49,10 @@ struct MainView: View {
             // Laufende Timer in die Dynamic Island schieben, sobald die App verlassen wird
             // (Live Activities dürfen nur im Vordergrund gestartet werden – .inactive gilt noch dazu)
             .onChange(of: scenePhase) { _, phase in
-                if phase != .active { moveTimersToDynamicIsland() }
+                if phase != .active {
+                    try? modelContext.save()   // Timer-Stand sichern, falls iOS die App im Hintergrund beendet
+                    moveTimersToDynamicIsland()
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

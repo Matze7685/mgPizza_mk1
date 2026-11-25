@@ -54,17 +54,16 @@ struct KneadSection: View {
                 KneadStepsEditor(steps: $recipe.kneadSteps, defaultPlan: KneadStep.plan(forStyle: recipe.style))
             }
             .onReceive(tick) { now in
-                // Alarm, wenn der laufende Schritt abgelaufen ist und die App offen ist.
-                // KneadAlarm klingelt pro Schritt nur einmal (auch wenn die Benachrichtigung gleichzeitig kommt
-                // oder die Rezeptansicht zweimal im Navigationsstapel liegt).
-                // Nur klingeln, wenn der Schritt gerade eben bei sichtbarer App abgelaufen ist. Läuft die App nur im
-                // Hintergrund weiter (Bluetooth/Audio) oder kommt man erst später zurück, hat die Benachrichtigung
-                // schon geklingelt – ein zweiter Ton wäre genau der Doppelalarm.
+                // Schritt gerade eben bei offener App abgelaufen: Den Ton liefert die Benachrichtigung
+                // (einzige Tonquelle, siehe AppDelegate). Die App klingelt nur selbst, wenn Benachrichtigungen aus sind.
+                // KneadAlarm.finish meldet jedes Schrittende genau einmal, auch wenn die Rezeptansicht mehrfach offen ist.
                 guard UIApplication.shared.applicationState == .active,
-                      let end = recipe.kneadStepEnd, now >= end, now.timeIntervalSince(end) < 3 else { return }
-                if KneadAlarm.ring(for: recipe.uid.uuidString) {
-                    VoiceControl.shared.stepFinished(for: recipe)
+                      let end = recipe.kneadStepEnd, now >= end, now.timeIntervalSince(end) < 3,
+                      KneadAlarm.finish(recipe.uid.uuidString, end: end) else { return }
+                if DoughNotifications.isAuthorized != true {
+                    KneadAlarm.ring()
                 }
+                VoiceControl.shared.stepFinished(for: recipe)
             }
         }
     }
@@ -161,32 +160,23 @@ struct KneadSection: View {
     }
 }
 
-/// Weckton für den Knet-Timer (wenn die App offen ist; im Hintergrund klingelt die Benachrichtigung).
-/// Einzige Stelle, die im Vordergrund klingelt: Knet-Benachrichtigungen werden ohne eigenen Ton
-/// angezeigt (siehe AppDelegate) und jeder Schritt klingelt nur einmal – vorher liefen Benachrichtigungston
-/// und App-Alarm (ggf. mehrfach) gleichzeitig.
+/// Ersatz-Weckton für den Knet-Timer, falls Benachrichtigungen ausgeschaltet sind.
+/// Normalerweise klingelt nur die Benachrichtigung (auch bei offener App) – vorher liefen App-Alarm und
+/// Benachrichtigung getrennt und waren doppelt zu hören.
 @MainActor
 enum KneadAlarm {
-    static let ringDuration: TimeInterval = 3.6
-    private static var lastRing: [String: Date] = [:]
+    /// Wartezeit, bis eine Sprachansage nach dem Ton starten darf
+    static let ringDuration: TimeInterval = 2.5
+    private static var finishedSteps: Set<String> = []
 
-    /// Klingelt einmal pro Rezept und Schritt (30-s-Fenster: Benachrichtigung und Ansicht melden dasselbe Ende).
-    @discardableResult
-    static func ring(for recipeID: String) -> Bool {
-        let now = Date()
-        if let last = lastRing[recipeID], now.timeIntervalSince(last) < 30 { return false }
-        lastRing[recipeID] = now
-        ring()
-        return true
+    /// true beim ersten Aufruf für dieses Rezept und dieses Schrittende, danach false.
+    static func finish(_ recipeID: String, end: Date) -> Bool {
+        finishedSteps.insert("\(recipeID)@\(Int(end.timeIntervalSince1970))").inserted
     }
 
-    private static func ring(times: Int = 3) {
-        for i in 0..<times {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 1.2) {
-                AudioServicesPlayAlertSound(SystemSoundID(1005))
-                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-            }
-        }
+    /// Ein einzelner Ton (inkl. Vibration)
+    static func ring() {
+        AudioServicesPlayAlertSound(SystemSoundID(1005))
     }
 }
 
