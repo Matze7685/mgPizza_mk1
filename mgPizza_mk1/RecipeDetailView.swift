@@ -15,8 +15,12 @@ struct RecipeDetailView: View {
     @State private var isShowingShoppingPicker = false
     @State private var checkedIngredients: Set<String> = []
     @State private var shownBatch = 0
-    /// Aufgeklappte Bereiche: 1 Zutaten, 2 Kneten, 3 Gare & Timer, 4 Mehr
-    @State private var expanded: Set<Int> = [1]
+    /// Aufgeklappte Bereiche: 2 Abwiegen & Kneten, 3 Gare & Timer, 4 Mehr
+    @State private var expanded: Set<Int> = [2]
+    /// Abwiege-Liste im Knet-Bereich (aufgeklappt, solange noch nicht geknetet wird)
+    @State private var isWeighExpanded = true
+    /// Nach unten gescrollt: Fortschritt als schmale Symbolleiste oben anheften
+    @State private var isStatusPinned = false
 
     private var isShowingTemplate: Binding<Bool> {
         Binding { templateRecipe != nil } set: { if !$0 { templateRecipe = nil } }
@@ -26,10 +30,26 @@ struct RecipeDetailView: View {
         Form {
             phaseSection
             DoughWarningsSection(recipe: recipeData)
-            ingredientsSection
-            KneadSection(recipe: recipeData, isExpanded: expanded.contains(2)) { toggle(2) }
+            KneadSection(recipe: recipeData, isExpanded: expanded.contains(2), onToggle: { toggle(2) },
+                         ingredients: AnyView(weighGroup))
             timerSection
             moreSection
+        }
+        .onScrollGeometryChange(for: Bool.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top > 90
+        } action: { _, pinned in
+            withAnimation(.easeInOut(duration: 0.2)) { isStatusPinned = pinned }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if isStatusPinned {
+                TimelineView(.periodic(from: .now, by: 30)) { context in
+                    PhaseProgressView(phase: recipeData.phase(now: context.date), iconsOnly: true)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 4)
+                .background(.bar)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
         .navigationTitle(recipeData.displayName)
         .navigationBarTitleDisplayMode(.inline)
@@ -38,8 +58,10 @@ struct RecipeDetailView: View {
         .onAppear {
             shownBatch = recipeData.currentBatch
             expanded = [currentGroup]
+            isWeighExpanded = recipeData.phase() != .knead
         }
         .onChange(of: currentGroup) { expanded = [currentGroup] }
+        .onChange(of: recipeData.phase()) { isWeighExpanded = recipeData.phase() != .knead }
         .onChange(of: recipeData.kneadBatch) { shownBatch = recipeData.currentBatch }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -59,11 +81,11 @@ struct RecipeDetailView: View {
 
     // MARK: 0 · Status
 
-    /// Bereich der aktuellen Phase (ohne laufendes Rezept: Zutaten)
+    /// Bereich der aktuellen Phase (ohne laufendes Rezept: Abwiegen & Kneten)
     private var currentGroup: Int {
         switch recipeData.phase() {
-        case nil, .ingredients: return 1
-        case .knead: return 2
+        case nil, .ingredients: return 2
+        case .knead: return recipeData.isKneadFinished ? 3 : 2   // alle Durchgänge fertig: Kneten zu, Gare auf
         default: return 3
         }
     }
@@ -121,11 +143,11 @@ struct RecipeDetailView: View {
         }
     }
 
-    // MARK: 1 · Zutaten
+    // MARK: 1 · Abwiegen (im Knet-Bereich)
 
-    var ingredientsSection: some View {
-        Section {
-            if expanded.contains(1) {
+    /// Abhak-Liste zum Abwiegen, aufklappbar oben im Bereich „Abwiegen & Kneten“
+    var weighGroup: some View {
+        DisclosureGroup(isExpanded: $isWeighExpanded) {
             if recipeData.batchCount > 1 {
                 Label("Too much for the mixer – kneaded in \(recipeData.batchCount) batches (max. \(Int(RecipeSetupData.mixerCapacity)) g each).",
                       systemImage: "square.split.2x1")
@@ -155,12 +177,6 @@ struct RecipeDetailView: View {
                 }
                 .foregroundStyle(.primary)
             }
-            HStack {
-                Text(recipeData.batchCount > 1 ? LocalizedStringKey("Batch total") : "Total")
-                Spacer()
-                Text("\(recipeData.totalDoughWeight * recipeData.batchFraction(min(shownBatch, recipeData.batchCount - 1)), specifier: "%.0f") g")
-                    .foregroundStyle(.secondary)
-            }
             if recipeData.batchCount > 1 {
                 HStack {
                     Text("Total (all batches)")
@@ -168,14 +184,13 @@ struct RecipeDetailView: View {
                     Text("\(recipeData.totalDoughWeight, specifier: "%.0f") g").foregroundStyle(.secondary)
                 }
             }
-            Button("Add to shopping list", systemImage: "cart.badge.plus") {
-                isShowingShoppingPicker = true
+        } label: {
+            HStack {
+                Label("Weigh ingredients", systemImage: "scalemass")
+                Spacer()
+                Text("\(recipeData.totalDoughWeight * recipeData.batchFraction(min(shownBatch, recipeData.batchCount - 1)), specifier: "%.0f") g")
+                    .foregroundStyle(.secondary)
             }
-            }
-        } header: {
-            sectionHeader(1, "1 · Ingredients", summary: "\(Int(recipeData.totalDoughWeight)) g")
-        } footer: {
-            if expanded.contains(1) { Text("Tap to tick off what you have weighed.") }
         }
     }
 
@@ -223,14 +238,15 @@ struct RecipeDetailView: View {
                     recipeData.startTimers()
                 } label: {
                     Label("Into the fridge – start timer", systemImage: "refrigerator.fill")
+                        .labelStyle(.titleAndIcon)
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(recipeData.isKneadFinished ? .blue : .gray)
+                .tint(recipeData.isKneadFinished ? .accentColor : .gray)
             }
         } header: {
-            sectionHeader(3, "3 · Proof & timer", summary: timerSummary)
+            sectionHeader(3, "2 · Proof & timer", summary: timerSummary)
         } footer: {
             if expanded.contains(3) && !recipeData.isStarted {
                 Text("Start when kneading is done. Reminders: 1 h before and when the dough comes out of the fridge, and at serving time.")
@@ -251,7 +267,7 @@ struct RecipeDetailView: View {
         Section {
             Button { toggle(4) } label: {
                 HStack {
-                    Label("More: tips, feedback, recipe values", systemImage: "ellipsis.circle")
+                    Label("More: shopping list, tips, feedback, recipe values", systemImage: "ellipsis.circle")
                     Spacer()
                     Image(systemName: "chevron.right")
                         .rotationEffect(.degrees(expanded.contains(4) ? 90 : 0))
@@ -261,6 +277,11 @@ struct RecipeDetailView: View {
             .buttonStyle(.plain)
         }
         if expanded.contains(4) {
+            Section {
+                Button("Add to shopping list", systemImage: "cart.badge.plus") {
+                    isShowingShoppingPicker = true
+                }
+            }
             FlourHintSection(totalHours: recipeData.roomTime + (recipeData.isStarted ? recipeData.coolTime : recipeData.effectiveCoolTime()))
             if recipeData.isDetroit {
                 DetroitTipsSection()
@@ -288,12 +309,15 @@ struct RecipeDetailView: View {
                 LabeledContent("Pans", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.panWidth))×\(Int(recipeData.panLength)) cm")
                 LabeledContent("Dough per Pan", value: "\(Int(recipeData.doughWeight)) g (\(String(format: "%.1f", recipeData.doughThickness)) mm)")
             } else {
-                LabeledContent("Dough Balls", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.doughWeight)) g")
+                LabeledContent("Dough Balls", value: "\(Int(recipeData.doughBallsCount)) × \(Int(recipeData.doughWeight)) g (≈ \(Int(recipeData.pizzaDiameter.rounded())) cm)")
             }
-            LabeledContent("Water", value: "\(Int(recipeData.waterRatio)) %")
-            LabeledContent("Salt", value: String(format: "%.1f %%", recipeData.saltRatio))
-            if recipeData.oilRatio > 0 { LabeledContent("Olive Oil", value: String(format: "%.1f %%", recipeData.oilRatio)) }
-            if recipeData.sugarRatio > 0 { LabeledContent("Sugar", value: String(format: "%.1f %%", recipeData.sugarRatio)) }
+            // Anteil (Bäckerprozent) und Gewicht fürs ganze Rezept
+            LabeledContent("Flour", value: String(format: "100 %% · %.0f g", recipeData.flour))
+            LabeledContent("Water", value: String(format: "%.0f %% · %.0f g", recipeData.waterRatio, recipeData.water))
+            LabeledContent("Salt", value: String(format: "%.1f %% · %.1f g", recipeData.saltRatio, recipeData.salt))
+            if recipeData.oilRatio > 0 { LabeledContent("Olive Oil", value: String(format: "%.1f %% · %.1f g", recipeData.oilRatio, recipeData.oil)) }
+            if recipeData.sugarRatio > 0 { LabeledContent("Sugar", value: String(format: "%.1f %% · %.1f g", recipeData.sugarRatio, recipeData.sugar)) }
+            LabeledContent(recipeData.yeastName, value: String(format: "%.2f %% · %.2f g", recipeData.flour > 0 ? recipeData.yeast() / recipeData.flour * 100 : 0, recipeData.yeast()))
             LabeledContent("Yeast Correction", value: "\(Int(recipeData.yeastCorrection)) %")
         }
     }
@@ -302,6 +326,8 @@ struct RecipeDetailView: View {
 /// Fortschritt: Zutaten → Kneten → Kühlschrank → Raumgare → Servieren
 struct PhaseProgressView: View {
     var phase: RecipeSetupData.Phase?
+    /// Kompakt (angeheftet beim Scrollen): nur Symbole, ohne Beschriftung
+    var iconsOnly = false
 
     private let items: [(RecipeSetupData.Phase, LocalizedStringKey, String)] = [
         (.ingredients, "Ingredients", "scalemass"),
@@ -317,20 +343,22 @@ struct PhaseProgressView: View {
                 let state = stateFor(item.0)
                 VStack(spacing: 4) {
                     Image(systemName: state == .done ? "checkmark.circle.fill" : item.2)
-                        .font(.title3)
-                        .frame(width: 36, height: 36)
+                        .font(iconsOnly ? .body : .title3)
+                        .frame(width: iconsOnly ? 28 : 36, height: iconsOnly ? 28 : 36)
                         .background(Circle().fill(state == .current ? Color.orange.opacity(0.25) : Color.clear))
                         .foregroundStyle(state == .done ? .green : (state == .current ? .orange : .gray))
-                    Text(item.1)
-                        .font(.caption2)
-                        .foregroundStyle(state == .current ? .primary : .secondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                    if !iconsOnly {
+                        Text(item.1)
+                            .font(.caption2)
+                            .foregroundStyle(state == .current ? .primary : .secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, iconsOnly ? 0 : 4)
     }
 
     private enum StepState { case done, current, open }

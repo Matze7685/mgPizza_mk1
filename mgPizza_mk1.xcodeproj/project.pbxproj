@@ -19,8 +19,6 @@
 		C7DC0DC63022775B003738AA /* RecipeContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DC53022775B003738AA /* RecipeContainerView.swift */; };
 		C7DC0DC83022799A003738AA /* RecipeSetupData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DC73022799A003738AA /* RecipeSetupData.swift */; };
 		C7DC0DCC30227C71003738AA /* DoughSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DCB30227C71003738AA /* DoughSettingsView.swift */; };
-		C7DC0DCE30227CB0003738AA /* FermentRoomTimeTempView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DCD30227CB0003738AA /* FermentRoomTimeTempView.swift */; };
-		C7DC0DD230227CC9003738AA /* FermentFridgeTimeTempView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DD130227CC9003738AA /* FermentFridgeTimeTempView.swift */; };
 		C7DC0DD530227DFC003738AA /* DoughResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DD430227DFC003738AA /* DoughResultView.swift */; };
 		C7DC0DD93029E729003738AA /* TimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DD83029E729003738AA /* TimerView.swift */; };
 		C7DC0DDB3029E811003738AA /* DigitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DC0DDA3029E811003738AA /* DigitView.swift */; };
@@ -51,7 +49,34 @@
 		C1B2C3D4000000060000CC02 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000060000CC01 /* AppRouter.swift */; };
 		D1B2C3D4000000010000DD02 /* MenuPizza.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B2C3D4000000010000DD01 /* MenuPizza.swift */; };
 		D1B2C3D4000000020000DD02 /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B2C3D4000000020000DD01 /* MenuView.swift */; };
+		E1B2C3D4000000010000EE02 /* PizzaLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B2C3D4000000010000EE01 /* PizzaLiveActivity.swift */; };
+		E1B2C3D4000000020000EE02 /* PizzaActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B2C3D4000000010000CC01 /* PizzaActivityAttributes.swift */; };
+		E1B2C3D4000000030000EE02 /* PizzaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E1B2C3D4000000030000EE01 /* PizzaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E1B2C3D4000000010000EE15 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C7DC0D823018C5A1003738AA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E1B2C3D4000000010000EE10;
+			remoteInfo = PizzaWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E1B2C3D4000000010000EE14 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E1B2C3D4000000030000EE02 /* PizzaWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		C7B149553066CFD20021AA7E /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
@@ -69,8 +94,6 @@
 		C7DC0DC53022775B003738AA /* RecipeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeContainerView.swift; sourceTree = "<group>"; };
 		C7DC0DC73022799A003738AA /* RecipeSetupData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeSetupData.swift; sourceTree = "<group>"; };
 		C7DC0DCB30227C71003738AA /* DoughSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughSettingsView.swift; sourceTree = "<group>"; };
-		C7DC0DCD30227CB0003738AA /* FermentRoomTimeTempView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FermentRoomTimeTempView.swift; sourceTree = "<group>"; };
-		C7DC0DD130227CC9003738AA /* FermentFridgeTimeTempView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FermentFridgeTimeTempView.swift; sourceTree = "<group>"; };
 		C7DC0DD430227DFC003738AA /* DoughResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoughResultView.swift; sourceTree = "<group>"; };
 		C7DC0DD83029E729003738AA /* TimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
 		C7DC0DDA3029E811003738AA /* DigitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DigitView.swift; sourceTree = "<group>"; };
@@ -101,10 +124,20 @@
 		C1B2C3D4000000060000CC01 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		D1B2C3D4000000010000DD01 /* MenuPizza.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuPizza.swift; sourceTree = "<group>"; };
 		D1B2C3D4000000020000DD01 /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
+		E1B2C3D4000000010000EE01 /* PizzaLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PizzaLiveActivity.swift; sourceTree = "<group>"; };
+		E1B2C3D4000000020000EE01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E1B2C3D4000000030000EE01 /* PizzaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PizzaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		C7DC0D873018C5A1003738AA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1B2C3D4000000010000EE12 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -157,6 +190,7 @@
 			isa = PBXGroup;
 			children = (
 				C7DC0DB63019FA16003738AA /* mgPizza_mk1 */,
+				E1B2C3D400000001000EE000 /* PizzaWidget */,
 				C7DC0D8B3018C5A1003738AA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -165,6 +199,7 @@
 			isa = PBXGroup;
 			children = (
 				C7DC0D8A3018C5A1003738AA /* mgPizza_mk1.app */,
+				E1B2C3D4000000030000EE01 /* PizzaWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -205,8 +240,6 @@
 			isa = PBXGroup;
 			children = (
 				C7DC0DCB30227C71003738AA /* DoughSettingsView.swift */,
-				C7DC0DCD30227CB0003738AA /* FermentRoomTimeTempView.swift */,
-				C7DC0DD130227CC9003738AA /* FermentFridgeTimeTempView.swift */,
 				C7DC0DD430227DFC003738AA /* DoughResultView.swift */,
 			);
 			path = RecipeContainer;
@@ -239,6 +272,15 @@
 			path = Buttons;
 			sourceTree = "<group>";
 		};
+		E1B2C3D400000001000EE000 /* PizzaWidget */ = {
+			isa = PBXGroup;
+			children = (
+				E1B2C3D4000000010000EE01 /* PizzaLiveActivity.swift */,
+				E1B2C3D4000000020000EE01 /* Info.plist */,
+			);
+			path = PizzaWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -249,10 +291,12 @@
 				C7DC0D863018C5A1003738AA /* Sources */,
 				C7DC0D873018C5A1003738AA /* Frameworks */,
 				C7DC0D883018C5A1003738AA /* Resources */,
+				E1B2C3D4000000010000EE14 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				E1B2C3D4000000010000EE16 /* PBXTargetDependency */,
 			);
 			name = mgPizza_mk1;
 			packageProductDependencies = (
@@ -260,6 +304,25 @@
 			productName = mgPizza_mk1;
 			productReference = C7DC0D8A3018C5A1003738AA /* mgPizza_mk1.app */;
 			productType = "com.apple.product-type.application";
+		};
+		E1B2C3D4000000010000EE10 /* PizzaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1B2C3D4000000010000EE17 /* Build configuration list for PBXNativeTarget "PizzaWidget" */;
+			buildPhases = (
+				E1B2C3D4000000010000EE11 /* Sources */,
+				E1B2C3D4000000010000EE12 /* Frameworks */,
+				E1B2C3D4000000010000EE13 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PizzaWidget;
+			packageProductDependencies = (
+			);
+			productName = PizzaWidget;
+			productReference = E1B2C3D4000000030000EE01 /* PizzaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -272,6 +335,9 @@
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					C7DC0D893018C5A1003738AA = {
+						CreatedOnToolsVersion = 26.4;
+					};
+					E1B2C3D4000000010000EE10 = {
 						CreatedOnToolsVersion = 26.4;
 					};
 				};
@@ -292,6 +358,7 @@
 			projectRoot = "";
 			targets = (
 				C7DC0D893018C5A1003738AA /* mgPizza_mk1 */,
+				E1B2C3D4000000010000EE10 /* PizzaWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -304,6 +371,13 @@
 				C7DC0DBB3019FA16003738AA /* Assets.xcassets in Resources */,
 				C7DC0DBC3019FA16003738AA /* Changelog.md in Resources */,
 				C7DC0DBE3019FA16003738AA /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1B2C3D4000000010000EE13 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,13 +412,11 @@
 				A1B2C3D4000000010000AA02 /* KneadStep.swift in Sources */,
 				C7DC0DC43019FEA4003738AA /* SettingsView.swift in Sources */,
 				C7DC0DD530227DFC003738AA /* DoughResultView.swift in Sources */,
-				C7DC0DD230227CC9003738AA /* FermentFridgeTimeTempView.swift in Sources */,
 				C7DC0DB73019FA16003738AA /* CalculateView.swift in Sources */,
 				C7DC0DCC30227C71003738AA /* DoughSettingsView.swift in Sources */,
 				C7DC0DDB3029E811003738AA /* DigitView.swift in Sources */,
 				C7DC0DE8302E5829003738AA /* NotificationView.swift in Sources */,
 				C7DC0DEC302EE693003738AA /* CustomPrimaryButtonStyle.swift in Sources */,
-				C7DC0DCE30227CB0003738AA /* FermentRoomTimeTempView.swift in Sources */,
 				C7DC0DD93029E729003738AA /* TimerView.swift in Sources */,
 				C7DC0E9230389891003738AA /* PizzaDoughRecipe.swift in Sources */,
 				C7DC0DC63022775B003738AA /* RecipeContainerView.swift in Sources */,
@@ -358,7 +430,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E1B2C3D4000000010000EE11 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1B2C3D4000000010000EE02 /* PizzaLiveActivity.swift in Sources */,
+				E1B2C3D4000000020000EE02 /* PizzaActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E1B2C3D4000000010000EE16 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E1B2C3D4000000010000EE10 /* PizzaWidget */;
+			targetProxy = E1B2C3D4000000010000EE15 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C7DC0D993018C5A3003738AA /* Debug */ = {
@@ -562,6 +651,62 @@
 			};
 			name = Release;
 		};
+		E1B2C3D4000000010000EE18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WVD937X98R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PizzaWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PizzaWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1.PizzaWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E1B2C3D4000000010000EE19 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WVD937X98R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PizzaWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PizzaWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1.PizzaWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -579,6 +724,15 @@
 			buildConfigurations = (
 				C7DC0D993018C5A3003738AA /* Debug */,
 				C7DC0D9A3018C5A3003738AA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E1B2C3D4000000010000EE17 /* Build configuration list for PBXNativeTarget "PizzaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1B2C3D4000000010000EE18 /* Debug */,
+				E1B2C3D4000000010000EE19 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

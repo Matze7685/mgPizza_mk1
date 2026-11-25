@@ -35,11 +35,28 @@ class NotificationModel {
 enum DoughNotifications {
     static let fridgeWarningLead: TimeInterval = 3600   // 1 Std. vorher erinnern
 
-    static func requestAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, error in
-            if let error = error {
+    /// Zuletzt bekannte Erlaubnis für Benachrichtigungen (nil = noch unbekannt).
+    /// Ist sie aus, klingelt der Knet-Timer ersatzweise in der App (siehe KneadSection).
+    private(set) static var isAuthorized: Bool?
+
+    /// Fragt einmalig nach der Erlaubnis (danach ohne Dialog) und merkt sich das Ergebnis.
+    static func requestAuthorization(then action: (() -> Void)? = nil) {
+        Task {
+            do {
+                isAuthorized = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+            } catch {
                 print("Fehler: \(error.localizedDescription)")
+                isAuthorized = false
             }
+            action?()
+        }
+    }
+
+    /// Status beim App-Start lesen, ohne zu fragen
+    static func refreshAuthorizationStatus() {
+        Task {
+            let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+            isAuthorized = status == .authorized || status == .provisional || status == .ephemeral
         }
     }
 
@@ -68,7 +85,8 @@ enum DoughNotifications {
             withIdentifiers: ["\(id)-fridge-warn", "\(id)-fridge", "\(id)-serving"])
     }
 
-    /// Knet-Timer pro Rezept, mit Ton (auch wenn die App offen ist, siehe AppDelegate)
+    /// Knet-Timer pro Rezept. Der Ton dieser Benachrichtigung ist der einzige Weckton – auch bei offener App
+    /// (siehe AppDelegate), damit es nicht doppelt klingelt.
     static func scheduleKneadStep(id: String, title: String, recipe: String, at date: Date) {
         add(id: "knead-\(id)", at: date, title: String(localized: "Knead step done ⏰"),
             body: String(localized: "\(recipe): \(title) is finished – start the next step."), timeSensitive: true)
@@ -78,19 +96,29 @@ enum DoughNotifications {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["knead-\(id)"])
     }
 
+    /// Plant eine Erinnerung. Ist die Erlaubnis noch nicht geklärt, wird erst gefragt und danach geplant –
+    /// vorher ging die allererste Erinnerung verloren (z. B. beim ersten Knetschritt), weil die Erlaubnis
+    /// erst nach dem Planen erteilt wurde.
     private static func add(id: String, at date: Date, title: String, body: String, timeSensitive: Bool = false) {
-        let interval = date.timeIntervalSinceNow
-        guard interval > 1 else { return }
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-        if timeSensitive { content.interruptionLevel = .timeSensitive }
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
-            if let error = error {
-                print("Fehler beim Planen: \(error.localizedDescription)")
+        let schedule = {
+            let interval = date.timeIntervalSinceNow
+            guard interval > 1 else { return }
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            content.sound = .default
+            if timeSensitive { content.interruptionLevel = .timeSensitive }
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
+                if let error = error {
+                    print("Fehler beim Planen: \(error.localizedDescription)")
+                }
             }
+        }
+        if isAuthorized == true {
+            schedule()
+        } else {
+            requestAuthorization { if isAuthorized == true { schedule() } }
         }
     }
 }
