@@ -5222,16 +5222,6 @@
         }
       }
     },
-    "%lld× %lld g · total %lld g" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld× %2$lld g · gesamt %3$lld g"
-          }
-        }
-      }
-    },
     "1 · Dough" : {
       "localizations" : {
         "de" : {
@@ -5388,6 +5378,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zutaten abwiegen"
+          }
+        }
+      }
+    },
+    "%lld× %lld g (≈ %lld cm) · total %lld g" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld× %2$lld g (≈ %3$lld cm) · gesamt %4$lld g"
+          }
+        }
+      }
+    },
+    "≈ %lld cm pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "≈ %lld cm Pizza"
           }
         }
       }

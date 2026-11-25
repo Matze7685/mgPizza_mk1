@@ -89,7 +89,7 @@ struct DoughSettingsView: View {
                 if recipe.isDetroit {
                     Text("\(Int(recipe.doughBallsCount))× \(Int(recipe.doughWeight)) g per pan · total \(Int(recipe.totalDoughWeight)) g")
                 } else {
-                    Text("\(Int(recipe.doughBallsCount))× \(Int(recipe.doughWeight)) g · total \(Int(recipe.totalDoughWeight)) g")
+                    Text("\(Int(recipe.doughBallsCount))× \(Int(recipe.doughWeight)) g (≈ \(Int(recipe.pizzaDiameter.rounded())) cm) · total \(Int(recipe.totalDoughWeight)) g")
                 }
             }
             .font(.caption).foregroundStyle(.secondary)
@@ -144,7 +144,12 @@ struct DoughSettingsView: View {
                     LabeledContent("Dough per Pan", value: "\(Int(recipe.doughWeight)) g")
                 } else {
                     Stepper("Dough Balls: \(Int(recipe.doughBallsCount))", value: $recipeSetupData.doughBallsCount, in: 1...60)
-                    slider("Dough Weight: \(Int(recipe.doughWeight)) g", value: $recipeSetupData.doughWeight, in: 100...2000, step: 10, warning: .ballWeight)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Dough Weight: \(Int(recipe.doughWeight)) g")
+                        Slider(value: $recipeSetupData.doughWeight, in: 100...2000, step: 10)
+                        Text("≈ \(Int(recipe.pizzaDiameter.rounded())) cm pizza")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
                 slider("Water: \(Int(recipe.waterRatio)) %", value: $recipeSetupData.waterRatio, in: 50...90, step: 1, warning: .water)
                 slider("Salt: \(recipe.saltRatio, specifier: "%.1f") %", value: $recipeSetupData.saltRatio, in: 1.0...4.0, step: 0.1, warning: .salt)

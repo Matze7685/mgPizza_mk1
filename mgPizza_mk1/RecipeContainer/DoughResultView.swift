@@ -35,7 +35,7 @@ struct FlourHintSection: View {
 /// Plausibilitätsprüfung der Teigverhältnisse.
 struct DoughWarningsSection: View {
     /// Wert, zu dem eine Warnung gehört (für die Anzeige direkt beim Regler)
-    enum Field { case water, salt, ballWeight, oil, room, fridge }
+    enum Field { case water, salt, oil, room, fridge }
 
     var recipe: RecipeSetupData
 
@@ -46,7 +46,6 @@ struct DoughWarningsSection: View {
         if recipe.saltRatio < 2.2 { result.append((.salt, "Salt below \(2.2, specifier: "%.1f")% tastes flat and weakens the gluten.")) }
         if recipe.saltRatio > 3.2 { result.append((.salt, "Salt above \(3.2, specifier: "%.1f")% slows the yeast noticeably.")) }
         if recipe.roomTemp >= 26 && recipe.roomTime >= 8 { result.append((.room, "Long proof at ≥26 °C – high risk of over-proofing.")) }
-        if !recipe.isDetroit && (recipe.doughWeight < 200 || recipe.doughWeight > 300) { result.append((.ballWeight, "Typical ball weight is 230–280 g for a 30–33 cm pizza.")) }
         if recipe.isDetroit && recipe.waterRatio < 65 { result.append((.water, "Detroit dough is usually \(68)–\(75)% hydration for an airy crumb.")) }
         if recipe.isDetroit && recipe.oilRatio == 0 { result.append((.oil, "Add ~\(2)% oil for Detroit – and oil the pan generously.")) }
         if recipe.effectiveCoolTime() > 72 { result.append((.fridge, "More than 72 h in the fridge – gluten may break down.")) }

@@ -27,9 +27,6 @@ struct KneadSection: View {
                     currentStepView(now: context.date)
                 }
                 VoiceControlRow(recipe: recipe)
-                ForEach(Array(recipe.kneadSteps.enumerated()), id: \.element.id) { index, step in
-                    stepRow(index: index, step: step)
-                }
             }
         } header: {
             // Alarm & Editor hängen am Header, damit sie auch eingeklappt funktionieren
@@ -97,8 +94,10 @@ struct KneadSection: View {
                         .font(.system(size: 56, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(remaining == 0 ? .green : .primary)
-                    Button(remaining == 0 ? LocalizedStringKey("Next step") : "Skip", systemImage: "forward.fill") {
+                    Button {
                         recipe.nextKneadStep()
+                    } label: {
+                        prominentLabel(remaining == 0 ? LocalizedStringKey("Next step") : "Skip", systemImage: "forward.fill")
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(remaining == 0 ? .green : .gray)
@@ -107,9 +106,11 @@ struct KneadSection: View {
                         .font(.system(size: 56, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
-                    Button("Start (ready)", systemImage: "play.fill") {
+                    Button {
                         DoughNotifications.requestAuthorization()
                         recipe.startKneadStep()
+                    } label: {
+                        prominentLabel("Start (ready)", systemImage: "play.fill")
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -123,8 +124,10 @@ struct KneadSection: View {
                     .foregroundStyle(.green)
                 Text("Take the dough out, then fill the machine for the next batch.")
                     .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                Button("Start batch \(recipe.currentBatch + 2) of \(recipe.batchCount)", systemImage: "arrow.right.circle.fill") {
+                Button {
                     recipe.startNextBatch()
+                } label: {
+                    prominentLabel("Start batch \(recipe.currentBatch + 2) of \(recipe.batchCount)", systemImage: "arrow.right.circle.fill")
                 }
                 .buttonStyle(.borderedProminent)
             }
@@ -145,22 +148,12 @@ struct KneadSection: View {
         }
     }
 
-    private func stepRow(index: Int, step: KneadStep) -> some View {
-        let current = recipe.kneadStepIndex
-        return HStack(alignment: .top) {
-            Image(systemName: index < current ? "checkmark.circle.fill" : (index == current ? "circle.inset.filled" : "circle"))
-                .foregroundStyle(index < current ? .green : (index == current ? .orange : .gray))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(LocalizedStringKey(step.title)).font(.subheadline.weight(.semibold))
-                let adds = recipe.addsText(for: step)
-                if !adds.isEmpty {
-                    Text(adds).font(.caption).foregroundStyle(.orange)
-                }
-            }
-            Spacer()
-            Text("\(step.minutes, specifier: "%.0f") min").font(.caption).monospacedDigit()
-        }
-        .opacity(index < current ? 0.5 : 1)
+    /// Wie „Jetzt backen“: Symbol + Text, fett, volle Breite (sonst zeigt iOS in Listen teils nur den Text)
+    private func prominentLabel(_ title: LocalizedStringKey, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .labelStyle(.titleAndIcon)
+            .font(.headline)
+            .frame(maxWidth: .infinity)
     }
 }
 
