@@ -21,11 +21,11 @@ Rezeptdetail: nur Bereich der aktuellen Phase aufgeklappt, Tipps/Feedback/Rezept
 - `ShoppingListView.swift` – Einkaufsliste + Auswahl-Sheet.
 - `OrdersFoldView.swift` – geteilte Bestellansicht (Bestellungen › „Geteilte Ansicht“) für faltbares iPhone in Laptop-Stellung: oben große Bestellkarten (nach Pizza/nach Gast, Antippen = gebacken), unten Bedienung; Teilung exakt in Bildschirmmitte, Knick-Abstand + Tauschen im ⋯-Menü. iOS hat keine Scharnier-API, daher manuell geöffnet.
 - `NotificationModel.swift` – Erinnerungen (Teig raus −1 h / raus / Servieren, Knetschritte).
-- `Shared/LiveActivityManager.swift`, `Shared/PizzaActivityAttributes.swift`, `PizzaWidget/` – Dynamic Island (Widget-Target muss in Xcode angelegt werden, siehe `PizzaWidget/README.md`).
+- `Shared/LiveActivityManager.swift`, `Shared/PizzaActivityAttributes.swift`, `PizzaWidget/` – Dynamic Island (Widget-Extension-Target `PizzaWidget` ist im Projekt eingetragen, siehe `PizzaWidget/README.md`).
 - `Shared/DoughAnnouncer.swift`, `Bluetooth/OvenSpeaker.swift` – Sprachansagen über AirPlay/HomePod (nur solange App läuft).
 - `Shared/VoiceControl.swift` – Sprachsteuerung (Deutsch/Englisch) für den Knetablauf: „nächster Schritt“, „Start“, „zurück“, „wiederholen“, „wie lange“, „Kühlschrank“, „Sprachsteuerung aus“. Mikrofon-Schalter im Knet-Abschnitt.
 - `ActivityView.swift` enthält `DoughStatusBar` (oben angeheftete Statusleiste nur während Zutaten/Kneten, Option „Always show dough status“); `MainView` schiebt Timer beim Verlassen der App in die Dynamic Island.
-- Knet-Alarm: `KneadAlarm.ring(for:)` entprellt; Benachrichtigung ohne eigenen Ton im Vordergrund (AppDelegate).
+- Knet-Alarm: einzige Tonquelle ist die Benachrichtigung (auch im Vordergrund, AppDelegate); `KneadAlarm.ring()` nur als Ersatz, wenn Benachrichtigungen aus sind. `KneadAlarm.finish` meldet jedes Schrittende einmal (Sprachansage). Timer-Stände werden sofort gespeichert (`RecipeSetupData.persist()`), damit sie ein Beenden im Hintergrund überleben.
 - `Shared/GuestOrders.swift` + `docs/` – Gäste-Speisekartenlink (Firebase Firestore REST, Webseite `docs/index.html`, Einrichtung `docs/README.md`); Import setzt Bestellmengen + abgewählte Zutaten (`MenuPizza.removedToppings`). Mehrere Abende: lokale Übersicht `GuestEvenings` (UserDefaults `guestEvenings_v1`), aktueller Abend in `menuEventID`/`menuTitle`/`menuDate`/`guestIntro`/`guestOrdersClosed`.
 - `Shared/TimerStatusView.swift` – Kontrolle geplanter Erinnerungen/Berechtigungen.
 - `Shared/SeedImporter.swift` – einmaliger Import der Rezepte aus „Pizzarezepte.numbers“.

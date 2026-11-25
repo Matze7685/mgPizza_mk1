@@ -4412,12 +4412,12 @@
         }
       }
     },
-    "Pins the current step and countdown to the top of every screen while you prepare the dough (weighing, kneading) – not during proofing. Running timers move to the Dynamic Island when you leave the app." : {
+    "Pins the current step and countdown to the top of the other tabs while you prepare the dough (weighing, kneading) – not during proofing and not on the Timer page, which shows it large. Running timers move to the Dynamic Island when you leave the app." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Heftet den aktuellen Schritt und Countdown oben auf jedem Bildschirm an, solange du den Teig zubereitest (Abwiegen, Kneten) – nicht während der Gare. Laufende Timer wandern in die Dynamic Island, sobald du die App verlässt."
+            "value" : "Heftet den aktuellen Schritt und Countdown oben in den anderen Tabs an, solange du den Teig zubereitest (Abwiegen, Kneten) – nicht während der Gare und nicht auf der Timer-Seite, die ihn groß zeigt. Laufende Timer wandern in die Dynamic Island, sobald du die App verlässt."
           }
         }
       }
@@ -5208,6 +5208,206 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonstiges"
+          }
+        }
+      }
+    },
+    "%lld× %lld g per pan · total %lld g" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld× %2$lld g pro Blech · gesamt %3$lld g"
+          }
+        }
+      }
+    },
+    "1 · Dough" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 · Teig"
+          }
+        }
+      }
+    },
+    "1 · Weigh & knead" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 · Abwiegen & Kneten"
+          }
+        }
+      }
+    },
+    "2 · Proof & timer" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 · Gare & Timer"
+          }
+        }
+      }
+    },
+    "2 · Yeast & extras" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 · Hefe & Extras"
+          }
+        }
+      }
+    },
+    "3 · Proof & schedule" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 · Gare & Zeitplan"
+          }
+        }
+      }
+    },
+    "Caputo blue" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caputo blau"
+          }
+        }
+      }
+    },
+    "Caputo red" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caputo rot"
+          }
+        }
+      }
+    },
+    "Fridge Temperature: %lld °C" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kühlschrank Temperatur: %lld °C"
+          }
+        }
+      }
+    },
+    "Fridge Time: %lld h" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kühlschrank Zeit: %lld Std."
+          }
+        }
+      }
+    },
+    "Fridge time = now until out of the fridge. Room time = out of the fridge until serving." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kühlschrankzeit = jetzt bis raus aus dem Kühlschrank. Raumzeit = raus aus dem Kühlschrank bis Servieren."
+          }
+        }
+      }
+    },
+    "Hours" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stunden"
+          }
+        }
+      }
+    },
+    "Kneaded in %lld batches (max. %lld g per batch)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird in %1$lld Durchgängen geknetet (max. %2$lld g pro Durchgang)."
+          }
+        }
+      }
+    },
+    "More: shopping list, tips, feedback, recipe values" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr: Einkaufsliste, Tipps, Feedback, Rezeptwerte"
+          }
+        }
+      }
+    },
+    "Plan by" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planen nach"
+          }
+        }
+      }
+    },
+    "Time of day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uhrzeit"
+          }
+        }
+      }
+    },
+    "Weigh ingredients" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zutaten abwiegen"
+          }
+        }
+      }
+    },
+    "%lld× %lld g (≈ %lld cm) · total %lld g" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld× %2$lld g (≈ %3$lld cm) · gesamt %4$lld g"
+          }
+        }
+      }
+    },
+    "≈ %lld cm pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "≈ %lld cm Pizza"
+          }
+        }
+      }
+    },
+    "Pins the current step and countdown to the top of every screen while you prepare the dough (weighing, kneading) – not during proofing. Running timers move to the Dynamic Island when you leave the app." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heftet den aktuellen Schritt und Countdown oben auf jedem Bildschirm an, solange du den Teig zubereitest (Abwiegen, Kneten) – nicht während der Gare. Laufende Timer wandern in die Dynamic Island, sobald du die App verlässt."
           }
         }
       }

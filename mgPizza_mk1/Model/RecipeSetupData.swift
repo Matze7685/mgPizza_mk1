@@ -165,6 +165,12 @@ extension RecipeSetupData {
 
     var totalDoughWeight: Double { doughWeight * doughBallsCount }
 
+    /// Ungefährer Pizza-Durchmesser in cm für einen Teigling (Neapolitanisch, ≈ 0,33 g Teig pro cm²):
+    /// 230 g ≈ 30 cm, 250 g ≈ 31 cm, 280 g ≈ 33 cm
+    var pizzaDiameter: Double {
+        2 * (doughWeight / 0.33 / .pi).squareRoot()
+    }
+
     var flour: Double {
         let totalFactor = 1.0 + (waterRatio + saltRatio + oilRatio + sugarRatio) / 100.0
         return totalDoughWeight / totalFactor
@@ -210,12 +216,20 @@ extension RecipeSetupData {
         isStarted = true
         DoughNotifications.schedule(for: self)
         LiveActivityManager.shared.refreshDough([self], now: now)
+        persist()
     }
 
     func stopTimers() {
         isStarted = false
         DoughNotifications.cancel(for: self)
         LiveActivityManager.shared.endDough(self)
+        persist()
+    }
+
+    /// Sofort speichern: Wird die App im Hintergrund von iOS beendet, bevor SwiftData automatisch speichert,
+    /// wäre die Endzeit des Timers sonst weg und der Timer stünde beim nächsten Öffnen wieder am Anfang.
+    func persist() {
+        try? modelContext?.save()
     }
 
     // MARK: Ablauf / Phase
@@ -299,6 +313,7 @@ extension RecipeSetupData {
         kneadStepEnd = end
         DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: kneadTitle(step), recipe: displayName, at: end)
         LiveActivityManager.shared.startKnead(self, title: kneadTitle(step), end: end)
+        persist()
     }
 
     func nextKneadStep() {
@@ -332,6 +347,7 @@ extension RecipeSetupData {
         kneadStepEnd = nil
         DoughNotifications.cancelKneadStep(id: uid.uuidString)
         LiveActivityManager.shared.endKnead(self)
+        persist()
     }
 
     /// Menge einer Zutat in Gramm (für die Knet-Infos)
@@ -372,10 +388,4 @@ extension RecipeSetupData {
         if sugar > 0 { items.append((String(localized: "Sugar"), String(format: "%.0f g", sugar))) }
         return items
     }
-}
-
-enum RecipeSetupStep: Hashable {
-    case fermentRoomTimeTemp
-    case fermentFridgeTimeTemp
-    case doughResult
 }

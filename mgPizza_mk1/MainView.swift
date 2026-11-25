@@ -42,14 +42,18 @@ struct MainView: View {
                     .tag(MainTab.menu)
             }
             .safeAreaInset(edge: .top, spacing: 0) {
-                if showDoughStatus {
-                    DoughStatusBar().padding(.vertical, 4)   // oben angeheftet, auch in Rezepten
+                // Nicht auf der Startseite: dort steht der Teigstatus schon groß in der Karte
+                if showDoughStatus && router.selectedTab != .activity {
+                    DoughStatusBar().padding(.vertical, 4)   // oben angeheftet, in Rezepten und Karte
                 }
             }
             // Laufende Timer in die Dynamic Island schieben, sobald die App verlassen wird
             // (Live Activities dürfen nur im Vordergrund gestartet werden – .inactive gilt noch dazu)
             .onChange(of: scenePhase) { _, phase in
-                if phase != .active { moveTimersToDynamicIsland() }
+                if phase != .active {
+                    try? modelContext.save()   // Timer-Stand sichern, falls iOS die App im Hintergrund beendet
+                    moveTimersToDynamicIsland()
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
