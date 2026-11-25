@@ -3,7 +3,6 @@
 //  mgPizza_mk1
 //
 
-import CryptoKit
 import SwiftData
 import SwiftUI
 
@@ -90,31 +89,68 @@ struct GuestOrder: Codable, Identifiable {
     private enum CodingKeys: String, CodingKey { case guest, lines, note }
 }
 
-/// Gastgeber-Schlüssel (einmal pro App-Installation). Nur der Hash steht auf dem Server (`hostHash` im Abend);
-/// mit dem Schlüssel selbst darf der Gastgeber jede Bestellung ändern, löschen oder freigeben.
-enum GuestHostKey {
-    private static let storeKey = "guestHostKey_v1"
+/// Anonyme Firebase-Anmeldung des Gastgebers (einmal pro App-Installation, ohne Eingabe). Die Kennung (uid) steht als `hostUid`
+/// am Abend; damit darf der Gastgeber jede Bestellung lesen, ändern, löschen oder freigeben (Firestore-Regeln, docs/README.md).
+actor GuestHostAuth {
+    static let shared = GuestHostAuth()
+    private let refreshKey = "guestHostRefresh_v1"
+    private let uidKey = "guestHostUid_v1"
+    private var idToken = ""
+    private var validUntil = Date.distantPast
 
-    static var secret: String {
-        if let saved = UserDefaults.standard.string(forKey: storeKey) { return saved }
-        let new = (UUID().uuidString + UUID().uuidString).replacingOccurrences(of: "-", with: "").lowercased()
-        UserDefaults.standard.set(new, forKey: storeKey)
-        return new
+    private func post(_ url: String, body: Data, type: String) async throws -> [String: Any] {
+        guard let url = URL(string: url) else { throw GuestOrderError.auth }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(type, forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(code) else { throw code == 400 ? GuestOrderError.auth : GuestOrderError.server(code) }
+        return (try JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
     }
 
-    static var hash: String { sha256Hex(secret) }
+    private func store(token: String?, refresh: String?, uid: String?, expires: String?) {
+        idToken = token ?? ""
+        validUntil = Date().addingTimeInterval(Double(expires ?? "") ?? 3600)
+        if let refresh { UserDefaults.standard.set(refresh, forKey: refreshKey) }
+        if let uid { UserDefaults.standard.set(uid, forKey: uidKey) }
+    }
 
-    static func sha256Hex(_ text: String) -> String {
-        SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
+    /// Gültiges Token + uid (meldet sich bei Bedarf neu an; schlägt fehl, wenn „Anonym“ in Firebase nicht aktiviert ist)
+    func session(apiKey: String) async throws -> (token: String, uid: String) {
+        if !idToken.isEmpty, validUntil > Date().addingTimeInterval(60), let uid = UserDefaults.standard.string(forKey: uidKey) {
+            return (idToken, uid)
+        }
+        if let refresh = UserDefaults.standard.string(forKey: refreshKey) {
+            let form = "grant_type=refresh_token&refresh_token=\(refresh.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? refresh)"
+            do {
+                let json = try await post("https://securetoken.googleapis.com/v1/token?key=\(apiKey)", body: Data(form.utf8),
+                                          type: "application/x-www-form-urlencoded")
+                store(token: json["id_token"] as? String, refresh: json["refresh_token"] as? String,
+                      uid: json["user_id"] as? String, expires: json["expires_in"] as? String)
+                if let uid = UserDefaults.standard.string(forKey: uidKey), !idToken.isEmpty { return (idToken, uid) }
+            } catch GuestOrderError.auth {
+                // Token ungültig (HTTP 400): unten neue Kennung anlegen. Netzwerkfehler dagegen werden weitergereicht.
+            }
+            // Nur wenn sich das Token nicht erneuern lässt, wird eine neue Kennung angelegt (dann Abende neu veröffentlichen)
+        }
+        let json = try await post("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=\(apiKey)",
+                                  body: Data(#"{"returnSecureToken":true}"#.utf8), type: "application/json")
+        store(token: json["idToken"] as? String, refresh: json["refreshToken"] as? String,
+              uid: json["localId"] as? String, expires: json["expiresIn"] as? String)
+        guard let uid = UserDefaults.standard.string(forKey: uidKey), !idToken.isEmpty else { throw GuestOrderError.auth }
+        return (idToken, uid)
     }
 }
 
 enum GuestOrderError: LocalizedError {
-    case notConfigured, forbidden, server(Int)
+    case notConfigured, forbidden, auth, server(Int)
     var errorDescription: String? {
         switch self {
         case .notConfigured: String(localized: "Enter the Firebase project ID, API key and page address first.")
         case .forbidden: String(localized: "Not allowed: this evening was published from another device, or the Firestore rules are not updated yet (see docs/README.md).")
+        case .auth: String(localized: "Sign-in failed. Enable “Anonymous” under Authentication → Sign-in method in Firebase.")
         case .server(let code): String(localized: "Server error \(code). Check project ID, API key and the Firestore rules.")
         }
     }
@@ -211,21 +247,22 @@ struct GuestOrderService {
 
     private func string(_ value: String) -> [String: Any] { ["stringValue": value] }
 
-    /// Nachweis für die Firestore-Regeln: wird im selben Schritt wie die eigentliche Änderung geschrieben und ist nicht lesbar
-    private func proofWrite(event: String, id: String, nonce: String) -> [String: Any] {
-        ["update": ["name": "\(docRoot)/events/\(event)/proofs/\(id)",
-                    "fields": ["key": string(GuestHostKey.secret), "nonce": string(nonce)]]]
+    /// Anfrage an Firestore mit der Kennung des Gastgebers
+    private func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        guard !apiKey.isEmpty else { throw GuestOrderError.notConfigured }
+        var request = request
+        request.setValue("Bearer \(try await GuestHostAuth.shared.session(apiKey: apiKey).token)", forHTTPHeaderField: "Authorization")
+        return try await URLSession.shared.data(for: request)
     }
 
-    private func commit(_ writes: [[String: Any]]) async throws {
-        guard !project.isEmpty, !apiKey.isEmpty,
-              let url = URL(string: "https://firestore.googleapis.com/v1/\(docRoot):commit?key=\(apiKey)")
-        else { throw GuestOrderError.notConfigured }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+    private func write(_ method: String, _ path: String, fields: [String: Any]? = nil, mask: [String] = []) async throws {
+        var query = ""
+        for field in mask { query += "&updateMask.fieldPaths=\(field)" }
+        var request = URLRequest(url: try url(path, query: query))
+        request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["writes": writes])
-        let (_, response) = try await URLSession.shared.data(for: request)
+        if let fields { request.httpBody = try JSONSerialization.data(withJSONObject: ["fields": fields]) }
+        let (_, response) = try await send(request)
         try check(response)
     }
 
@@ -234,16 +271,12 @@ struct GuestOrderService {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         let json = String(decoding: try encoder.encode(event), as: UTF8.self)
-        let nonce = UUID().uuidString
-        try await commit([
-            proofWrite(event: id, id: "_event", nonce: nonce),
-            ["update": ["name": "\(docRoot)/events/\(id)",
-                        "fields": ["data": string(json), "hostHash": string(GuestHostKey.hash), "nonce": string(nonce)]]],
-        ])
+        let uid = try await GuestHostAuth.shared.session(apiKey: apiKey).uid
+        try await write("PATCH", "events/\(id)", fields: ["data": string(json), "hostUid": string(uid)])
     }
 
     func fetchOrders(id: String) async throws -> [GuestOrder] {
-        let (data, response) = try await URLSession.shared.data(from: try url("events/\(id)/orders", query: "&pageSize=300"))
+        let (data, response) = try await send(URLRequest(url: try url("events/\(id)/orders", query: "&pageSize=300")))
         try check(response)
         struct List: Decodable {
             struct Doc: Decodable { var fields: [String: Field] }
@@ -254,7 +287,7 @@ struct GuestOrderService {
         return (list.documents ?? []).compactMap { doc in
             guard var order = doc.fields["data"]?.stringValue.flatMap({ try? JSONDecoder().decode(GuestOrder.self, from: Data($0.utf8)) })
             else { return nil }
-            order.claimed = !(doc.fields["ownerHash"]?.stringValue ?? "").isEmpty
+            order.claimed = !(doc.fields["owner"]?.stringValue ?? "").isEmpty
             return order
         }
         .sorted { $0.guest.localizedCaseInsensitiveCompare($1.guest) == .orderedAscending }
@@ -281,8 +314,7 @@ struct GuestOrderService {
 
     /// Bestellung eines Gastes unter neuem Namen speichern und die alte entfernen (falls vorhanden). Das Gerät des Gasts bleibt zugeordnet.
     func renameOrder(id: String, from old: String, to new: String) async throws {
-        let oldPath = "events/\(id)/orders/\(Self.slug(old))"
-        let (data, response) = try await URLSession.shared.data(from: try url(oldPath))
+        let (data, response) = try await send(URLRequest(url: try url("events/\(id)/orders/\(Self.slug(old))")))
         if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
         try check(response)
         struct Doc: Decodable { struct Field: Decodable { var stringValue: String? }; var fields: [String: Field] }
@@ -291,35 +323,23 @@ struct GuestOrderService {
               var order = try? JSONDecoder().decode(GuestOrder.self, from: Data(json.utf8)) else { return }
         order.guest = new
         let newJSON = String(decoding: try JSONEncoder().encode(order), as: UTF8.self)
-        let nonce = UUID().uuidString
-        var newFields: [String: Any] = ["data": string(newJSON), "nonce": string(nonce)]
-        if let owner = fields["ownerHash"]?.stringValue, !owner.isEmpty { newFields["ownerHash"] = string(owner) }
-        let newSlug = Self.slug(new)
-        try await commit([
-            proofWrite(event: id, id: newSlug, nonce: nonce),
-            ["update": ["name": "\(docRoot)/events/\(id)/orders/\(newSlug)", "fields": newFields]],
-        ])
-        if Self.slug(old) != newSlug { try await deleteOrder(id: id, guest: old) }
+        try await write("PATCH", "events/\(id)/orders/\(Self.slug(new))",
+                        fields: ["data": string(newJSON), "owner": string(fields["owner"]?.stringValue ?? "")])
+        if Self.slug(old) != Self.slug(new) { try await deleteOrder(id: id, guest: old) }
     }
 
-    /// Als Gastgeber jede Bestellung löschen
+    /// Als Gastgeber jede Bestellung löschen (fehlende Bestellung ist kein Fehler)
     func deleteOrder(id: String, guest: String) async throws {
-        let slug = Self.slug(guest)
-        try await commit([
-            proofWrite(event: id, id: slug, nonce: UUID().uuidString),
-            ["delete": "\(docRoot)/events/\(id)/orders/\(slug)"],
-        ])
+        var request = URLRequest(url: try url("events/\(id)/orders/\(Self.slug(guest))"))
+        request.httpMethod = "DELETE"
+        let (_, response) = try await send(request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
+        try check(response)
     }
 
     /// Bestellung für ein neues Gerät freigeben: Die Bestellung bleibt, das nächste Gerät, das sie speichert, übernimmt sie
     func releaseOrder(id: String, guest: String) async throws {
-        let slug = Self.slug(guest)
-        let nonce = UUID().uuidString
-        try await commit([
-            proofWrite(event: id, id: slug, nonce: nonce),
-            ["update": ["name": "\(docRoot)/events/\(id)/orders/\(slug)", "fields": ["nonce": string(nonce)]],
-             "updateMask": ["fieldPaths": ["ownerHash", "nonce"]]],
-        ])
+        try await write("PATCH", "events/\(id)/orders/\(Self.slug(guest))", fields: ["owner": string("")], mask: ["owner"])
     }
 
     private func check(_ response: URLResponse) throws {

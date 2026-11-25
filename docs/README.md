@@ -2,59 +2,53 @@
 
 1. https://console.firebase.google.com → Projekt anlegen (Analytics aus).
 2. **Build → Firestore Database → Datenbank erstellen** (Produktionsmodus, Region z. B. `eur3`).
-3. Tab **Regeln** einfügen und veröffentlichen:
+3. **Build → Authentication → Anmeldemethode → „Anonym“ aktivieren.** Gäste melden sich damit unsichtbar an (kein Login, keine Mail, kein PIN);
+   jedes Gerät bekommt nur eine zufällige Kennung.
+4. Tab **Regeln** (Firestore) einfügen und veröffentlichen:
    ```
    rules_version = '2';
    service cloud.firestore {
      match /databases/{db}/documents {
-       function sha(k) { return hashing.sha256(k).toHexString().lower(); }
-       function proofPath(e, id) { return /databases/$(db)/documents/events/$(e)/proofs/$(id); }
-       // Gültiger Nachweis: wird im selben Schritt geschrieben (neuer Nonce) und passt zum Hash des Besitzers bzw. Gastgebers
-       function proved(e, id, hash) {
-         return existsAfter(proofPath(e, id))
-           && getAfter(proofPath(e, id)).data.nonce != resource.data.get('nonce', '')
-           && sha(getAfter(proofPath(e, id)).data.key) == hash;
-       }
-       function hostHash(e) { return get(/databases/$(db)/documents/events/$(e)).data.get('hostHash', '#'); }
+       function signedIn() { return request.auth != null; }
+       function isHost(e) { return signedIn() && request.auth.uid == get(/databases/$(db)/documents/events/$(e)).data.get('hostUid', ''); }
 
        match /events/{event} {
-         allow get: if true;       // nur einzelne Abende per ID, keine Liste aller Abende
-         allow create: if true;
-         // Abend ändern: nur der Gastgeber (oder solange der Abend noch keinen Gastgeber-Hash hat)
-         allow update, delete: if resource.data.get('hostHash', '') == ''
-           || proved(event, '_event', resource.data.hostHash);
-
-         match /proofs/{id} { allow write: if true; allow read: if false; }   // Schlüssel sind nie lesbar
+         allow get: if true;                      // nur einzelne Abende per ID, keine Liste aller Abende
+         // Abend anlegen/ändern: nur der Gastgeber (ein Abend ohne hostUid, also von früher, wird beim nächsten Veröffentlichen übernommen)
+         allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+         allow update: if isHost(event)
+           || (signedIn() && resource.data.get('hostUid', '') == '' && request.resource.data.hostUid == request.auth.uid);
+         allow delete: if isHost(event);
 
          match /orders/{order} {
-           allow read: if true;      // alle sehen alle Bestellungen (nur ansehen)
-           allow create: if true;
-           // Ändern: Gerät des Gasts, Gastgeber, oder (alte/freigegebene Bestellung ohne Kennung) das erste Gerät, das speichert
-           allow update: if resource.data.get('ownerHash', '') == ''
-             || (proved(event, order, resource.data.ownerHash) && request.resource.data.ownerHash == resource.data.ownerHash
-                 && request.resource.data.nonce == getAfter(proofPath(event, order)).data.nonce)
-             || (proved(event, order, hostHash(event)));
-           // Löschen: Gerät des Gasts oder Gastgeber (alte Bestellungen ohne Kennung nur der Gastgeber)
+           // Lesen: nur die eigene Bestellung (Kennung des Geräts) oder der Gastgeber. Freie Bestellungen (owner leer) darf jeder öffnen und übernehmen.
+           allow get: if resource == null || resource.data.get('owner', '') == ''
+             || (signedIn() && resource.data.owner == request.auth.uid) || isHost(event);
+           allow list: if (signedIn() && resource.data.get('owner', '') == request.auth.uid) || isHost(event);
+           allow create: if signedIn() && (request.resource.data.owner == request.auth.uid || isHost(event));
+           allow update: if signedIn() && (
+               (resource.data.get('owner', '') == '' && request.resource.data.owner == request.auth.uid)
+               || (resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid)
+               || isHost(event));
            allow delete: if resource == null
-             || (resource.data.get('ownerHash', '') != '' && proved(event, order, resource.data.ownerHash))
-             || proved(event, order, hostHash(event));
+             || (signedIn() && resource.data.get('owner', '') == request.auth.uid) || isHost(event);
          }
        }
      }
    }
    ```
-   **So funktioniert der Schutz:** Jedes Gästegerät erzeugt beim ersten Besuch einen zufälligen Schlüssel (nur im Browser, kein Login).
-   An der Bestellung steht nur dessen Hash. Zum Ändern/Löschen schickt die Seite den Schlüssel als nicht lesbaren „Nachweis“ im selben
-   Schritt mit; die Regeln prüfen ihn serverseitig. Fremde Bestellungen sind nur sichtbar. Der Gastgeber hat einen eigenen Schlüssel in der App
-   (Hash am Abend) und kann so jede Bestellung löschen oder freigeben (Menü → Guest link → Bestellung nach links wischen).
-   Eine freigegebene oder alte Bestellung (ohne Kennung) übernimmt das nächste Gerät, das sie speichert.
+   **So funktioniert der Schutz:** Die Gästeseite meldet jedes Gerät anonym an. An jeder Bestellung steht die Kennung (`owner`) des Geräts.
+   Nur dieses Gerät kann sie lesen, ändern oder löschen; **fremde Bestellungen sind auf der Gästeseite unsichtbar und serverseitig nicht abrufbar.**
+   Der Gastgeber (Kennung als `hostUid` am Abend, wird beim Veröffentlichen in der App gesetzt) sieht und verwaltet alle Bestellungen.
+   Handy gewechselt oder Browserdaten gelöscht? In der App unter *Guest link* die Bestellung nach links wischen → *Für neues Gerät freigeben*.
+   Eine freigegebene oder alte Bestellung (ohne Kennung) darf das nächste Gerät öffnen und übernehmen – gib sie also erst frei, wenn der Gast bereit ist.
    Die Event-ID im Link ist lang und zufällig (unerratbar), sonst ist nichts geschützt – für einen Pizzaabend okay.
-   Hinweis: Einmal im **Regeln-Simulator** der Firebase-Konsole testen. Ohne die neuen Regeln läuft alles weiter wie bisher, nur ohne Schutz.
-4. **Projekteinstellungen → Allgemein**: *Projekt-ID* und unter *Ihre Apps → Web-App* den *apiKey* notieren (App registrieren, Hosting nicht nötig).
-5. In `docs/index.html` oben `PROJECT` und `API_KEY` eintragen, pushen.
-6. GitHub → Repo **Settings → Pages → Branch wählen, Ordner `/docs`**. Adresse: `https://<user>.github.io/<repo>/`.
-7. In der App: Menü → *Guest link* → Projekt-ID, API-Key und Seitenadresse eintragen (einmalig), Gäste eintragen, *Publish menu*, Link teilen.
-8. Später: *Fetch orders* → *Import into menu & toppings* → Zutaten landen in der Einkaufsliste-Funktion.
+   Hinweis: Einmal im **Regeln-Simulator** testen. Mit den alten, offenen Regeln läuft die neue Seite zwar, schützt aber nichts.
+5. **Projekteinstellungen → Allgemein**: *Projekt-ID* und unter *Ihre Apps → Web-App* den *apiKey* notieren (App registrieren, Hosting nicht nötig).
+6. In `docs/index.html` oben `PROJECT` und `API_KEY` eintragen, pushen.
+7. GitHub → Repo **Settings → Pages → Branch wählen, Ordner `/docs`**. Adresse: `https://<user>.github.io/<repo>/`.
+8. In der App: Menü → *Guest link* → Projekt-ID, API-Key und Seitenadresse eintragen (einmalig), Gäste eintragen, *Publish menu*, Link teilen.
+9. Später: *Fetch orders* → *Import into menu & toppings* → Zutaten landen in der Einkaufsliste-Funktion.
 
 ## Mehrere Abende / Anlässe
 

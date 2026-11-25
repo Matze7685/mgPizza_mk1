@@ -5451,6 +5451,16 @@
           }
         }
       }
+    },
+    "Sign-in failed. Enable “Anonymous” under Authentication → Sign-in method in Firebase." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anmeldung fehlgeschlagen. Aktiviere in Firebase unter Authentication → Anmeldemethode den Anbieter „Anonym“."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
