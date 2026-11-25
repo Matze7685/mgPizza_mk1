@@ -57,8 +57,12 @@ struct PizzaLiveActivity: Widget {
                 Image(systemName: context.state.symbol)
                     .foregroundStyle(.orange)
             } compactTrailing: {
+                // Feste Breite: Ohne sie reserviert iOS zu wenig Platz, der Countdown bricht
+                // senkrecht um bzw. wird zu „2:…“ abgeschnitten.
                 countdown(context.state.endDate)
-                    .frame(maxWidth: 64)
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(.orange)
+                    .frame(width: compactWidth(context.state.endDate), alignment: .trailing)
             } minimal: {
                 Image(systemName: context.state.symbol)
                     .foregroundStyle(.orange)
@@ -71,5 +75,12 @@ struct PizzaLiveActivity: Widget {
         return Text(timerInterval: now...max(end, now), countsDown: true)
             .monospacedDigit()
             .multilineTextAlignment(.trailing)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+    }
+
+    /// Platz für „12:34“ bzw. „1:23:45“ (ab einer Stunde)
+    private func compactWidth(_ end: Date) -> CGFloat {
+        end.timeIntervalSinceNow >= 3600 ? 64 : 44
     }
 }
