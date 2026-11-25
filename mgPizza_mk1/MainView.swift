@@ -42,8 +42,9 @@ struct MainView: View {
                     .tag(MainTab.menu)
             }
             .safeAreaInset(edge: .top, spacing: 0) {
-                if showDoughStatus {
-                    DoughStatusBar().padding(.vertical, 4)   // oben angeheftet, auch in Rezepten
+                // Nicht auf der Startseite: dort steht der Teigstatus schon groß in der Karte
+                if showDoughStatus && router.selectedTab != .activity {
+                    DoughStatusBar().padding(.vertical, 4)   // oben angeheftet, in Rezepten und Karte
                 }
             }
             // Laufende Timer in die Dynamic Island schieben, sobald die App verlassen wird
