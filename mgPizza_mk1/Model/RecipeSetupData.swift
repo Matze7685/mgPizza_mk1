@@ -216,12 +216,20 @@ extension RecipeSetupData {
         isStarted = true
         DoughNotifications.schedule(for: self)
         LiveActivityManager.shared.refreshDough([self], now: now)
+        persist()
     }
 
     func stopTimers() {
         isStarted = false
         DoughNotifications.cancel(for: self)
         LiveActivityManager.shared.endDough(self)
+        persist()
+    }
+
+    /// Sofort speichern: Wird die App im Hintergrund von iOS beendet, bevor SwiftData automatisch speichert,
+    /// wäre die Endzeit des Timers sonst weg und der Timer stünde beim nächsten Öffnen wieder am Anfang.
+    func persist() {
+        try? modelContext?.save()
     }
 
     // MARK: Ablauf / Phase
@@ -305,6 +313,7 @@ extension RecipeSetupData {
         kneadStepEnd = end
         DoughNotifications.scheduleKneadStep(id: uid.uuidString, title: kneadTitle(step), recipe: displayName, at: end)
         LiveActivityManager.shared.startKnead(self, title: kneadTitle(step), end: end)
+        persist()
     }
 
     func nextKneadStep() {
@@ -338,6 +347,7 @@ extension RecipeSetupData {
         kneadStepEnd = nil
         DoughNotifications.cancelKneadStep(id: uid.uuidString)
         LiveActivityManager.shared.endKnead(self)
+        persist()
     }
 
     /// Menge einer Zutat in Gramm (für die Knet-Infos)
