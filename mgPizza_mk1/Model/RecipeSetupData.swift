@@ -165,6 +165,12 @@ extension RecipeSetupData {
 
     var totalDoughWeight: Double { doughWeight * doughBallsCount }
 
+    /// Ungefährer Pizza-Durchmesser in cm für einen Teigling (Neapolitanisch, ≈ 0,33 g Teig pro cm²):
+    /// 230 g ≈ 30 cm, 250 g ≈ 31 cm, 280 g ≈ 33 cm
+    var pizzaDiameter: Double {
+        2 * (doughWeight / 0.33 / .pi).squareRoot()
+    }
+
     var flour: Double {
         let totalFactor = 1.0 + (waterRatio + saltRatio + oilRatio + sugarRatio) / 100.0
         return totalDoughWeight / totalFactor
@@ -372,10 +378,4 @@ extension RecipeSetupData {
         if sugar > 0 { items.append((String(localized: "Sugar"), String(format: "%.0f g", sugar))) }
         return items
     }
-}
-
-enum RecipeSetupStep: Hashable {
-    case fermentRoomTimeTemp
-    case fermentFridgeTimeTemp
-    case doughResult
 }

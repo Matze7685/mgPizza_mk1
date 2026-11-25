@@ -24,7 +24,7 @@ struct SettingsView: View {
             Section {
                 Toggle("Always show dough status", isOn: $showDoughStatus)
             } footer: {
-                Text("Pins the current step and countdown to the top of every screen while you prepare the dough (weighing, kneading) – not during proofing. Running timers move to the Dynamic Island when you leave the app.")
+                Text("Pins the current step and countdown to the top of the other tabs while you prepare the dough (weighing, kneading) – not during proofing and not on the Timer page, which shows it large. Running timers move to the Dynamic Island when you leave the app.")
             }
             Section {
                 Stepper("Max. dough per batch: \(Int(mixerCapacity)) g", value: $mixerCapacity, in: 500...10000, step: 100)
