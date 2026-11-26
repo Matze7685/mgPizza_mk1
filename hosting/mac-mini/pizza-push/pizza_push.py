@@ -201,7 +201,7 @@ def push_to_host(db, apns, host_uid, title, body, thread, collapse_id=None):
         where = {"fieldFilter": {"field": {"fieldPath": "hostUid"}, "op": "EQUAL", "value": {"stringValue": host_uid}}}
     devices = db.query("pushTokens", where=where)
     if not devices:
-        log("  kein Gerät angemeldet (in der App unter Guest link → Push einschalten)")
+        log("  kein Gerät angemeldet (in der App: Anlass → Pizzen & Mengen → Gästeseite → „Push bei Gästebestellungen“ einschalten)")
     payload = {"aps": {"alert": {"title": title, "body": body}, "sound": "default", "thread-id": thread},
                "guestEvent": thread}
     for device in devices:
