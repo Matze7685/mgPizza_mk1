@@ -2,25 +2,53 @@
 
 1. https://console.firebase.google.com → Projekt anlegen (Analytics aus).
 2. **Build → Firestore Database → Datenbank erstellen** (Produktionsmodus, Region z. B. `eur3`).
-3. Tab **Regeln** einfügen und veröffentlichen:
+3. **Build → Authentication → Anmeldemethode → „Anonym“ aktivieren.** Gäste melden sich damit unsichtbar an (kein Login, keine Mail, kein PIN);
+   jedes Gerät bekommt nur eine zufällige Kennung.
+4. Tab **Regeln** (Firestore) einfügen und veröffentlichen:
    ```
    rules_version = '2';
    service cloud.firestore {
      match /databases/{db}/documents {
+       function signedIn() { return request.auth != null; }
+       function isHost(e) { return signedIn() && request.auth.uid == get(/databases/$(db)/documents/events/$(e)).data.get('hostUid', ''); }
+
        match /events/{event} {
-         allow get, write: if true;   // nur einzelne Abende per ID, keine Liste aller Abende
-         match /orders/{order} { allow read, write: if true; }
+         allow get: if true;                      // nur einzelne Abende per ID, keine Liste aller Abende
+         // Abend anlegen/ändern: nur der Gastgeber (ein Abend ohne hostUid, also von früher, wird beim nächsten Veröffentlichen übernommen)
+         allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+         allow update: if isHost(event)
+           || (signedIn() && resource.data.get('hostUid', '') == '' && request.resource.data.hostUid == request.auth.uid);
+         allow delete: if isHost(event);
+
+         match /orders/{order} {
+           // Lesen: nur die eigene Bestellung (Kennung des Geräts) oder der Gastgeber. Freie Bestellungen (owner leer) darf jeder öffnen und übernehmen.
+           allow get: if resource == null || resource.data.get('owner', '') == ''
+             || (signedIn() && resource.data.owner == request.auth.uid) || isHost(event);
+           allow list: if (signedIn() && resource.data.get('owner', '') == request.auth.uid) || isHost(event);
+           allow create: if signedIn() && (request.resource.data.owner == request.auth.uid || isHost(event));
+           allow update: if signedIn() && (
+               (resource.data.get('owner', '') == '' && request.resource.data.owner == request.auth.uid)
+               || (resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid)
+               || isHost(event));
+           allow delete: if resource == null
+             || (signedIn() && resource.data.get('owner', '') == request.auth.uid) || isHost(event);
+         }
        }
      }
    }
    ```
+   **So funktioniert der Schutz:** Die Gästeseite meldet jedes Gerät anonym an. An jeder Bestellung steht die Kennung (`owner`) des Geräts.
+   Nur dieses Gerät kann sie lesen, ändern oder löschen; **fremde Bestellungen sind auf der Gästeseite unsichtbar und serverseitig nicht abrufbar.**
+   Der Gastgeber (Kennung als `hostUid` am Abend, wird beim Veröffentlichen in der App gesetzt) sieht und verwaltet alle Bestellungen.
+   Handy gewechselt oder Browserdaten gelöscht? In der App unter *Guest link* die Bestellung nach links wischen → *Für neues Gerät freigeben*.
+   Eine freigegebene oder alte Bestellung (ohne Kennung) darf das nächste Gerät öffnen und übernehmen – gib sie also erst frei, wenn der Gast bereit ist.
    Die Event-ID im Link ist lang und zufällig (unerratbar), sonst ist nichts geschützt – für einen Pizzaabend okay.
-   `get` statt `read` sorgt dafür, dass niemand die Liste aller Abende abrufen kann: Wer einen Link hat, sieht nur diesen einen Abend.
-4. **Projekteinstellungen → Allgemein**: *Projekt-ID* und unter *Ihre Apps → Web-App* den *apiKey* notieren (App registrieren, Hosting nicht nötig).
-5. In `docs/index.html` oben `PROJECT` und `API_KEY` eintragen, pushen.
-6. GitHub → Repo **Settings → Pages → Branch wählen, Ordner `/docs`**. Adresse: `https://<user>.github.io/<repo>/`.
-7. In der App: Menü → *Guest link* → Projekt-ID, API-Key und Seitenadresse eintragen (einmalig), Gäste eintragen, *Publish menu*, Link teilen.
-8. Später: *Fetch orders* → *Import into menu & toppings* → Zutaten landen in der Einkaufsliste-Funktion.
+   Hinweis: Einmal im **Regeln-Simulator** testen. Mit den alten, offenen Regeln läuft die neue Seite zwar, schützt aber nichts.
+5. **Projekteinstellungen → Allgemein**: *Projekt-ID* und unter *Ihre Apps → Web-App* den *apiKey* notieren (App registrieren, Hosting nicht nötig).
+6. In `docs/index.html` oben `PROJECT` und `API_KEY` eintragen, pushen.
+7. GitHub → Repo **Settings → Pages → Branch wählen, Ordner `/docs`**. Adresse: `https://<user>.github.io/<repo>/`.
+8. In der App: Menü → *Guest link* → Projekt-ID, API-Key und Seitenadresse eintragen (einmalig), Gäste eintragen, *Publish menu*, Link teilen.
+9. Später: *Fetch orders* → *Import into menu & toppings* → Zutaten landen in der Einkaufsliste-Funktion.
 
 ## Mehrere Abende / Anlässe
 
