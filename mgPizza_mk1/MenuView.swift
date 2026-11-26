@@ -18,6 +18,7 @@ struct MenuView: View {
     @State private var addedToShopping = false
     @State private var pdfURL: URL?
     @State private var isShowingGuestLink = false
+    @State private var isShowingFoldView = false
 
     private var onMenu: [MenuPizza] { pizzas.filter(\.isOnMenu) }
     /// Nur die eigentliche Speisekarte (ohne eigene Gäste-Pizzen) für Teilen, PDF und Gästelink
@@ -74,6 +75,12 @@ struct MenuView: View {
 
             if mode == .orders {
                 Section {
+                    Button("Split view: orders on top", systemImage: "rectangle.split.1x2") { isShowingFoldView = true }
+                } footer: {
+                    Text("For a foldable iPhone in laptop posture: the orders fill the upper screen, the controls stay on the lower one.")
+                }
+
+                Section {
                     ForEach(onMenu) { pizza in
                         MenuPizzaRow(pizza: pizza, number: number(of: pizza), showsOrders: true) { editingPizza = pizza }
                     }
@@ -120,6 +127,9 @@ struct MenuView: View {
         }
         .sheet(isPresented: $isShowingGuestLink) {
             GuestLinkSheet(title: title, date: date, pizzas: menuPizzas)
+        }
+        .fullScreenCover(isPresented: $isShowingFoldView) {
+            OrdersFoldView()
         }
         .sheet(item: $editingPizza) { pizza in
             MenuPizzaEditor(pizza: pizza)

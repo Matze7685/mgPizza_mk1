@@ -19,6 +19,7 @@ Rezeptdetail: nur Bereich der aktuellen Phase aufgeklappt, Tipps/Feedback/Rezept
 - `Model/SauceRecipe.swift`, `SauceView.swift` – Saucen (Einheiten %, g, ml, Stk., TL) + Zutaten-Tipps.
 - `Model/MenuPizza.swift`, `MenuView.swift` – Speisekarte für Gäste (Text/PDF teilen, Bestellungen, Belag → Einkaufsliste).
 - `ShoppingListView.swift` – Einkaufsliste + Auswahl-Sheet.
+- `OrdersFoldView.swift` – geteilte Bestellansicht (Bestellungen › „Geteilte Ansicht“) für faltbares iPhone in Laptop-Stellung: oben große Bestellkarten (nach Pizza/nach Gast, Antippen = gebacken), unten Bedienung; Teilung exakt in Bildschirmmitte, Knick-Abstand + Tauschen im ⋯-Menü. iOS hat keine Scharnier-API, daher manuell geöffnet.
 - `NotificationModel.swift` – Erinnerungen (Teig raus −1 h / raus / Servieren, Knetschritte).
 - `Shared/LiveActivityManager.swift`, `Shared/PizzaActivityAttributes.swift`, `PizzaWidget/` – Dynamic Island (Widget-Extension-Target `PizzaWidget` ist im Projekt eingetragen, siehe `PizzaWidget/README.md`).
 - `Shared/DoughAnnouncer.swift`, `Bluetooth/OvenSpeaker.swift` – Sprachansagen über AirPlay/HomePod (nur solange App läuft).
