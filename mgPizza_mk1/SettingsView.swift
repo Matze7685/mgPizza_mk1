@@ -63,6 +63,15 @@ struct SettingsView: View {
                     Label("Bluetooth Test (Ooni Hub)", systemImage: "antenna.radiowaves.left.and.right")
                 }
             }
+            Section {
+                NavigationLink {
+                    InfoView()
+                } label: {
+                    Label("Info", systemImage: "info.circle")
+                }
+            } footer: {
+                Text("Version, changelog and pizza counter")
+            }
         }
     }
 }
