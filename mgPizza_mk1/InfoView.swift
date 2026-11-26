@@ -205,7 +205,8 @@ enum Changelog {
     }
 
     static let entries: [Entry] = [
-        Entry(version: "1.7", builds: "80–81", date: "26.11.26", title: "Geteilte Ansicht", changes: [
+        Entry(version: "1.7", builds: "80–82", date: "26.11.26", title: "Geteilte Ansicht", changes: [
+            "⋯-Menü: Spalten und Knick-Abstand als beschriftete Untermenüs, „Nächste Pizza daneben“ zeigt die Hälfte immer an",
             "Tomatensauce, Reibekäse und Mozzarella stehen oben immer untereinander (🍅 🧀 ⚪️)",
             "Oben nur noch Zutatennamen, auch bei Zusatzzutaten ohne Mengen",
             "Zutaten größer in 2 oder 3 Spalten (Einstellungen), optional die nächste Pizza mit Zutaten daneben",
