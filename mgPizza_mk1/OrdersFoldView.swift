@@ -16,8 +16,8 @@ struct OrdersFoldView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
 
-    @AppStorage("fbProject") private var project = ""
-    @AppStorage("fbKey") private var apiKey = ""
+    @AppStorage("fbProject") private var project = GuestFirebaseDefaults.project
+    @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
     @AppStorage("menuEventID") private var eventID = ""
     @AppStorage("menuTitle") private var menuTitle = ""
     /// Abstand für den Knick in der Mitte (Punkte); dort steht kein Inhalt
