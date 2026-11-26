@@ -189,15 +189,26 @@ struct OrdersFoldView: View {
             }
 
             if let item = current {
-                if showNextPizza, let next {
-                    HStack(alignment: .top, spacing: 12) {
-                        pizzaPanel(item, scale: 0.8)
-                        Divider()
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Next").font(.caption.weight(.semibold)).textCase(.uppercase).foregroundStyle(.secondary)
-                            pizzaPanel(next, scale: 0.7)
+                if showNextPizza {
+                    // Feste Breiten statt freier Verteilung, damit beide Hälften sicher sichtbar sind
+                    GeometryReader { geo in
+                        HStack(alignment: .top, spacing: 12) {
+                            pizzaPanel(item, scale: 0.8)
+                                .frame(width: max(0, (geo.size.width - 25) * 0.55))
+                            Divider()
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Next").font(.caption.weight(.semibold)).textCase(.uppercase).foregroundStyle(.secondary)
+                                if let next {
+                                    pizzaPanel(next, scale: 0.7)
+                                } else {
+                                    Text("No more pizzas").font(.headline).foregroundStyle(.secondary)
+                                    Spacer()
+                                }
+                            }
+                            .frame(width: max(0, (geo.size.width - 25) * 0.45), alignment: .leading)
+                            .opacity(0.6)
                         }
-                        .opacity(0.6)
+                        .frame(maxHeight: .infinity, alignment: .top)
                     }
                 } else {
                     pizzaPanel(item, scale: 1)
@@ -380,15 +391,22 @@ struct OrdersFoldView: View {
                     Divider()
                     Toggle("Swap top and bottom", isOn: $swapHalves)
                     Toggle("Show next pizza with ingredients", isOn: $showNextPizza)
-                    Picker("Ingredient columns", selection: $foldColumns) {
-                        Text("2").tag(2)
-                        Text("3").tag(3)
+                    // Als Untermenüs, damit die Auswahl ihre Überschrift behält
+                    Picker(selection: $foldColumns) {
+                        Text("2 columns").tag(2)
+                        Text("3 columns").tag(3)
+                    } label: {
+                        Label("Ingredient columns", systemImage: "square.grid.2x2")
                     }
-                    Picker("Gap for the fold", selection: $hingeGap) {
-                        Text("None").tag(0.0)
-                        Text("Small").tag(24.0)
-                        Text("Large").tag(48.0)
+                    .pickerStyle(.menu)
+                    Picker(selection: $hingeGap) {
+                        Text("No gap").tag(0.0)
+                        Text("Small gap").tag(24.0)
+                        Text("Large gap").tag(48.0)
+                    } label: {
+                        Label("Gap for the fold", systemImage: "arrow.up.and.down")
                     }
+                    .pickerStyle(.menu)
                 } label: {
                     Image(systemName: "ellipsis.circle").font(.title2)
                 }
