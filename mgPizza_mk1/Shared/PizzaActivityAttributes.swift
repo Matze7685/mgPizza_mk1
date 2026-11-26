@@ -8,8 +8,10 @@
 import ActivityKit
 import Foundation
 
-struct PizzaActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
+/// `nonisolated`: ActivityKit nutzt die Konformität außerhalb des MainActors
+/// (Projekt-Default ist MainActor-Isolation).
+nonisolated struct PizzaActivityAttributes: ActivityAttributes {
+    nonisolated public struct ContentState: Codable, Hashable {
         var title: String          // z. B. "Teig raus" oder Knetschritt
         var subtitle: String       // Rezeptname
         var endDate: Date
