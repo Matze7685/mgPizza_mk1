@@ -5911,6 +5911,376 @@
           }
         }
       }
+    },
+    "1 · Event" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 · Anlass"
+          }
+        }
+      }
+    },
+    "2 · Guests (%lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 · Gäste (%lld)"
+          }
+        }
+      }
+    },
+    "3 · Menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 · Speisekarte"
+          }
+        }
+      }
+    },
+    "4 · Orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 · Bestellungen"
+          }
+        }
+      }
+    },
+    "Add (%lld)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzufügen (%lld)"
+          }
+        }
+      }
+    },
+    "All earlier guests are already on the list." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle früheren Gäste stehen schon auf der Liste."
+          }
+        }
+      }
+    },
+    "All guests of an event" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Gäste eines Anlasses"
+          }
+        }
+      }
+    },
+    "Amounts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mengen"
+          }
+        }
+      }
+    },
+    "Available pizzas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswählbare Pizzen"
+          }
+        }
+      }
+    },
+    "Change e.g. the tomato sauce once and every pizza gets the new amount. Extra amounts: how much one pizza needs when a guest adds an ingredient." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Z. B. die Tomatensauce einmal ändern, und jede Pizza bekommt die neue Menge. Zusatzmengen: wie viel eine Pizza braucht, wenn ein Gast eine Zutat dazuwünscht."
+          }
+        }
+      }
+    },
+    "Changes reach the guests after publishing the menu again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen sehen die Gäste, sobald du die Speisekarte erneut veröffentlichst."
+          }
+        }
+      }
+    },
+    "Create your first event: name and date. Then add the guests and publish the menu." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leg deinen ersten Anlass an: Name und Datum. Danach Gäste eintragen und Speisekarte veröffentlichen."
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
+          }
+        }
+      }
+    },
+    "Delete event" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anlass löschen"
+          }
+        }
+      }
+    },
+    "Delete “%@”?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ löschen?"
+          }
+        }
+      }
+    },
+    "Dough: %lld dough balls, %lld Detroit pans. On the shopping list the tomato sauce is split into its ingredients (recipe “%@”)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teig: %lld Teiglinge, %lld Detroit-Pfannen. Auf der Einkaufsliste wird die Tomatensauce in ihre Zutaten aufgeteilt (Rezept „%@“)."
+          }
+        }
+      }
+    },
+    "Earlier guests" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frühere Gäste"
+          }
+        }
+      }
+    },
+    "Events" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anlass"
+          }
+        }
+      }
+    },
+    "Guest page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gästeseite"
+          }
+        }
+      }
+    },
+    "Guests from earlier events" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste von früheren Anlässen"
+          }
+        }
+      }
+    },
+    "Next you add the guests and publish the menu." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danach trägst du die Gäste ein und veröffentlichst die Speisekarte."
+          }
+        }
+      }
+    },
+    "No pizzas available – choose them in “Pizzas & amounts”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Pizzen auswählbar – wähle sie unter „Pizzen & Mengen“."
+          }
+        }
+      }
+    },
+    "Orders from the guest page are counted automatically. Without guest page: enter the counts by hand under “Pizzas ordered”. Swipe an order to release it for a new phone or to delete it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestellungen von der Gästeseite werden automatisch gezählt. Ohne Gästeseite: Anzahl von Hand unter „Bestellte Pizzen“ eintragen. Bestellung zur Seite wischen, um sie für ein neues Handy freizugeben oder zu löschen."
+          }
+        }
+      }
+    },
+    "Pizzas & amounts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizzen & Mengen"
+          }
+        }
+      }
+    },
+    "Pizzas on the menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizzen auf der Karte"
+          }
+        }
+      }
+    },
+    "Put on shopping list" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf die Einkaufsliste"
+          }
+        }
+      }
+    },
+    "Send menu without guest page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karte ohne Gästeseite schicken"
+          }
+        }
+      }
+    },
+    "Single guests" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einzelne Gäste"
+          }
+        }
+      }
+    },
+    "Tap a name to rename, swipe to remove. Several names at once: separate with commas." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namen antippen zum Umbenennen, wischen zum Entfernen. Mehrere Namen auf einmal: mit Komma trennen."
+          }
+        }
+      }
+    },
+    "The guest link stops working and the event disappears from the app." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Gästelink funktioniert dann nicht mehr und der Anlass verschwindet aus der App."
+          }
+        }
+      }
+    },
+    "This event is over" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Anlass ist vorbei"
+          }
+        }
+      }
+    },
+    "Toggle the circle to make a pizza available. Tap a pizza to edit its toppings. For each event you can still untick single pizzas." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kreis antippen, um eine Pizza auswählbar zu machen. Pizza antippen, um den Belag zu ändern. Pro Anlass kannst du einzelne Pizzen trotzdem abwählen."
+          }
+        }
+      }
+    },
+    "Untick pizzas you don't want to offer at this event. After publishing, the guest link is copied: paste it into your message." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizzen abwählen, die es bei diesem Anlass nicht geben soll. Nach dem Veröffentlichen liegt der Gästelink in der Zwischenablage: einfach in deine Nachricht einfügen."
+          }
+        }
+      }
+    },
+    "Which pizzas can be chosen, toppings per pizza, extra amounts and settings of the guest page." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welche Pizzen es gibt, Belag pro Pizza, Zusatzmengen und Einstellungen der Gästeseite."
+          }
+        }
+      }
+    },
+    "Published. The guest link is copied: paste it into your message." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veröffentlicht. Der Gästelink liegt in der Zwischenablage: einfach in deine Nachricht einfügen."
+          }
+        }
+      }
+    },
+    "%lld orders received, shopping list updated." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Bestellungen erhalten, Einkaufsliste aktualisiert."
+          }
+        }
+      }
+    },
+    "Publish menu again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speisekarte erneut veröffentlichen"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

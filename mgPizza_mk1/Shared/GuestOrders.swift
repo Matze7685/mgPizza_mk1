@@ -40,6 +40,11 @@ struct GuestEvening: Codable, Identifiable, Hashable {
     var closed: Bool = false
     var orderCount: Int?
     var publishedAt: Date?
+    /// Pizzen, die bei diesem Anlass nicht auf der Karte stehen (Namen)
+    var hiddenPizzas: [String]?
+
+    /// Anlass vorbei: Datum liegt vor heute
+    var isPast: Bool { date < Calendar.current.startOfDay(for: .now) }
 }
 
 enum GuestEvenings {
@@ -69,6 +74,38 @@ enum GuestEvenings {
             list.append(evening)
         }
         save(list)
+    }
+
+    static func remove(id: String) {
+        save(all.filter { $0.id != id })
+    }
+
+    static func newID() -> String {
+        UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+    }
+
+    /// Adresse der Gästeseite (Einstellung, sonst die feste Adresse)
+    static var pageURL: String {
+        let value = (UserDefaults.standard.string(forKey: "guestPageURL") ?? "").trimmingCharacters(in: .whitespaces)
+        return value.isEmpty ? GuestFirebaseDefaults.pageURL : value
+    }
+
+    static func link(id: String) -> URL? {
+        guard !id.isEmpty, var parts = URLComponents(string: pageURL) else { return nil }
+        parts.queryItems = [URLQueryItem(name: "e", value: id)]
+        return parts.url
+    }
+}
+
+extension GuestOrderService {
+    /// Mit den gespeicherten Firebase-Werten (leer = feste Werte)
+    static var current: GuestOrderService {
+        func value(_ key: String, _ fallback: String) -> String {
+            let text = (UserDefaults.standard.string(forKey: key) ?? "").trimmingCharacters(in: .whitespaces)
+            return text.isEmpty ? fallback : text
+        }
+        return GuestOrderService(project: value("fbProject", GuestFirebaseDefaults.project),
+                                 apiKey: value("fbKey", GuestFirebaseDefaults.apiKey))
     }
 }
 
@@ -351,6 +388,15 @@ struct GuestOrderService {
                                                               "updated": ["timestampValue": ISO8601DateFormatter().string(from: Date())]])
     }
 
+    /// Anlass in Firebase löschen (die Gästeseite zeigt ihn danach nicht mehr)
+    func deleteEvent(id: String) async throws {
+        var request = URLRequest(url: try url("events/\(id)"))
+        request.httpMethod = "DELETE"
+        let (_, response) = try await send(request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 { return }
+        try check(response)
+    }
+
     func deletePushToken(_ token: String) async throws {
         try await write("DELETE", "pushTokens/\(token)")
     }
@@ -467,557 +513,5 @@ extension MenuPizza {
                 index += 1
             }
         }
-    }
-}
-
-struct GuestLinkSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    var title: String
-    var date: Date
-    var pizzas: [MenuPizza]          // nur die auf der Karte
-
-    @AppStorage("fbProject") private var project = GuestFirebaseDefaults.project
-    @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
-    @AppStorage("guestPageURL") private var pageURL = GuestFirebaseDefaults.pageURL
-    @AppStorage("guestNames") private var guestNames = ""
-    @AppStorage("menuEventID") private var eventID = ""
-    @AppStorage("menuTitle") private var menuTitle = ""
-    @AppStorage("menuDate") private var menuDate: Double = Date().timeIntervalSince1970
-    @AppStorage("guestIntro") private var intro = ""
-    @AppStorage("guestOrdersClosed") private var ordersClosed = false
-    @AppStorage(GuestPush.enabledKey) private var pushEnabled = false
-    @AppStorage(GuestPush.statusKey) private var pushStatus = ""
-    @State private var orders: [GuestOrder] = []
-    @State private var status = ""
-    @State private var isBusy = false
-    @State private var eveningCount = 0
-    @State private var newGuest = ""
-    @State private var renaming: String?
-    @State private var renameText = ""
-    @State private var removing: String?
-    @State private var deletingOrder: String?
-    @State private var showingNewEvent = false
-
-    private var guests: [String] {
-        guestNames.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-    }
-
-    private var guestLink: URL? { Self.link(pageURL: pageURL, id: eventID) }
-
-    static func link(pageURL: String, id: String) -> URL? {
-        guard !id.isEmpty, !pageURL.isEmpty, var parts = URLComponents(string: pageURL) else { return nil }
-        parts.queryItems = [URLQueryItem(name: "e", value: id)]
-        return parts.url
-    }
-
-    /// Der aktuelle Abend, wie er in der Übersicht gespeichert wird
-    private var current: GuestEvening {
-        GuestEvening(id: eventID, title: title, date: date, intro: intro, guests: guests, closed: ordersClosed)
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(title).font(.headline)
-                        Text(date.formatted(.dateTime.weekday(.wide).day().month().hour().minute()))
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical)
-                        .lineLimit(1...5)
-                    Toggle("Orders closed", isOn: $ordersClosed)
-                    NavigationLink {
-                        GuestEveningsView(currentID: eventID, pageURL: pageURL, service: service, onSelect: { switchTo($0) },
-                                          onNew: { showingNewEvent = true })
-                    } label: {
-                        LabeledContent("All events", value: "\(eveningCount)")
-                    }
-                    Button("New event", systemImage: "sparkles") { showingNewEvent = true }
-                } header: {
-                    Text("Evening")
-                } footer: {
-                    Text("Title and date come from the menu. Each evening gets its own link; guests only ever see their own evening. Changes reach the guests after “Publish menu”.")
-                }
-
-                Section {
-                    ForEach(guests, id: \.self) { name in
-                        Button {
-                            renameText = name
-                            renaming = name
-                        } label: {
-                            HStack {
-                                Text(name).foregroundStyle(.primary)
-                                Spacer()
-                                if orders.contains(where: { $0.guest == name }) {
-                                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                                }
-                            }
-                        }
-                        .swipeActions {
-                            Button("Remove", systemImage: "trash", role: .destructive) { removing = name }
-                        }
-                    }
-                    HStack {
-                        TextField("Add guest", text: $newGuest)
-                            .onSubmit(addGuests)
-                        Button("Add", systemImage: "plus.circle.fill", action: addGuests)
-                            .labelStyle(.iconOnly)
-                            .disabled(newGuest.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                } header: {
-                    Text("Guests (\(guests.count))")
-                } footer: {
-                    Text("Tap a name to rename, swipe to remove. An existing order moves with the new name; removing a guest deletes their order. Several names at once: separate with commas.")
-                }
-
-                Section {
-                    Button("Publish menu", systemImage: "icloud.and.arrow.up") { Task { await publish() } }
-                        .disabled(isBusy)
-                    if let link = guestLink {
-                        // Als reiner Text teilen: Mit URL + message schicken manche Apps (WhatsApp, Nachrichten) nur die Nachricht
-                        ShareLink(item: "🍕 \(title)\n\(link.absoluteString)") {
-                            Label("Send guest link", systemImage: "link")
-                        }
-                        Link(destination: link) {
-                            Label("Open guest page", systemImage: "safari")
-                        }
-                        Button("Copy guest link", systemImage: "doc.on.doc") {
-                            UIPasteboard.general.string = link.absoluteString
-                            status = String(localized: "Link copied.")
-                        }
-                        Text(link.absoluteString).font(.caption2).foregroundStyle(.secondary).textSelection(.enabled)
-                    }
-                }
-
-                Section {
-                    Button("Fetch orders", systemImage: "icloud.and.arrow.down") { Task { await fetch() } }
-                        .disabled(isBusy)
-                    ForEach(orders) { order in
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 4) {
-                                Text(order.guest).font(.headline)
-                                if order.claimed == true { Image(systemName: "lock.fill").font(.caption).foregroundStyle(.secondary) }
-                            }
-                            Text(order.lines.map { "\($0.count)× \($0.name)" + ($0.custom.map { " (\($0.map(\.name).joined(separator: ", ")))" } ?? "") + (($0.extra ?? []).isEmpty ? "" : " + \($0.extra!.joined(separator: ", "))") + ($0.without.isEmpty ? "" : " (\(String(localized: "without")) \($0.without.joined(separator: ", ")))") }
-                                .joined(separator: ", "))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        .swipeActions {
-                            Button("Delete order", systemImage: "trash", role: .destructive) { deletingOrder = order.guest }
-                            if order.claimed == true {
-                                Button("Release for new device", systemImage: "lock.open") { Task { await release(order.guest) } }
-                                    .tint(.orange)
-                            }
-                        }
-                    }
-                    let missing = guests.filter { name in !orders.contains { $0.guest == name } }
-                    if !orders.isEmpty && !missing.isEmpty {
-                        Text("Still missing: \(missing.joined(separator: ", "))").font(.caption).foregroundStyle(.orange)
-                    }
-                    if !orders.isEmpty {
-                        Button("Import into menu & toppings", systemImage: "square.and.arrow.down") {
-                            importOrders()
-                            dismiss()
-                            NotificationCenter.default.post(name: .showShoppingList, object: nil)
-                        }
-                    }
-                } header: {
-                    Text("Orders")
-                } footer: {
-                    Text("Importing replaces the order counts in the menu. A lock means the order belongs to the guest's device. Swipe to release it (e.g. new phone) or delete it.")
-                }
-
-                Section {
-                    Toggle("Push for guest orders", systemImage: "bell.badge", isOn: $pushEnabled)
-                        .onChange(of: pushEnabled) { _, on in Task { on ? await GuestPush.enable() : await GuestPush.disable() } }
-                    if pushEnabled && !pushStatus.isEmpty {
-                        Text(pushStatus).font(.caption).foregroundStyle(.secondary)
-                    }
-                } footer: {
-                    Text("A notification on this iPhone when a guest orders, changes or deletes an order. Needs Pizza-Push on the Mac mini (hosting/mac-mini/pizza-push).")
-                }
-
-                Section {
-                    NavigationLink("Extra amounts per pizza") { ExtraDefaultsEditor() }
-                } footer: {
-                    Text("How much of an ingredient one pizza needs when a guest types it in as an extra.")
-                }
-
-                Section {
-                    // Alles vorbelegt: normalerweise nichts zu tun. Nur für ein eigenes Firebase-Projekt oder eine andere Adresse.
-                    DisclosureGroup("Advanced (already set up)") {
-                        TextField("Firebase project ID", text: $project).textInputAutocapitalization(.never).autocorrectionDisabled()
-                        TextField("Firebase API key", text: $apiKey).textInputAutocapitalization(.never).autocorrectionDisabled()
-                        TextField("Guest page address (https://…)", text: $pageURL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                            .keyboardType(.URL)
-                        Button("Reset to defaults", systemImage: "arrow.uturn.backward") {
-                            project = GuestFirebaseDefaults.project
-                            apiKey = GuestFirebaseDefaults.apiKey
-                            pageURL = GuestFirebaseDefaults.pageURL
-                        }
-                    }
-                }
-
-                if !status.isEmpty {
-                    Section { Text(status).font(.callout) }
-                }
-            }
-            .navigationTitle("Guest link")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
-            .alert("Rename guest", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }) {
-                TextField("Name", text: $renameText)
-                Button("Cancel", role: .cancel) { renaming = nil }
-                Button("Save") {
-                    if let old = renaming { Task { await rename(old, to: renameText) } }
-                    renaming = nil
-                }
-            }
-            .confirmationDialog("Remove \(removing ?? "")?", isPresented: Binding { removing != nil } set: { if !$0 { removing = nil } },
-                                titleVisibility: .visible) {
-                Button("Remove guest and order", role: .destructive) {
-                    if let name = removing { Task { await remove(name) } }
-                    removing = nil
-                }
-            } message: {
-                Text("If this guest has already ordered, the order is deleted too.")
-            }
-            .sheet(isPresented: $showingNewEvent) {
-                NewGuestEventSheet { newTitle, newDate, newIntro in
-                    Task { await createEvening(title: newTitle, date: newDate, intro: newIntro) }
-                }
-            }
-            .confirmationDialog("Delete the order of \(deletingOrder ?? "")?", isPresented: Binding { deletingOrder != nil } set: { if !$0 { deletingOrder = nil } },
-                                titleVisibility: .visible) {
-                Button("Delete order", role: .destructive) {
-                    if let name = deletingOrder { Task { await deleteGuestOrder(name) } }
-                    deletingOrder = nil
-                }
-            }
-            .onAppear {
-                // Früher leer gespeicherte Felder mit den festen Werten füllen
-                if project.trimmingCharacters(in: .whitespaces).isEmpty { project = GuestFirebaseDefaults.project }
-                if apiKey.trimmingCharacters(in: .whitespaces).isEmpty { apiKey = GuestFirebaseDefaults.apiKey }
-                if pageURL.trimmingCharacters(in: .whitespaces).isEmpty { pageURL = GuestFirebaseDefaults.pageURL }
-                if eventID.isEmpty { eventID = Self.newID() }
-                // Erster Start mit Übersicht: den bisher genutzten Abend übernehmen
-                if !GuestEvenings.exists {
-                    var old = current
-                    old.publishedAt = guests.isEmpty ? nil : .now
-                    GuestEvenings.save(guests.isEmpty ? [] : [old])
-                }
-                eveningCount = GuestEvenings.all.count
-            }
-        }
-    }
-
-    static func newID() -> String {
-        UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
-    }
-
-    private var service: GuestOrderService { .init(project: project.trimmingCharacters(in: .whitespaces),
-                                                   apiKey: apiKey.trimmingCharacters(in: .whitespaces)) }
-
-    /// Neuen Anlass anlegen: eigener Link, Karte und Gäste bleiben, wird sofort veröffentlicht, der Link liegt danach in der Zwischenablage
-    private func createEvening(title newTitle: String, date newDate: Date, intro newIntro: String) async {
-        if GuestEvenings.all.contains(where: { $0.id == eventID }) { GuestEvenings.upsert(current) }
-        eventID = Self.newID()
-        menuTitle = newTitle
-        menuDate = newDate.timeIntervalSince1970
-        intro = newIntro
-        ordersClosed = false
-        orders = []
-        await publish(title: newTitle, date: newDate)
-        if let link = guestLink {
-            UIPasteboard.general.string = link.absoluteString
-            status = String(localized: "Event created and published. The guest link is copied: paste it into your message.")
-        }
-    }
-
-    /// Zu einem anderen Abend aus der Übersicht wechseln (Link, Titel, Datum, Gäste, Text)
-    private func switchTo(_ evening: GuestEvening) {
-        if GuestEvenings.all.contains(where: { $0.id == eventID }) { GuestEvenings.upsert(current) }
-        eventID = evening.id
-        menuTitle = evening.title
-        menuDate = evening.date.timeIntervalSince1970
-        intro = evening.intro
-        ordersClosed = evening.closed
-        guestNames = evening.guests.joined(separator: "\n")
-        orders = []
-        status = String(localized: "Switched to “\(evening.title)”. Publishing sends the menu currently set up in the app.")
-    }
-
-    private func setGuests(_ list: [String]) {
-        guestNames = list.joined(separator: "\n")
-    }
-
-    /// Ein oder mehrere Namen (mit Komma oder Zeilenumbruch getrennt) hinzufügen, ohne Doppelte
-    private func addGuests() {
-        var list = guests
-        for name in newGuest.split(whereSeparator: { $0 == "," || $0 == "\n" }).map({ $0.trimmingCharacters(in: .whitespaces) })
-        where !name.isEmpty && !list.contains(where: { $0.caseInsensitiveCompare(name) == .orderedSame }) {
-            list.append(name)
-        }
-        setGuests(list)
-        newGuest = ""
-    }
-
-    /// Wurde der aktuelle Abend schon veröffentlicht? Dann Änderungen an der Gästeliste gleich hochladen.
-    private var isPublished: Bool { GuestEvenings.all.contains { $0.id == eventID && $0.publishedAt != nil } }
-
-    private func rename(_ old: String, to newName: String) async {
-        let name = newName.trimmingCharacters(in: .whitespaces)
-        guard !name.isEmpty, name != old else { return }
-        if guests.contains(where: { $0 != old && $0.caseInsensitiveCompare(name) == .orderedSame }) {
-            status = String(localized: "“\(name)” is already on the list.")
-            return
-        }
-        setGuests(guests.map { $0 == old ? name : $0 })
-        if let i = orders.firstIndex(where: { $0.guest == old }) { orders[i].guest = name }
-        guard isPublished else { return }
-        do {
-            try await service.renameOrder(id: eventID, from: old, to: name)
-            await publish()
-        } catch { status = error.localizedDescription }
-    }
-
-    private func remove(_ name: String) async {
-        setGuests(guests.filter { $0 != name })
-        orders.removeAll { $0.guest == name }
-        guard isPublished else { return }
-        do {
-            try await service.deleteOrder(id: eventID, guest: name)
-            await publish()
-        } catch { status = error.localizedDescription }
-    }
-
-    private func release(_ name: String) async {
-        do {
-            try await service.releaseOrder(id: eventID, guest: name)
-            orders = try await service.fetchOrders(id: eventID)
-            PrepQueueStore.saveOrders(orders, event: eventID)   // für die geteilte Ansicht (Gästenamen)
-            status = String(localized: "Order of \(name) released. The next device that saves it takes it over.")
-        } catch { status = error.localizedDescription }
-    }
-
-    private func deleteGuestOrder(_ name: String) async {
-        do {
-            try await service.deleteOrder(id: eventID, guest: name)
-            orders.removeAll { $0.guest == name }
-        } catch { status = error.localizedDescription }
-    }
-
-    private func publish(title overrideTitle: String? = nil, date overrideDate: Date? = nil) async {
-        isBusy = true; defer { isBusy = false }
-        let eventTitle = overrideTitle ?? title
-        let eventDate = overrideDate ?? date
-        let text = intro.trimmingCharacters(in: .whitespacesAndNewlines)
-        let event = GuestEvent(title: eventTitle, date: eventDate, guests: guests, pizzas: pizzas.map { pizza in
-            .init(name: pizza.name, info: pizza.info,
-                  toppings: pizza.toppings.map { .init(name: $0.name, amount: $0.amount, unit: $0.unit) })
-        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil)
-        do {
-            try await service.publish(event, id: eventID)
-            var evening = GuestEvening(id: eventID, title: eventTitle, date: eventDate, intro: intro, guests: guests, closed: ordersClosed)
-            evening.publishedAt = .now
-            GuestEvenings.upsert(evening)
-            eveningCount = GuestEvenings.all.count
-            status = guestLink == nil ? String(localized: "Published. Enter the guest page address to get the link.")
-                                      : String(localized: "Published. Send the guest link.")
-        } catch { status = error.localizedDescription }
-    }
-
-    /// Bestellungen in die Karte übernehmen und alle benötigten Zutaten auf die Einkaufsliste setzen
-    private func importOrders() {
-        MenuPizza.apply(orders: orders, to: pizzas, context: modelContext)
-        try? modelContext.save()
-        let all = (try? modelContext.fetch(FetchDescriptor<MenuPizza>())) ?? []
-        let needed = MenuPizza.aggregatedToppings(of: all.filter(\.isOnMenu))
-        ShoppingItem.replace(needed.map { ($0.name, MenuPizza.formatted($0.amount, unit: $0.unit)) },
-                             source: title, in: modelContext)
-        status = String(localized: "Orders imported, shopping list updated.")
-    }
-
-    private func fetch() async {
-        isBusy = true; defer { isBusy = false }
-        do {
-            orders = try await service.fetchOrders(id: eventID)
-            PrepQueueStore.saveOrders(orders, event: eventID)   // für die geteilte Ansicht (Gästenamen)
-            var evening = current
-            evening.orderCount = orders.count
-            GuestEvenings.upsert(evening)
-            eveningCount = GuestEvenings.all.count
-            status = String(localized: "\(orders.count) orders received.")
-            // Direkt übernehmen und Einkaufsliste füllen; fehlt noch jemand, bleibt das Fenster offen
-            if !orders.isEmpty {
-                importOrders()
-                if guests.allSatisfy({ name in orders.contains { $0.guest == name } }) {
-                    dismiss()
-                    NotificationCenter.default.post(name: .showShoppingList, object: nil)
-                } else {
-                    status = String(localized: "Orders imported, shopping list updated. Some guests are still missing.")
-                }
-            }
-        } catch { status = error.localizedDescription }
-    }
-}
-
-/// Übersicht aller Abende/Anlässe (nur für den Gastgeber): kommende und vergangene, mit Status und Anzahl Bestellungen
-struct GuestEveningsView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
-    var currentID: String
-    var pageURL: String
-    var service: GuestOrderService
-    var onSelect: (GuestEvening) -> Void
-    var onNew: () -> Void = {}
-
-    @State private var evenings = GuestEvenings.all
-    @State private var isRefreshing = false
-
-    private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
-    private var upcoming: [GuestEvening] { evenings.filter { $0.date >= startOfToday }.sorted { $0.date < $1.date } }
-    private var past: [GuestEvening] { evenings.filter { $0.date < startOfToday }.sorted { $0.date > $1.date } }
-
-    var body: some View {
-        List {
-            if evenings.isEmpty {
-                ContentUnavailableView {
-                    Label("No events yet", systemImage: "party.popper")
-                } description: {
-                    Text("Create your first event: title, date, done. The guest link is ready right away.")
-                } actions: {
-                    Button("New event", action: onNew).buttonStyle(.borderedProminent)
-                }
-            }
-            if !upcoming.isEmpty {
-                Section("Upcoming") { ForEach(upcoming) { row($0) } }
-            }
-            if !past.isEmpty {
-                Section("Past") { ForEach(past) { row($0) } }
-            }
-            Section {
-            } footer: {
-                Text("Tap an event to work on it. Swipe right to open or copy its link. Removing it here only hides it in the app; its guest link keeps working.")
-            }
-        }
-        .navigationTitle("All events")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("New event", systemImage: "plus", action: onNew)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Refresh orders", systemImage: "arrow.clockwise") { Task { await refresh() } }
-                    .disabled(isRefreshing || evenings.isEmpty)
-            }
-        }
-        .refreshable { await refresh() }
-    }
-
-    private func row(_ evening: GuestEvening) -> some View {
-        Button {
-            onSelect(evening)
-            dismiss()
-        } label: {
-            HStack(spacing: 12) {
-                VStack(spacing: 0) {
-                    Text(evening.date.formatted(.dateTime.day())).font(.title2.bold())
-                    Text(evening.date.formatted(.dateTime.month(.abbreviated))).font(.caption.smallCaps())
-                }
-                .frame(width: 46, height: 46)
-                .background(.tint.opacity(evening.id == currentID ? 0.25 : 0.12), in: RoundedRectangle(cornerRadius: 10))
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack {
-                        Text(evening.title).font(.headline).foregroundStyle(.primary)
-                        if evening.id == currentID {
-                            Text("Current").font(.caption2.bold()).padding(.horizontal, 6).padding(.vertical, 2)
-                                .background(.tint, in: Capsule()).foregroundStyle(.white)
-                        }
-                    }
-                    Text(evening.date.formatted(.dateTime.weekday(.wide).hour().minute()))
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text(details(evening)).font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            .padding(.vertical, 2)
-        }
-        .swipeActions(edge: .trailing) {
-            Button("Remove", systemImage: "trash", role: .destructive) {
-                evenings.removeAll { $0.id == evening.id }
-                GuestEvenings.save(evenings)
-            }
-            .disabled(evening.id == currentID)
-        }
-        .swipeActions(edge: .leading) {
-            if let link = GuestLinkSheet.link(pageURL: pageURL, id: evening.id) {
-                Button("Open", systemImage: "safari") { openURL(link) }
-                    .tint(.green)
-                Button("Copy link", systemImage: "doc.on.doc") { UIPasteboard.general.string = link.absoluteString }
-                    .tint(.blue)
-            }
-        }
-    }
-
-    private func details(_ evening: GuestEvening) -> String {
-        var parts = [String(localized: "\(evening.guests.count) guests")]
-        if let count = evening.orderCount { parts.append(String(localized: "\(count) orders")) }
-        if evening.publishedAt == nil {
-            parts.append(String(localized: "not published"))
-        } else if evening.closed {
-            parts.append(String(localized: "orders closed"))
-        }
-        return parts.joined(separator: " · ")
-    }
-
-    /// Bestellanzahl aller Abende neu abholen
-    private func refresh() async {
-        isRefreshing = true; defer { isRefreshing = false }
-        for evening in evenings where evening.publishedAt != nil {
-            guard let orders = try? await service.fetchOrders(id: evening.id) else { continue }
-            var updated = evening
-            updated.orderCount = orders.count
-            GuestEvenings.upsert(updated)
-        }
-        evenings = GuestEvenings.all
-    }
-}
-
-/// Neuen Anlass anlegen: nur Titel und Datum (Text optional); Karte und Gäste bleiben, Veröffentlichen passiert automatisch
-struct NewGuestEventSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    var onCreate: (String, Date, String) -> Void
-
-    @State private var title = ""
-    @State private var date = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: .now) ?? .now
-    @State private var intro = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name of the event, e.g. Anna's 40th", text: $title)
-                    DatePicker("Date", selection: $date)
-                    TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical).lineLimit(1...4)
-                } footer: {
-                    Text("The menu and the guest list stay as they are; you can change them afterwards. The event is published right away and its guest link is copied.")
-                }
-            }
-            .navigationTitle("New event")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        onCreate(title.trimmingCharacters(in: .whitespaces), date, intro.trimmingCharacters(in: .whitespacesAndNewlines))
-                        dismiss()
-                    }
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-        }
-        .presentationDetents([.medium])
     }
 }

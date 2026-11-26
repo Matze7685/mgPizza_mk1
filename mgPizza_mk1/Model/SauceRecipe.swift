@@ -106,3 +106,28 @@ class SauceRecipe {
         + ingredients.filter { $0.percent > 0 }.map { ($0.name, formattedAmount(of: $0)) }
     }
 }
+
+extension SauceRecipe {
+    /// Zutaten für eine bestimmte Menge fertige Sauce (z. B. 640 g für 8 Pizzen), Einheiten wie beim Belag ("g", "ml", "pcs", "tsp")
+    func parts(forSauce grams: Double) -> [(name: String, amount: Double, unit: String)] {
+        guard totalWeight > 0 else { return [] }
+        let factor = grams / totalWeight
+        var result: [(name: String, amount: Double, unit: String)] = [(tomatoName, tomatoWeight * factor, "g")]
+        for ingredient in ingredients where ingredient.percent > 0 {
+            let unit: String
+            switch ingredient.unit {
+            case .percent, .gram: unit = "g"
+            case .milliliter: unit = "ml"
+            case .piece: unit = "pcs"
+            case .teaspoon: unit = "tsp"
+            }
+            result.append((ingredient.name, amount(of: ingredient) * factor, unit))
+        }
+        return result
+    }
+
+    /// Rezept für die Einkaufsliste: am besten bewertet, bei Gleichstand das neueste
+    static func preferred(_ recipes: [SauceRecipe]) -> SauceRecipe? {
+        recipes.max { ($0.rating, $0.createdAt) < ($1.rating, $1.createdAt) }
+    }
+}

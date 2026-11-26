@@ -6,167 +6,500 @@
 import SwiftData
 import SwiftUI
 
-/// Speisekarte für den Pizzaabend: an Gäste schicken, Bestellungen eintragen, Zutaten berechnen.
-struct MenuView: View {
-    enum Mode { case plan, orders }
-    var mode: Mode = .plan
+/// Tab „Anlass“: alle Anlässe auf einen Blick, neuen Anlass anlegen. Pizzen und Mengen liegen im Untermenü.
+struct EventsView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
+    @AppStorage("menuEventID") private var eventID = ""
     @AppStorage("menuTitle") private var menuTitle = ""
     @AppStorage("menuDate") private var menuDate: Double = Date().timeIntervalSince1970
-    @State private var editingPizza: MenuPizza?
-    @State private var addedToShopping = false
-    @State private var pdfURL: URL?
-    @State private var isShowingGuestLink = false
-    @State private var isShowingFoldView = false
-    @State private var isShowingToppingAmounts = false
+    @AppStorage("guestNames") private var guestNames = ""
+    @AppStorage("guestIntro") private var intro = ""
+    @AppStorage("guestOrdersClosed") private var ordersClosed = false
+    @AppStorage("menuHiddenPizzas") private var hiddenText = ""
+    @State private var evenings: [GuestEvening] = []
+    @State private var showingNew = false
+    @State private var created: GuestEvening?
+    @State private var openEvening: GuestEvening?
+    @State private var deleting: GuestEvening?
 
-    private var onMenu: [MenuPizza] { pizzas.filter(\.isOnMenu) }
-    /// Nur die eigentliche Speisekarte (ohne eigene Gäste-Pizzen) für Teilen, PDF und Gästelink
-    private var planPizzas: [MenuPizza] { pizzas.filter { !$0.isGuestCustom } }
-    private var menuPizzas: [MenuPizza] { onMenu.filter { !$0.isGuestCustom } }
-    private var totalOrders: Int { onMenu.reduce(0) { $0 + $1.orderCount } }
-    private var roundCount: Int { onMenu.filter { !$0.isDetroit }.reduce(0) { $0 + $1.orderCount } }
-    private var detroitCount: Int { onMenu.filter(\.isDetroit).reduce(0) { $0 + $1.orderCount } }
+    private var upcoming: [GuestEvening] { evenings.filter { !$0.isPast }.sorted { $0.date < $1.date } }
+    private var past: [GuestEvening] { evenings.filter(\.isPast).sorted { $0.date > $1.date } }
 
     var body: some View {
         List {
-            if mode == .plan {
             Section {
-                TextField("Pizza night", text: $menuTitle)
-                DatePicker("Date", selection: dateBinding, displayedComponents: [.date, .hourAndMinute])
-            } header: {
-                Text("Event")
+                Button { showingNew = true } label: {
+                    Label("New event", systemImage: "plus.circle.fill").font(.headline)
+                }
+            } footer: {
+                if evenings.isEmpty {
+                    Text("Create your first event: name and date. Then add the guests and publish the menu.")
+                }
             }
-
+            if !upcoming.isEmpty {
+                Section("Upcoming") { ForEach(upcoming) { row($0) } }
+            }
+            if !past.isEmpty {
+                Section("Past") { ForEach(past) { row($0) } }
+            }
             Section {
+                NavigationLink { MenuSettingsView() } label: {
+                    Label("Pizzas & amounts", systemImage: "slider.horizontal.3")
+                }
+            } footer: {
+                Text("Which pizzas can be chosen, toppings per pizza, extra amounts and settings of the guest page.")
+            }
+        }
+        .navigationDestination(item: $openEvening) { evening in
+            EventDetailView(evening: evening)
+        }
+        .sheet(isPresented: $showingNew, onDismiss: {
+            // Nach dem Anlegen direkt in den neuen Anlass
+            if let created { openEvening = created; self.created = nil }
+        }) {
+            NewEventSheet { title, date, text in
+                let evening = GuestEvening(id: GuestEvenings.newID(), title: title, date: date, intro: text)
+                GuestEvenings.upsert(evening)
+                created = evening
+                reload()
+            }
+        }
+        .confirmationDialog("Delete “\(deleting?.title ?? "")”?", isPresented: Binding { deleting != nil } set: { if !$0 { deleting = nil } },
+                            titleVisibility: .visible) {
+            Button("Delete event", role: .destructive) {
+                if let evening = deleting { Task { await delete(evening) } }
+                deleting = nil
+            }
+        } message: {
+            Text("The guest link stops working and the event disappears from the app.")
+        }
+        .refreshable { await refreshCounts() }
+        .onAppear {
+            migrate()
+            reload()
+            MenuPizza.seedIfNeeded(into: modelContext)
+            MenuPizza.seedMoreIfNeeded(into: modelContext)
+        }
+        .onChange(of: openEvening) { _, open in if open == nil { reload() } }
+    }
+
+    private func row(_ evening: GuestEvening) -> some View {
+        Button { openEvening = evening } label: {
+            HStack(spacing: 12) {
+                VStack(spacing: 0) {
+                    Text(evening.date.formatted(.dateTime.day())).font(.title2.bold())
+                    Text(evening.date.formatted(.dateTime.month(.abbreviated))).font(.caption.smallCaps())
+                }
+                .frame(width: 46, height: 46)
+                .background(.tint.opacity(evening.isPast ? 0.08 : 0.18), in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(evening.title).font(.headline).foregroundStyle(.primary)
+                    Text(evening.date.formatted(.dateTime.weekday(.wide).hour().minute()))
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text(details(evening)).font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
+            }
+            .padding(.vertical, 2)
+        }
+        .swipeActions(edge: .trailing) {
+            Button("Delete", systemImage: "trash") { deleting = evening }
+                .tint(.red)
+        }
+        .swipeActions(edge: .leading) {
+            if evening.publishedAt != nil, let link = GuestEvenings.link(id: evening.id) {
+                Button("Copy link", systemImage: "doc.on.doc") { UIPasteboard.general.string = link.absoluteString }
+                    .tint(.blue)
+            }
+        }
+    }
+
+    private func details(_ evening: GuestEvening) -> String {
+        var parts = [String(localized: "\(evening.guests.count) guests")]
+        if let count = evening.orderCount { parts.append(String(localized: "\(count) orders")) }
+        if evening.publishedAt == nil {
+            parts.append(String(localized: "not published"))
+        } else if evening.closed {
+            parts.append(String(localized: "orders closed"))
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func reload() { evenings = GuestEvenings.all }
+
+    /// Früher gab es nur einen Abend ohne Übersicht: diesen einmalig übernehmen
+    private func migrate() {
+        guard !GuestEvenings.exists else { return }
+        let guests = guestNames.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        guard !eventID.isEmpty, !guests.isEmpty else { GuestEvenings.save([]); return }
+        var old = GuestEvening(id: eventID, title: menuTitle.isEmpty ? String(localized: "Pizza night") : menuTitle,
+                               date: Date(timeIntervalSince1970: menuDate), intro: intro, guests: guests, closed: ordersClosed)
+        old.publishedAt = .now
+        GuestEvenings.save([old])
+    }
+
+    private func delete(_ evening: GuestEvening) async {
+        if evening.publishedAt != nil { try? await GuestOrderService.current.deleteEvent(id: evening.id) }
+        GuestEvenings.remove(id: evening.id)
+        if evening.id == eventID {
+            // Der gelöschte Anlass war der aktuelle: leer weitermachen
+            eventID = ""
+            menuTitle = ""
+            guestNames = ""
+            intro = ""
+            ordersClosed = false
+            hiddenText = ""
+        }
+        reload()
+    }
+
+    /// Bestellanzahl aller veröffentlichten Anlässe neu abholen
+    private func refreshCounts() async {
+        let service = GuestOrderService.current
+        for evening in evenings where evening.publishedAt != nil {
+            guard let orders = try? await service.fetchOrders(id: evening.id) else { continue }
+            var updated = evening
+            updated.orderCount = orders.count
+            GuestEvenings.upsert(updated)
+        }
+        reload()
+    }
+}
+
+/// Ein Anlass in vier Schritten: 1 Anlass, 2 Gäste, 3 Speisekarte veröffentlichen, 4 Bestellungen
+struct EventDetailView: View {
+    let evening: GuestEvening
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
+    @Query private var sauces: [SauceRecipe]
+    @AppStorage("menuEventID") private var eventID = ""
+    @AppStorage("menuTitle") private var menuTitle = ""
+    @AppStorage("menuDate") private var menuDate: Double = Date().timeIntervalSince1970
+    @AppStorage("guestNames") private var guestNames = ""
+    @AppStorage("guestIntro") private var intro = ""
+    @AppStorage("guestOrdersClosed") private var ordersClosed = false
+    @AppStorage("menuHiddenPizzas") private var hiddenText = ""
+    @State private var orders: [GuestOrder] = []
+    @State private var publishedAt: Date?
+    @State private var status = ""
+    @State private var isBusy = false
+    @State private var newGuest = ""
+    @State private var renaming: String?
+    @State private var renameText = ""
+    @State private var removing: String?
+    @State private var deletingOrder: String?
+    @State private var showingGuestPicker = false
+    @State private var showingFoldView = false
+    @State private var confirmingDelete = false
+    @State private var editingPizza: MenuPizza?
+    @State private var pdfURL: URL?
+
+    private var service: GuestOrderService { .current }
+    private var guests: [String] {
+        guestNames.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+    private var hidden: Set<String> { Set(hiddenText.split(separator: "\n").map(String.init)) }
+    private var date: Date { Date(timeIntervalSince1970: menuDate) }
+    private var dateBinding: Binding<Date> { Binding { date } set: { menuDate = $0.timeIntervalSince1970 } }
+    private var title: String { menuTitle.isEmpty ? String(localized: "Pizza night") : menuTitle }
+    private var isPast: Bool { date < Calendar.current.startOfDay(for: .now) }
+    private var isPublished: Bool { publishedAt != nil }
+    private var guestLink: URL? { GuestEvenings.link(id: eventID) }
+
+    /// Alle auswählbaren Pizzen (Untermenü „Pizzen & Mengen“)
+    private var available: [MenuPizza] { pizzas.filter { $0.isOnMenu && !$0.isGuestCustom } }
+    /// Die Karte dieses Anlasses
+    private var eventPizzas: [MenuPizza] { available.filter { !hidden.contains($0.name) } }
+    /// Für Bestellungen: Karte + eigene Pizzen der Gäste
+    private var orderPizzas: [MenuPizza] { eventPizzas + pizzas.filter(\.isGuestCustom) }
+    private var totalOrders: Int { orderPizzas.reduce(0) { $0 + $1.orderCount } }
+    private var roundCount: Int { orderPizzas.filter { !$0.isDetroit }.reduce(0) { $0 + $1.orderCount } }
+    private var detroitCount: Int { orderPizzas.filter(\.isDetroit).reduce(0) { $0 + $1.orderCount } }
+    private var sauce: SauceRecipe? { SauceRecipe.preferred(sauces) }
+
+    /// Der Anlass, wie er in der Übersicht gespeichert wird
+    private var current: GuestEvening {
+        GuestEvening(id: eventID, title: title, date: date, intro: intro, guests: guests, closed: ordersClosed,
+                     hiddenPizzas: hidden.isEmpty ? nil : Array(hidden).sorted())
+    }
+
+    var body: some View {
+        Form {
+            if eventID == evening.id {
+                eventSection
+                guestSection
+                menuSection
+                ordersSection
+                if totalOrders > 0 { toppingsSection }
+                Section {
+                    Button("Delete event", systemImage: "trash", role: .destructive) { confirmingDelete = true }
+                }
+                if !status.isEmpty {
+                    Section { Text(status).font(.callout) }
+                }
+            } else {
+                ProgressView()
+            }
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            if eventID != evening.id { switchTo(evening) }
+            publishedAt = GuestEvenings.all.first { $0.id == evening.id }?.publishedAt
+            if isPublished { await loadOrders(updateShopping: false) }
+        }
+        // Jede Änderung gleich in der Übersicht speichern
+        .onChange(of: current) { _, new in if new.id == evening.id { GuestEvenings.upsert(new) } }
+        .task(id: shareText) { pdfURL = MenuPDF.render(title: title, date: date, pizzas: eventPizzas) }
+        .alert("Rename guest", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }) {
+            TextField("Name", text: $renameText)
+            Button("Cancel", role: .cancel) { renaming = nil }
+            Button("Save") {
+                if let old = renaming { Task { await rename(old, to: renameText) } }
+                renaming = nil
+            }
+        }
+        .confirmationDialog("Remove \(removing ?? "")?", isPresented: Binding { removing != nil } set: { if !$0 { removing = nil } },
+                            titleVisibility: .visible) {
+            Button("Remove guest and order", role: .destructive) {
+                if let name = removing { Task { await remove(name) } }
+                removing = nil
+            }
+        } message: {
+            Text("If this guest has already ordered, the order is deleted too.")
+        }
+        .confirmationDialog("Delete the order of \(deletingOrder ?? "")?", isPresented: Binding { deletingOrder != nil } set: { if !$0 { deletingOrder = nil } },
+                            titleVisibility: .visible) {
+            Button("Delete order", role: .destructive) {
+                if let name = deletingOrder { Task { await deleteGuestOrder(name) } }
+                deletingOrder = nil
+            }
+        }
+        .confirmationDialog("Delete “\(title)”?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete event", role: .destructive) { Task { await deleteEvent() } }
+        } message: {
+            Text("The guest link stops working and the event disappears from the app.")
+        }
+        .sheet(isPresented: $showingGuestPicker) {
+            GuestPickerSheet(evenings: GuestEvenings.all.filter { $0.id != eventID }, existing: guests) { names in
+                addGuests(names)
+            }
+        }
+        .sheet(item: $editingPizza) { pizza in
+            MenuPizzaEditor(pizza: pizza)
+        }
+        .fullScreenCover(isPresented: $showingFoldView) {
+            OrdersFoldView()
+        }
+    }
+
+    // MARK: 1 · Anlass
+
+    private var eventSection: some View {
+        Section {
+            TextField("Pizza night", text: $menuTitle)
+            DatePicker("Date", selection: dateBinding)
+            TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical)
+                .lineLimit(1...5)
+        } header: {
+            Text("1 · Event")
+        } footer: {
+            if isPublished {
+                Text("Changes reach the guests after publishing the menu again.")
+            }
+        }
+    }
+
+    // MARK: 2 · Gäste
+
+    private var guestSection: some View {
+        Section {
+            ForEach(guests, id: \.self) { name in
+                Button {
+                    renameText = name
+                    renaming = name
+                } label: {
+                    HStack {
+                        Text(name).foregroundStyle(.primary)
+                        Spacer()
+                        if orders.contains(where: { $0.guest == name }) {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                        }
+                    }
+                }
+                .swipeActions {
+                    Button("Remove", systemImage: "trash", role: .destructive) { removing = name }
+                }
+            }
+            HStack {
+                TextField("Add guest", text: $newGuest)
+                    .onSubmit(addTypedGuests)
+                Button("Add", systemImage: "plus.circle.fill", action: addTypedGuests)
+                    .labelStyle(.iconOnly)
+                    .disabled(newGuest.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            if GuestEvenings.all.contains(where: { $0.id != eventID && !$0.guests.isEmpty }) {
+                Button("Guests from earlier events", systemImage: "person.2.badge.plus") { showingGuestPicker = true }
+            }
+        } header: {
+            Text("2 · Guests (\(guests.count))")
+        } footer: {
+            Text("Tap a name to rename, swipe to remove. Several names at once: separate with commas.")
+        }
+    }
+
+    // MARK: 3 · Speisekarte
+
+    private var menuSection: some View {
+        Section {
+            DisclosureGroup {
+                ForEach(available) { pizza in
+                    let isOn = !hidden.contains(pizza.name)
+                    Button {
+                        var set = hidden
+                        if isOn { set.insert(pizza.name) } else { set.remove(pizza.name) }
+                        hiddenText = set.sorted().joined(separator: "\n")
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                                .font(.title3).foregroundStyle(isOn ? .green : .gray)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(pizza.name).foregroundStyle(.primary)
+                                if !pizza.toppingsText.isEmpty {
+                                    Text(pizza.toppingsText).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                }
+                            }
+                        }
+                    }
+                }
+                if available.isEmpty {
+                    Text("No pizzas available – choose them in “Pizzas & amounts”.").foregroundStyle(.secondary)
+                }
+            } label: {
+                LabeledContent("Pizzas on the menu", value: "\(eventPizzas.count)/\(available.count)")
+            }
+            Button(isPublished ? "Publish menu again" : "Publish menu", systemImage: "icloud.and.arrow.up") {
+                Task { await publish() }
+            }
+            .disabled(isBusy || eventPizzas.isEmpty)
+            if isPublished, let link = guestLink {
+                // Als reiner Text teilen: Mit URL + message schicken manche Apps (WhatsApp, Nachrichten) nur die Nachricht
+                ShareLink(item: "🍕 \(title)\n\(link.absoluteString)") {
+                    Label("Send guest link", systemImage: "link")
+                }
+                Button("Copy guest link", systemImage: "doc.on.doc") {
+                    UIPasteboard.general.string = link.absoluteString
+                    status = String(localized: "Link copied.")
+                }
+                Link(destination: link) {
+                    Label("Open guest page", systemImage: "safari")
+                }
+            }
+            Menu {
                 ShareLink(item: shareText, subject: Text(title)) {
-                    Label("Send menu as text (WhatsApp, Messages …)", systemImage: "square.and.arrow.up")
+                    Label("Send menu as text (WhatsApp, Messages …)", systemImage: "text.bubble")
                 }
                 if let pdfURL {
                     ShareLink(item: pdfURL) {
                         Label("Send menu as PDF", systemImage: "doc.richtext")
                     }
                 }
-                Button("Guest link: guests order online", systemImage: "person.2.badge.plus") {
-                    isShowingGuestLink = true
-                }
-            } footer: {
-                Text("Your guests reply with the number and count, e.g. “1×2, 3×1”. Enter the orders in the “Orders” tab.")
+            } label: {
+                Label("Send menu without guest page", systemImage: "square.and.arrow.up")
             }
-            }
-
-            if mode == .plan {
-            Section {
-                ForEach(planPizzas) { pizza in
-                    MenuPizzaRow(pizza: pizza, number: number(of: pizza), showsOrders: false) { editingPizza = pizza }
-                }
-                .onDelete { offsets in offsets.forEach { modelContext.delete(planPizzas[$0]) } }
-                Button("Add pizza", systemImage: "plus") {
-                    let pizza = MenuPizza(name: String(localized: "New pizza"), sortIndex: (pizzas.map(\.sortIndex).max() ?? 0) + 1)
-                    modelContext.insert(pizza)
-                    editingPizza = pizza
-                }
-            } header: {
-                Text("Pizzas")
-            } footer: {
-                Text("Toggle the circle to put a pizza on or off the menu. Tap a pizza to edit its toppings.")
-            }
-            }
-
-            if mode == .plan {
-            Section {
-                Button("Topping amounts for all pizzas", systemImage: "scalemass") { isShowingToppingAmounts = true }
-            } footer: {
-                Text("Change e.g. the tomato sauce once and every pizza on the menu gets the new amount.")
-            }
-            }
-
-            if mode == .orders {
-                Section {
-                    Button("Split view: guests on top, preparation below", systemImage: "rectangle.split.1x2") { isShowingFoldView = true }
-                } footer: {
-                    Text("For a foldable iPhone in laptop posture: the upper screen shows the guest with their pizza and ingredients, the lower one the order of preparation.")
-                }
-
-                Section {
-                    ForEach(onMenu) { pizza in
-                        MenuPizzaRow(pizza: pizza, number: number(of: pizza), showsOrders: true) { editingPizza = pizza }
-                    }
-                    if onMenu.isEmpty {
-                        Text("No pizzas on the menu yet – pick some in “Plan”.").foregroundStyle(.secondary)
-                    }
-                } header: {
-                    Text("Orders")
-                }
-            }
-
-            if mode == .orders && totalOrders > 0 {
-                Section {
-                    LabeledContent("Pizzas ordered", value: "\(totalOrders)")
-                    ForEach(aggregatedToppings, id: \.key) { item in
-                        LabeledContent(item.name, value: MenuPizza.formatted(item.amount, unit: item.unit))
-                    }
-                    Button {
-                        ShoppingItem.replace(aggregatedToppings.map { ($0.name, MenuPizza.formatted($0.amount, unit: $0.unit)) },
-                                             source: title, in: modelContext)
-                        addedToShopping = true
-                    } label: {
-                        Label(addedToShopping ? "Added to shopping list" : "Add toppings to shopping list",
-                              systemImage: addedToShopping ? "checkmark" : "cart.badge.plus")
-                    }
-                    Button("Reset orders", systemImage: "arrow.counterclockwise", role: .destructive) {
-                        for pizza in pizzas {
-                            if pizza.isGuestCustom {
-                                modelContext.delete(pizza)
-                            } else {
-                                pizza.orderCount = 0
-                                pizza.removedToppings = [:]
-                                pizza.guestExtras = [:]
-                            }
-                        }
-                        addedToShopping = false
-                    }
-                } header: {
-                    Text("Needed toppings")
-                } footer: {
-                    Text("Dough: \(roundCount) dough balls, \(detroitCount) Detroit pans – create the dough recipe with the + button.")
-                }
-            }
-        }
-        .sheet(isPresented: $isShowingGuestLink) {
-            GuestLinkSheet(title: title, date: date, pizzas: menuPizzas)
-        }
-        .fullScreenCover(isPresented: $isShowingFoldView) {
-            OrdersFoldView()
-        }
-        .sheet(isPresented: $isShowingToppingAmounts) {
-            ToppingAmountsEditor(pizzas: planPizzas)
-        }
-        .sheet(item: $editingPizza) { pizza in
-            MenuPizzaEditor(pizza: pizza)
-        }
-        .task(id: shareText) { pdfURL = MenuPDF.render(title: title, date: date, pizzas: menuPizzas) }
-        .onAppear {
-            MenuPizza.seedIfNeeded(into: modelContext)
-            MenuPizza.seedMoreIfNeeded(into: modelContext)
+        } header: {
+            Text("3 · Menu")
+        } footer: {
+            Text("Untick pizzas you don't want to offer at this event. After publishing, the guest link is copied: paste it into your message.")
         }
     }
 
-    private var date: Date { Date(timeIntervalSince1970: menuDate) }
-    private var dateBinding: Binding<Date> {
-        Binding { date } set: { menuDate = $0.timeIntervalSince1970 }
+    // MARK: 4 · Bestellungen
+
+    private var ordersSection: some View {
+        Section {
+            if isPast {
+                Label("This event is over", systemImage: "flag.checkered").foregroundStyle(.secondary)
+            } else {
+                Toggle("Orders closed", systemImage: "lock", isOn: Binding {
+                    ordersClosed
+                } set: { closed in
+                    ordersClosed = closed
+                    if isPublished { Task { await publish(quiet: true) } }
+                })
+            }
+            if isPublished {
+                Button("Fetch orders", systemImage: "icloud.and.arrow.down") { Task { await loadOrders(updateShopping: true) } }
+                    .disabled(isBusy)
+            }
+            ForEach(orders) { order in
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(order.guest).font(.headline)
+                        if order.claimed == true { Image(systemName: "lock.fill").font(.caption).foregroundStyle(.secondary) }
+                    }
+                    Text(order.lines.map { "\($0.count)× \($0.name)" + ($0.custom.map { " (\($0.map(\.name).joined(separator: ", ")))" } ?? "") + (($0.extra ?? []).isEmpty ? "" : " + \($0.extra!.joined(separator: ", "))") + ($0.without.isEmpty ? "" : " (\(String(localized: "without")) \($0.without.joined(separator: ", ")))") }
+                        .joined(separator: ", "))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                .swipeActions {
+                    Button("Delete order", systemImage: "trash", role: .destructive) { deletingOrder = order.guest }
+                    if order.claimed == true {
+                        Button("Release for new device", systemImage: "lock.open") { Task { await release(order.guest) } }
+                            .tint(.orange)
+                    }
+                }
+            }
+            let missing = guests.filter { name in !orders.contains { $0.guest == name } }
+            if !orders.isEmpty && !missing.isEmpty {
+                Text("Still missing: \(missing.joined(separator: ", "))").font(.caption).foregroundStyle(.orange)
+            }
+            DisclosureGroup {
+                ForEach(orderPizzas) { pizza in
+                    MenuPizzaRow(pizza: pizza, number: number(of: pizza), showsOrders: true) { editingPizza = pizza }
+                }
+            } label: {
+                LabeledContent("Pizzas ordered", value: "\(totalOrders)")
+            }
+            Button("Split view: guests on top, preparation below", systemImage: "rectangle.split.1x2") { showingFoldView = true }
+        } header: {
+            Text("4 · Orders")
+        } footer: {
+            Text("Orders from the guest page are counted automatically. Without guest page: enter the counts by hand under “Pizzas ordered”. Swipe an order to release it for a new phone or to delete it.")
+        }
     }
-    private var title: String { menuTitle.isEmpty ? String(localized: "Pizza night") : menuTitle }
+
+    private var toppingsSection: some View {
+        Section {
+            ForEach(MenuPizza.aggregatedToppings(of: orderPizzas), id: \.key) { item in
+                LabeledContent(item.name, value: MenuPizza.formatted(item.amount, unit: item.unit))
+            }
+            Button("Put on shopping list", systemImage: "cart.badge.plus") {
+                updateShoppingList()
+                AppRouter.shared.selectedTab = .shopping
+            }
+            Button("Reset orders", systemImage: "arrow.counterclockwise", role: .destructive) { resetOrderCounts() }
+        } header: {
+            Text("Needed toppings")
+        } footer: {
+            if let sauce {
+                Text("Dough: \(roundCount) dough balls, \(detroitCount) Detroit pans. On the shopping list the tomato sauce is split into its ingredients (recipe “\(sauce.displayName)”).")
+            } else {
+                Text("Dough: \(roundCount) dough balls, \(detroitCount) Detroit pans – create the dough recipe with the + button.")
+            }
+        }
+    }
 
     private func number(of pizza: MenuPizza) -> Int? {
-        menuPizzas.firstIndex { $0.persistentModelID == pizza.persistentModelID }.map { $0 + 1 }
+        eventPizzas.firstIndex { $0.persistentModelID == pizza.persistentModelID }.map { $0 + 1 }
     }
 
     /// Text für WhatsApp & Co.
     private var shareText: String {
         var lines = ["🍕 \(title) – \(date.formatted(.dateTime.weekday(.wide).day().month().hour().minute()))", ""]
-        for (index, pizza) in menuPizzas.enumerated() {
+        for (index, pizza) in eventPizzas.enumerated() {
             lines.append("\(index + 1). \(pizza.name)" + (pizza.info.isEmpty ? "" : " (\(pizza.info))"))
             if !pizza.toppingsText.isEmpty { lines.append("    \(pizza.toppingsText)") }
         }
@@ -175,20 +508,358 @@ struct MenuView: View {
         return lines.joined(separator: "\n")
     }
 
-    /// Belag aller Bestellungen zusammengerechnet (gleicher Name + Einheit)
-    private var aggregatedToppings: [(key: String, name: String, amount: Double, unit: String)] {
-        MenuPizza.aggregatedToppings(of: onMenu)
+    // MARK: Aktionen
+
+    /// Diesen Anlass zum aktuellen machen (Titel, Datum, Gäste, Text, Karte); Bestellzahlen des vorherigen werden zurückgesetzt
+    private func switchTo(_ evening: GuestEvening) {
+        eventID = evening.id
+        menuTitle = evening.title
+        menuDate = evening.date.timeIntervalSince1970
+        intro = evening.intro
+        ordersClosed = evening.closed
+        guestNames = evening.guests.joined(separator: "\n")
+        hiddenText = (evening.hiddenPizzas ?? []).joined(separator: "\n")
+        orders = []
+        resetOrderCounts()
+    }
+
+    private func resetOrderCounts() {
+        for pizza in pizzas {
+            if pizza.isGuestCustom {
+                modelContext.delete(pizza)
+            } else {
+                pizza.orderCount = 0
+                pizza.removedToppings = [:]
+                pizza.guestExtras = [:]
+            }
+        }
+    }
+
+    private func addTypedGuests() {
+        addGuests(newGuest.split(whereSeparator: { $0 == "," || $0 == "\n" }).map { $0.trimmingCharacters(in: .whitespaces) })
+        newGuest = ""
+    }
+
+    /// Namen hinzufügen, ohne Doppelte
+    private func addGuests(_ names: [String]) {
+        var list = guests
+        for name in names where !name.isEmpty && !list.contains(where: { $0.caseInsensitiveCompare(name) == .orderedSame }) {
+            list.append(name)
+        }
+        guestNames = list.joined(separator: "\n")
+        if isPublished { Task { await publish(quiet: true) } }
+    }
+
+    private func rename(_ old: String, to newName: String) async {
+        let name = newName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, name != old else { return }
+        if guests.contains(where: { $0 != old && $0.caseInsensitiveCompare(name) == .orderedSame }) {
+            status = String(localized: "“\(name)” is already on the list.")
+            return
+        }
+        guestNames = guests.map { $0 == old ? name : $0 }.joined(separator: "\n")
+        if let i = orders.firstIndex(where: { $0.guest == old }) { orders[i].guest = name }
+        guard isPublished else { return }
+        do {
+            try await service.renameOrder(id: eventID, from: old, to: name)
+            await publish(quiet: true)
+        } catch { status = error.localizedDescription }
+    }
+
+    private func remove(_ name: String) async {
+        guestNames = guests.filter { $0 != name }.joined(separator: "\n")
+        orders.removeAll { $0.guest == name }
+        guard isPublished else { return }
+        do {
+            try await service.deleteOrder(id: eventID, guest: name)
+            await publish(quiet: true)
+        } catch { status = error.localizedDescription }
+    }
+
+    private func release(_ name: String) async {
+        do {
+            try await service.releaseOrder(id: eventID, guest: name)
+            orders = try await service.fetchOrders(id: eventID)
+            PrepQueueStore.saveOrders(orders, event: eventID)   // für die geteilte Ansicht (Gästenamen)
+            status = String(localized: "Order of \(name) released. The next device that saves it takes it over.")
+        } catch { status = error.localizedDescription }
+    }
+
+    private func deleteGuestOrder(_ name: String) async {
+        do {
+            try await service.deleteOrder(id: eventID, guest: name)
+            orders.removeAll { $0.guest == name }
+            MenuPizza.apply(orders: orders, to: available, context: modelContext)
+        } catch { status = error.localizedDescription }
+    }
+
+    /// Karte + Gäste hochladen. Beim ersten Mal liegt der Link danach in der Zwischenablage.
+    private func publish(quiet: Bool = false) async {
+        isBusy = true; defer { isBusy = false }
+        let text = intro.trimmingCharacters(in: .whitespacesAndNewlines)
+        let event = GuestEvent(title: title, date: date, guests: guests, pizzas: eventPizzas.map { pizza in
+            .init(name: pizza.name, info: pizza.info,
+                  toppings: pizza.toppings.map { .init(name: $0.name, amount: $0.amount, unit: $0.unit) })
+        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil)
+        let first = !isPublished
+        do {
+            try await service.publish(event, id: eventID)
+            var saved = current
+            saved.publishedAt = .now
+            GuestEvenings.upsert(saved)
+            publishedAt = saved.publishedAt
+            if quiet { return }
+            if first, let link = guestLink {
+                UIPasteboard.general.string = link.absoluteString
+                status = String(localized: "Published. The guest link is copied: paste it into your message.")
+            } else {
+                status = String(localized: "Published. Send the guest link.")
+            }
+        } catch { status = error.localizedDescription }
+    }
+
+    /// Bestellungen abholen und in die Karte übernehmen; auf Wunsch auch die Einkaufsliste aktualisieren
+    private func loadOrders(updateShopping: Bool) async {
+        isBusy = true; defer { isBusy = false }
+        do {
+            orders = try await service.fetchOrders(id: eventID)
+            PrepQueueStore.saveOrders(orders, event: eventID)   // für die geteilte Ansicht (Gästenamen)
+            var saved = current
+            saved.orderCount = orders.count
+            GuestEvenings.upsert(saved)
+            // Ohne Online-Bestellungen bleiben von Hand eingetragene Zahlen stehen
+            if !orders.isEmpty {
+                MenuPizza.apply(orders: orders, to: available, context: modelContext)
+                try? modelContext.save()
+            }
+            if updateShopping {
+                if totalOrders > 0 { updateShoppingList() }
+                status = orders.isEmpty ? String(localized: "No orders yet.")
+                                        : String(localized: "\(orders.count) orders received, shopping list updated.")
+            }
+        } catch {
+            if updateShopping { status = error.localizedDescription }
+        }
+    }
+
+    /// Zutaten dieses Anlasses auf die Einkaufsliste (ersetzt frühere, noch nicht abgehakte Einträge)
+    private func updateShoppingList() {
+        let all = (try? modelContext.fetch(FetchDescriptor<MenuPizza>())) ?? []
+        let ordered = all.filter { $0.isGuestCustom || ($0.isOnMenu && !hidden.contains($0.name)) }
+        ShoppingItem.replace(MenuPizza.shoppingItems(of: ordered, sauce: sauce), source: title, in: modelContext)
+    }
+
+    private func deleteEvent() async {
+        if isPublished {
+            do { try await service.deleteEvent(id: eventID) } catch { status = error.localizedDescription; return }
+        }
+        GuestEvenings.remove(id: eventID)
+        eventID = ""
+        menuTitle = ""
+        guestNames = ""
+        intro = ""
+        ordersClosed = false
+        hiddenText = ""
+        resetOrderCounts()
+        dismiss()
+    }
+}
+
+/// Gäste von früheren Anlässen übernehmen: alle eines Anlasses oder einzelne Namen
+struct GuestPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var evenings: [GuestEvening]
+    var existing: [String]
+    var onAdd: ([String]) -> Void
+    @State private var selected: Set<String> = []
+
+    private func isNew(_ name: String) -> Bool {
+        !existing.contains { $0.caseInsensitiveCompare(name) == .orderedSame }
+    }
+
+    /// Alle bekannten Namen, die noch nicht auf der Liste stehen
+    private var names: [String] {
+        var seen: [String] = []
+        for name in evenings.sorted(by: { $0.date > $1.date }).flatMap(\.guests)
+        where isNew(name) && !seen.contains(where: { $0.caseInsensitiveCompare(name) == .orderedSame }) {
+            seen.append(name)
+        }
+        return seen.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("All guests of an event") {
+                    ForEach(evenings.filter { !$0.guests.isEmpty }.sorted { $0.date > $1.date }) { evening in
+                        Button {
+                            selected.formUnion(evening.guests.filter(isNew))
+                        } label: {
+                            LabeledContent(evening.title, value: "\(evening.guests.count)")
+                        }
+                        .foregroundStyle(.primary)
+                    }
+                }
+                Section("Single guests") {
+                    ForEach(names, id: \.self) { name in
+                        Button {
+                            if selected.contains(name) { selected.remove(name) } else { selected.insert(name) }
+                        } label: {
+                            HStack {
+                                Image(systemName: selected.contains(name) ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(selected.contains(name) ? .green : .gray)
+                                Text(name).foregroundStyle(.primary)
+                            }
+                        }
+                    }
+                    if names.isEmpty {
+                        Text("All earlier guests are already on the list.").foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("Earlier guests")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add (\(selected.count))") {
+                        onAdd(names.filter(selected.contains))
+                        dismiss()
+                    }
+                    .disabled(selected.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+/// Neuen Anlass anlegen: nur Name und Datum (Text optional). Danach geht es direkt zu Gästen und Speisekarte.
+struct NewEventSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var onCreate: (String, Date, String) -> Void
+
+    @State private var title = ""
+    @State private var date = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: .now) ?? .now
+    @State private var intro = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name of the event, e.g. Anna's 40th", text: $title)
+                    DatePicker("Date", selection: $date)
+                    TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical).lineLimit(1...4)
+                } footer: {
+                    Text("Next you add the guests and publish the menu.")
+                }
+            }
+            .navigationTitle("New event")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        onCreate(title.trimmingCharacters(in: .whitespaces), date, intro.trimmingCharacters(in: .whitespacesAndNewlines))
+                        dismiss()
+                    }
+                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+/// Untermenü „Pizzen & Mengen“: auswählbare Pizzen, Belag, Zusatzmengen und Einstellungen der Gästeseite (ändert sich selten)
+struct MenuSettingsView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
+    @AppStorage("fbProject") private var project = GuestFirebaseDefaults.project
+    @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
+    @AppStorage("guestPageURL") private var pageURL = GuestFirebaseDefaults.pageURL
+    @AppStorage(GuestPush.enabledKey) private var pushEnabled = false
+    @AppStorage(GuestPush.statusKey) private var pushStatus = ""
+    @State private var editingPizza: MenuPizza?
+    @State private var isShowingToppingAmounts = false
+
+    private var planPizzas: [MenuPizza] { pizzas.filter { !$0.isGuestCustom } }
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(planPizzas) { pizza in
+                    MenuPizzaRow(pizza: pizza, number: nil, showsOrders: false) { editingPizza = pizza }
+                }
+                .onDelete { offsets in
+                    let list = planPizzas
+                    offsets.forEach { modelContext.delete(list[$0]) }
+                }
+                Button("Add pizza", systemImage: "plus") {
+                    let pizza = MenuPizza(name: String(localized: "New pizza"), sortIndex: (pizzas.map(\.sortIndex).max() ?? 0) + 1)
+                    modelContext.insert(pizza)
+                    editingPizza = pizza
+                }
+            } header: {
+                Text("Available pizzas")
+            } footer: {
+                Text("Toggle the circle to make a pizza available. Tap a pizza to edit its toppings. For each event you can still untick single pizzas.")
+            }
+
+            Section {
+                Button("Topping amounts for all pizzas", systemImage: "scalemass") { isShowingToppingAmounts = true }
+                NavigationLink { ExtraDefaultsEditor() } label: {
+                    Label("Extra amounts per pizza", systemImage: "plus.square.on.square")
+                }
+            } header: {
+                Text("Amounts")
+            } footer: {
+                Text("Change e.g. the tomato sauce once and every pizza gets the new amount. Extra amounts: how much one pizza needs when a guest adds an ingredient.")
+            }
+
+            Section {
+                Toggle("Push for guest orders", systemImage: "bell.badge", isOn: $pushEnabled)
+                    .onChange(of: pushEnabled) { _, on in Task { on ? await GuestPush.enable() : await GuestPush.disable() } }
+                if pushEnabled && !pushStatus.isEmpty {
+                    Text(pushStatus).font(.caption).foregroundStyle(.secondary)
+                }
+                // Alles vorbelegt: normalerweise nichts zu tun. Nur für ein eigenes Firebase-Projekt oder eine andere Adresse.
+                DisclosureGroup("Advanced (already set up)") {
+                    TextField("Firebase project ID", text: $project).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField("Firebase API key", text: $apiKey).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField("Guest page address (https://…)", text: $pageURL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .keyboardType(.URL)
+                    Button("Reset to defaults", systemImage: "arrow.uturn.backward") {
+                        project = GuestFirebaseDefaults.project
+                        apiKey = GuestFirebaseDefaults.apiKey
+                        pageURL = GuestFirebaseDefaults.pageURL
+                    }
+                }
+            } header: {
+                Text("Guest page")
+            } footer: {
+                Text("A notification on this iPhone when a guest orders, changes or deletes an order. Needs Pizza-Push on the Mac mini (hosting/mac-mini/pizza-push).")
+            }
+        }
+        .navigationTitle("Pizzas & amounts")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $isShowingToppingAmounts) {
+            ToppingAmountsEditor(pizzas: planPizzas)
+        }
+        .sheet(item: $editingPizza) { pizza in
+            MenuPizzaEditor(pizza: pizza)
+        }
     }
 }
 
 extension MenuPizza {
     /// Belag aller Bestellungen zusammengerechnet (gleicher Name + Einheit)
-    static func aggregatedToppings(of onMenu: [MenuPizza]) -> [(key: String, name: String, amount: Double, unit: String)] {
+    /// - Parameter sauce: Mit Saucenrezept wird die Tomatensauce in ihre Zutaten aufgeteilt (für die Einkaufsliste)
+    static func aggregatedToppings(of onMenu: [MenuPizza], sauce: SauceRecipe? = nil) -> [(key: String, name: String, amount: Double, unit: String)] {
         var totals: [String: (name: String, amount: Double, unit: String)] = [:]
         var order: [String] = []
         // Gleiche Zutat zusammenrechnen, auch wenn sie unterschiedlich heißt („Cooked ham“ ↔ „Schinken“,
         // „Mozzarella (fior di latte)“ ↔ „Mozzarella“) oder in anderer Einheit steht (g ↔ Stück).
-        func add(_ name: String, _ amount: Double, _ unit: String) {
+        func addPlain(_ name: String, _ amount: Double, _ unit: String) {
             var key = "\(name.lowercased())|\(unit)"
             var amount = amount
             if totals[key] == nil, let match = existingKey(for: name, unit: unit, in: totals, order: order) {
@@ -197,6 +868,13 @@ extension MenuPizza {
             }
             if totals[key] == nil { order.append(key) }
             totals[key, default: (name, 0, unit)].amount += amount
+        }
+        func add(_ name: String, _ amount: Double, _ unit: String) {
+            if let sauce, isTomatoSauce(name), unit == "g" || unit == "ml" {
+                for part in sauce.parts(forSauce: amount) where part.amount > 0 { addPlain(part.name, part.amount, part.unit) }
+            } else {
+                addPlain(name, amount, unit)
+            }
         }
         for pizza in onMenu where pizza.orderCount > 0 {
             for topping in pizza.toppings {
@@ -222,6 +900,26 @@ extension MenuPizza {
         Bundle.main.localizedString(forKey: name, value: nil, table: nil)
             .lowercased().replacingOccurrences(of: "\\(.*?\\)", with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespaces)
+    }
+
+    /// „Tomatensauce“, „Tomato sauce“, „Pizzasauce“ …
+    static func isTomatoSauce(_ name: String) -> Bool {
+        let text = normalized(name).replacingOccurrences(of: " ", with: "")
+        return ["tomatensauce", "tomatosauce", "pizzasauce", "tomatensoße", "tomatensosse"].contains { text.contains($0) }
+    }
+
+    /// Menge für die Einkaufsliste: Gramm/ml ganz, Stück aufgerundet
+    static func shoppingAmount(_ amount: Double, unit: String) -> String {
+        switch unit {
+        case "g", "ml": return formatted(amount >= 10 ? amount.rounded() : (amount * 10).rounded() / 10, unit: unit)
+        case "pcs": return formatted(amount.rounded(.up), unit: unit)
+        default: return formatted((amount * 4).rounded(.up) / 4, unit: unit)
+        }
+    }
+
+    /// Alle Zutaten der bestellten Pizzen für die Einkaufsliste (Tomatensauce nach Rezept aufgeteilt)
+    static func shoppingItems(of pizzas: [MenuPizza], sauce: SauceRecipe?) -> [(String, String)] {
+        aggregatedToppings(of: pizzas, sauce: sauce).map { ($0.name, shoppingAmount($0.amount, unit: $0.unit)) }
     }
 
     private static func words(_ name: String) -> [String] {
@@ -503,35 +1201,11 @@ struct MenuCardView: View {
 }
 
 extension Notification.Name {
-    /// Springt im Tab "Menü" direkt zur Einkaufsliste
+    /// Wechselt in den Tab „Einkauf“
     static let showShoppingList = Notification.Name("showShoppingList")
 }
 
-/// Tab "Menü": Speisekarte und Einkaufsliste
-struct MenuAndShoppingView: View {
-    enum Page: Hashable { case plan, orders, shopping }
-    @State private var page: Page = .plan
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Picker("Page", selection: $page) {
-                Text("Plan").tag(Page.plan)
-                Text("Orders").tag(Page.orders)
-                Text("Shopping list").tag(Page.shopping)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.bottom, 6)
-            switch page {
-            case .plan: MenuView(mode: .plan)
-            case .orders: MenuView(mode: .orders)
-            case .shopping: ShoppingListView()
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .showShoppingList)) { _ in page = .shopping }
-    }
-}
 
 #Preview {
-    NavigationStack { MenuAndShoppingView() }
+    NavigationStack { EventsView() }
 }
