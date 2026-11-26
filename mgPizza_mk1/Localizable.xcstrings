@@ -6281,6 +6281,36 @@
           }
         }
       }
+    },
+    "Reopen event" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anlass wieder öffnen"
+          }
+        }
+      }
+    },
+    "Mark event as done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anlass als erledigt markieren"
+          }
+        }
+      }
+    },
+    "An event moves to “Past” automatically at midnight after its day, or right away when you mark it as done. Orders are then closed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Anlass wandert automatisch um Mitternacht nach seinem Tag zu „Vergangene“, oder sofort, wenn du ihn als erledigt markierst. Die Bestellung wird dann geschlossen."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
