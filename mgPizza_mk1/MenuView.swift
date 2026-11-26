@@ -79,6 +79,7 @@ struct EventsView: View {
             reload()
             MenuPizza.seedIfNeeded(into: modelContext)
             MenuPizza.seedMoreIfNeeded(into: modelContext)
+            MenuPizza.addGratedCheeseIfNeeded(into: modelContext)
         }
         .onChange(of: openEvening) { _, open in if open == nil { reload() } }
     }
@@ -781,6 +782,7 @@ struct MenuSettingsView: View {
     @AppStorage(GuestPush.statusKey) private var pushStatus = ""
     @State private var editingPizza: MenuPizza?
     @State private var isShowingToppingAmounts = false
+    @State private var isShowingNewPizza = false
 
     private var planPizzas: [MenuPizza] { pizzas.filter { !$0.isGuestCustom } }
 
@@ -794,11 +796,7 @@ struct MenuSettingsView: View {
                     let list = planPizzas
                     offsets.forEach { modelContext.delete(list[$0]) }
                 }
-                Button("Add pizza", systemImage: "plus") {
-                    let pizza = MenuPizza(name: String(localized: "New pizza"), sortIndex: (pizzas.map(\.sortIndex).max() ?? 0) + 1)
-                    modelContext.insert(pizza)
-                    editingPizza = pizza
-                }
+                Button("Add pizza", systemImage: "plus") { isShowingNewPizza = true }
             } header: {
                 Text("Available pizzas")
             } footer: {
@@ -845,6 +843,10 @@ struct MenuSettingsView: View {
         .sheet(isPresented: $isShowingToppingAmounts) {
             ToppingAmountsEditor(pizzas: planPizzas)
         }
+        .sheet(isPresented: $isShowingNewPizza) {
+            NewPizzaSheet(pizzas: planPizzas, nextSortIndex: (pizzas.map(\.sortIndex).max() ?? 0) + 1)
+        }
+        .onAppear { MenuPizza.addGratedCheeseIfNeeded(into: modelContext) }
         .sheet(item: $editingPizza) { pizza in
             MenuPizzaEditor(pizza: pizza)
         }
@@ -1083,6 +1085,169 @@ struct ToppingAmountsEditor: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
         }
+    }
+}
+
+/// Neue Pizza: alle bisherigen Zutaten zum Ankreuzen mit Menge, optional eine andere Pizza als Vorlage
+struct NewPizzaSheet: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    var pizzas: [MenuPizza]
+    var nextSortIndex: Int
+
+    private struct Choice: Identifiable {
+        var id = UUID()
+        var key: String
+        var name: String
+        var unit: String
+        var amount: Double
+        var selected = false
+        /// Selbst hinzugefügte Zutat (Name und Einheit frei wählbar)
+        var isCustom: Bool { key.hasPrefix("custom-") }
+    }
+
+    @State private var name = ""
+    @State private var template: PersistentIdentifier?
+    @State private var choices: [Choice] = []
+    @State private var didLoad = false
+
+    private static func key(_ name: String, _ unit: String) -> String {
+        "\(name.trimmingCharacters(in: .whitespaces).lowercased())|\(unit)"
+    }
+
+    /// Jede bisher verwendete Zutat einmal, mit der häufigsten Menge
+    private func loadChoices() {
+        var amounts: [String: [Double]] = [:]
+        var result: [Choice] = []
+        for topping in pizzas.flatMap(\.toppings) where !topping.name.trimmingCharacters(in: .whitespaces).isEmpty {
+            let key = Self.key(topping.name, topping.unit)
+            if amounts[key] == nil {
+                result.append(Choice(key: key, name: topping.name, unit: topping.unit, amount: topping.amount))
+            }
+            amounts[key, default: []].append(topping.amount)
+        }
+        for index in result.indices {
+            let counts = Dictionary((amounts[result[index].key] ?? []).map { ($0, 1) }, uniquingKeysWith: +)
+            if let common = counts.max(by: { $0.value == $1.value ? $0.key > $1.key : $0.value < $1.value })?.key {
+                result[index].amount = common
+            }
+        }
+        // Reibekäse gehört auf jede Pizza: immer anbieten und vorauswählen
+        let cheese = MenuPizza.gratedCheese
+        let cheeseKey = Self.key(cheese.name, cheese.unit)
+        if let index = result.firstIndex(where: { $0.key == cheeseKey }) {
+            result[index].selected = true
+        } else {
+            result.append(Choice(key: cheeseKey, name: cheese.name, unit: cheese.unit, amount: cheese.amount, selected: true))
+        }
+        choices = result
+    }
+
+    /// Belag der Vorlage übernehmen: genau diese Zutaten mit ihren Mengen, in ihrer Reihenfolge oben
+    private func apply(template id: PersistentIdentifier?) {
+        guard let pizza = pizzas.first(where: { $0.persistentModelID == id }) else { return }
+        for index in choices.indices { choices[index].selected = false }
+        var front: [Choice] = []
+        for topping in pizza.toppings where !topping.name.trimmingCharacters(in: .whitespaces).isEmpty {
+            let key = Self.key(topping.name, topping.unit)
+            if let index = choices.firstIndex(where: { $0.key == key }) {
+                var choice = choices.remove(at: index)
+                choice.amount = topping.amount
+                choice.selected = true
+                front.append(choice)
+            }
+        }
+        choices = front + choices
+    }
+
+    private var selectedCount: Int { choices.filter(\.selected).count }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name", text: $name)
+                    Picker("Template", selection: $template) {
+                        Text("None").tag(PersistentIdentifier?.none)
+                        ForEach(pizzas) { pizza in
+                            Text(pizza.name).tag(Optional(pizza.persistentModelID))
+                        }
+                    }
+                } footer: {
+                    Text("With a template, its toppings and amounts are ticked. You can change everything.")
+                }
+
+                Section {
+                    ForEach($choices) { $choice in
+                        HStack {
+                            Button {
+                                choice.selected.toggle()
+                            } label: {
+                                Image(systemName: choice.selected ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(choice.selected ? .green : .gray)
+                            }
+                            .buttonStyle(.plain)
+                            if choice.isCustom {
+                                TextField("Topping", text: $choice.name)
+                            } else {
+                                Text(LocalizedStringKey(choice.name))
+                                    .foregroundStyle(choice.selected ? .primary : .secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { choice.selected.toggle() }
+                            }
+                            AmountField(value: $choice.amount)
+                            if choice.isCustom {
+                                Picker("Unit", selection: $choice.unit) {
+                                    ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { unit in
+                                        Text(LocalizedStringKey(unit)).tag(unit)
+                                    }
+                                }
+                                .labelsHidden()
+                                .fixedSize()
+                            } else {
+                                Text(LocalizedStringKey(choice.unit)).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    Button("Other topping", systemImage: "plus") {
+                        choices.append(Choice(key: "custom-\(UUID().uuidString)", name: "", unit: "g", amount: 50, selected: true))
+                    }
+                } header: {
+                    Text("Toppings per pizza")
+                } footer: {
+                    Text("All toppings of your pizzas. Tick what goes on this pizza and adjust the amount.")
+                }
+            }
+            .navigationTitle("New pizza")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Create") { create() }
+                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+            .onAppear {
+                guard !didLoad else { return }
+                didLoad = true
+                loadChoices()
+            }
+            .onChange(of: template) { _, id in apply(template: id) }
+        }
+    }
+
+    private func create() {
+        let toppings = choices
+            .filter { $0.selected && !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
+            .map { Topping(name: $0.name.trimmingCharacters(in: .whitespaces), amount: $0.amount, unit: $0.unit) }
+        let source = pizzas.first { $0.persistentModelID == template }
+        let pizza = MenuPizza(name: name.trimmingCharacters(in: .whitespaces), toppings: toppings,
+                              sortIndex: nextSortIndex, isDetroit: source?.isDetroit ?? false)
+        modelContext.insert(pizza)
+        try? modelContext.save()
+        dismiss()
     }
 }
 
