@@ -700,7 +700,9 @@ struct EventDetailView: View {
         let event = GuestEvent(title: title, date: date, guests: guests, pizzas: eventPizzas.map { pizza in
             .init(name: pizza.name, info: pizza.info,
                   toppings: pizza.toppings.map { .init(name: $0.name, amount: $0.amount, unit: $0.unit) })
-        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil, extras: MenuPizza.alwaysOfferedExtras)
+        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil, extras: MenuPizza.alwaysOfferedExtras,
+           extraAmounts: ExtraDefaults.all.filter { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
+               .map { GuestEvent.Topping(name: $0.name.trimmingCharacters(in: .whitespaces), amount: $0.amount, unit: $0.unit) })
         let first = !isPublished
         do {
             try await service.publish(event, id: eventID)

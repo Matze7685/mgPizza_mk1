@@ -28,6 +28,7 @@ struct GuestEvent: Codable {
     var intro: String?            // Begrüßungstext / Anlass auf der Gästeseite
     var closed: Bool?             // true: Gäste sehen die Karte, können aber nicht mehr bestellen
     var extras: [String]?         // immer angebotene Zusatzzutaten (z. B. Parmesan), auch wenn keine Pizza sie hat
+    var extraAmounts: [Topping]?  // Zusatzzutaten zum Ankreuzen mit Menge pro Pizza (Einstellung „Zusatzmengen pro Pizza“)
 }
 
 /// Ein Abend/Anlass mit eigenem Gästelink. Die Liste liegt nur lokal in der App (Übersicht für den Gastgeber);
@@ -277,7 +278,7 @@ struct ExtraDefaultsEditor: View {
                 Button("Add ingredient", systemImage: "plus") { items.append(ExtraAmount(name: "", amount: 30)) }
                 Button("Restore defaults", systemImage: "arrow.uturn.backward") { items = ExtraDefaults.builtIn }
             } footer: {
-                Text("Amount per pizza. Used when guests type their own extra ingredients. Unknown ingredients count as 1 piece.")
+                Text("Guests tick these ingredients as extras on the guest page. The amount per pizza is used for the shopping list; changing it is optional.")
             }
         }
         .navigationTitle("Extra amounts")

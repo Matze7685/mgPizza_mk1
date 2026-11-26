@@ -25,6 +25,7 @@
   .count button{width:38px;padding:4px;font-size:1.3em;background:var(--cream);border-color:var(--green);color:var(--green)}
   .count b{min-width:1.2em;text-align:center;font-size:1.2em}
   .toppings{margin-top:8px;font-size:.95em}.toppings label{display:block;padding:3px 0}
+  .extras{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}.extras label{padding:4px 0}
   button.send{background:var(--green);color:#fff;border:0;margin-top:18px;font-weight:bold;font-size:1.1em;padding:14px}
   #msg{margin-top:12px;font-weight:bold;color:var(--green)}
   .guests{margin:16px}
@@ -73,6 +74,8 @@ const eventId = new URLSearchParams(location.search).get("e");
 const app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const slug = n => n.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "gast";
+// true: Zusatzzutaten nur ankreuzen (Liste mit Mengen kommt aus der App), kein freies Eintippen
+let extrasFromList = false;
 const splitExtra = v => v.split(",").map(x => x.trim()).filter(Boolean);
 // Angehakte Zusatzzutaten + frei eingetippte, ohne Doppelte
 const mergeExtra = i => {
@@ -146,7 +149,18 @@ async function load() {
     const k = t.name.toLowerCase() + "|" + t.unit;
     if (!seen.has(k)) { seen.add(k); pool.push(t); }
   }));
-  // Zusatzzutaten, die zu einer Pizza dazugewählt werden können (alles aus der Karte, was nicht schon drauf ist)
+  // Zusatzzutaten aus der gespeicherten Liste der App (Einstellung „Zusatzmengen pro Pizza“); Mengen rechnet die App
+  extrasFromList = !!(event.extraAmounts && event.extraAmounts.length);
+  // Was schon auf der Pizza ist, wird nicht als Extra angeboten („Mozzarella“ passt zu „Mozzarella (fior di latte)“)
+  const onPizza = (p, n) => p.toppings.some(t => { const a = t.name.toLowerCase(); return a === n || a.startsWith(n + " ") || a.startsWith(n + "("); });
+  if (extrasFromList) {
+    event.pizzas.forEach(p => {
+      const names = new Set();
+      p.extraOptions = [...event.extraAmounts.map(t => t.name), ...(event.extras || [])]
+        .filter(n => { const k = (n || "").toLowerCase(); return k && !onPizza(p, k) && !names.has(k) && names.add(k); });
+    });
+  } else
+  // Ältere App ohne Mengenliste: alles aus der Karte, was nicht schon drauf ist
   event.pizzas.forEach(p => {
     const own = new Set(p.toppings.map(t => t.name.toLowerCase()));
     const names = new Set();
@@ -324,8 +338,8 @@ function render() {
         <div class="count"><button data-d="-1" data-i="${i}">−</button><b id="c${i}">${counts[i]}</b><button data-d="1" data-i="${i}">+</button></div></div>
       <div class="info" style="margin-top:6px">${esc(p.toppings.map(t => t.name).join(", "))}</div>
       <div class="toppings" id="t${i}" ${counts[i] ? "" : "hidden"}>Abwählen, was du nicht möchtest:${p.toppings.map(t => `<label><input type="checkbox" style="width:auto" ${without[i].has(t.name) ? "" : "checked"} data-i="${i}" data-t="${esc(t.name)}"> ${esc(t.name)}</label>`).join("")}
-        ${p.extraOptions.length ? `<div style="margin-top:8px">Extra dazu:</div>${p.extraOptions.map(n => `<label><input type="checkbox" style="width:auto" ${extraSel[i].has(n) ? "checked" : ""} data-ei="${i}" data-e="${esc(n)}"> ${esc(n)}</label>`).join("")}` : ""}
-        <input placeholder="Andere Zusatzzutat (optional, mehrere mit Komma)" data-x="${i}" value="${esc(extras[i])}" style="margin-top:8px"></div>
+        ${p.extraOptions.length ? `<div style="margin-top:8px">Extra dazu:</div><div class="extras">${p.extraOptions.map(n => `<label><input type="checkbox" style="width:auto" ${extraSel[i].has(n) ? "checked" : ""} data-ei="${i}" data-e="${esc(n)}"> ${esc(n)}</label>`).join("")}</div>` : ""}
+        ${extrasFromList ? "" : `<input placeholder="Andere Zusatzzutat (optional, mehrere mit Komma)" data-x="${i}" value="${esc(extras[i])}" style="margin-top:8px">`}</div>
     </div>`).join("")}
     <div class="pizza">
       <div class="row"><div><div class="name">Eigene Pizza</div><div class="info">Zutaten selbst auswählen</div></div>

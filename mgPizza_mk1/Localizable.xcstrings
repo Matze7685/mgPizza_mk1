@@ -4892,16 +4892,6 @@
         }
       }
     },
-    "Amount per pizza. Used when guests type their own extra ingredients. Unknown ingredients count as 1 piece." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menge pro Pizza. Gilt für Zutaten, die Gäste selbst als Zusatz eintippen. Unbekannte Zutaten zählen als 1 Stück."
-          }
-        }
-      }
-    },
     "Restore defaults" : {
       "localizations" : {
         "de" : {
@@ -6588,6 +6578,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "3 · Zubereitung"
+          }
+        }
+      }
+    },
+    "Guests tick these ingredients as extras on the guest page. The amount per pizza is used for the shopping list; changing it is optional." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Zutaten können Gäste auf der Gästeseite als Extra ankreuzen. Die Menge pro Pizza wird für die Einkaufsliste verwendet, ändern ist optional."
           }
         }
       }
