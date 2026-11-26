@@ -9,7 +9,7 @@ import SwiftData
 import SwiftUI
 
 enum MainTab: Hashable {
-    case activity, recipes, menu
+    case activity, recipes, events, shopping
 }
 
 struct MainView: View {
@@ -35,12 +35,18 @@ struct MainView: View {
                         Label("Recipes", systemImage: "book")
                     }
                     .tag(MainTab.recipes)
-                MenuAndShoppingView()
+                EventsView()
                     .tabItem {
-                        Label("Menu", systemImage: "menucard")
+                        Label("Events", systemImage: "party.popper")
                     }
-                    .tag(MainTab.menu)
+                    .tag(MainTab.events)
+                ShoppingListView()
+                    .tabItem {
+                        Label("Shopping", systemImage: "cart")
+                    }
+                    .tag(MainTab.shopping)
             }
+            .onReceive(NotificationCenter.default.publisher(for: .showShoppingList)) { _ in router.selectedTab = .shopping }
             .safeAreaInset(edge: .top, spacing: 0) {
                 // Nicht auf der Startseite: dort steht der Teigstatus schon groß in der Karte
                 if showDoughStatus && router.selectedTab != .activity {
