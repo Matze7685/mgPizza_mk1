@@ -251,7 +251,7 @@ struct OrdersFoldView: View {
         var amount: String? = nil
     }
 
-    /// Normale Zutaten ohne Mengen; nur Zusatzzutaten (mehr als normal) mit Menge
+    /// Zutaten ohne Mengenangaben: normale, Zusatzzutaten (grün) und abgewählte (rot)
     private func ingredients(_ item: PrepItem) -> [Ingredient] {
         let base: [String]
         if let custom = item.custom {
@@ -261,10 +261,8 @@ struct OrdersFoldView: View {
             base = toppings.map(\.name).filter { !item.without.contains($0) }
         }
         var list = base.map { Ingredient(name: $0, kind: .normal) }
-        for name in item.extra {
-            let standard = ExtraDefaults.amount(for: name)
-            list.append(Ingredient(name: name, kind: .extra, amount: MenuPizza.formatted(standard.amount, unit: standard.unit)))
-        }
+        // Zusatzzutaten nur als Name (grün), ohne Mengenangabe
+        list += item.extra.map { Ingredient(name: $0, kind: .extra) }
         list += item.without.map { Ingredient(name: $0, kind: .without) }
         return list
     }
