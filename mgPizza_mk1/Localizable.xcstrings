@@ -5791,6 +5791,26 @@
           }
         }
       }
+    },
+    "Advanced (already set up)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweitert (schon eingerichtet)"
+          }
+        }
+      }
+    },
+    "Reset to defaults" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Standard zurücksetzen"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
