@@ -586,7 +586,7 @@ struct GuestLinkSheet: View {
             } message: {
                 Text("If this guest has already ordered, the order is deleted too.")
             }
-            .confirmationDialog("Delete the order of \(deletingOrder ?? \"\")?", isPresented: Binding { deletingOrder != nil } set: { if !$0 { deletingOrder = nil } },
+            .confirmationDialog("Delete the order of \(deletingOrder ?? "")?", isPresented: Binding { deletingOrder != nil } set: { if !$0 { deletingOrder = nil } },
                                 titleVisibility: .visible) {
                 Button("Delete order", role: .destructive) {
                     if let name = deletingOrder { Task { await deleteGuestOrder(name) } }
