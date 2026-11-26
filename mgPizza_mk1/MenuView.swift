@@ -19,6 +19,7 @@ struct MenuView: View {
     @State private var pdfURL: URL?
     @State private var isShowingGuestLink = false
     @State private var isShowingFoldView = false
+    @State private var isShowingToppingAmounts = false
 
     private var onMenu: [MenuPizza] { pizzas.filter(\.isOnMenu) }
     /// Nur die eigentliche Speisekarte (ohne eigene Gäste-Pizzen) für Teilen, PDF und Gästelink
@@ -70,6 +71,14 @@ struct MenuView: View {
                 Text("Pizzas")
             } footer: {
                 Text("Toggle the circle to put a pizza on or off the menu. Tap a pizza to edit its toppings.")
+            }
+            }
+
+            if mode == .plan {
+            Section {
+                Button("Topping amounts for all pizzas", systemImage: "scalemass") { isShowingToppingAmounts = true }
+            } footer: {
+                Text("Change e.g. the tomato sauce once and every pizza on the menu gets the new amount.")
             }
             }
 
@@ -130,6 +139,9 @@ struct MenuView: View {
         }
         .fullScreenCover(isPresented: $isShowingFoldView) {
             OrdersFoldView()
+        }
+        .sheet(isPresented: $isShowingToppingAmounts) {
+            ToppingAmountsEditor(pizzas: planPizzas)
         }
         .sheet(item: $editingPizza) { pizza in
             MenuPizzaEditor(pizza: pizza)
@@ -286,6 +298,93 @@ struct MenuPizzaRow: View {
             }
         }
         .opacity(pizza.isOnMenu || showsOrders ? 1 : 0.5)
+    }
+}
+
+/// Belagmengen für alle Pizzen auf einmal: Jede Zutat steht einmal da, eine Änderung gilt für jede Pizza mit dieser Zutat.
+struct ToppingAmountsEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    var pizzas: [MenuPizza]
+
+    private struct ToppingGroup: Identifiable {
+        var id: String { key }
+        var key: String
+        var name: String
+        var unit: String
+        var count: Int
+    }
+
+    private static func key(_ topping: Topping) -> String {
+        "\(topping.name.trimmingCharacters(in: .whitespaces).lowercased())|\(topping.unit)"
+    }
+
+    private var groups: [ToppingGroup] {
+        var result: [ToppingGroup] = []
+        for topping in pizzas.flatMap(\.toppings) where !topping.name.trimmingCharacters(in: .whitespaces).isEmpty {
+            let key = Self.key(topping)
+            if let index = result.firstIndex(where: { $0.key == key }) {
+                result[index].count += 1
+            } else {
+                result.append(ToppingGroup(key: key, name: topping.name, unit: topping.unit, count: 1))
+            }
+        }
+        return result
+    }
+
+    private func amounts(of key: String) -> [Double] {
+        pizzas.flatMap(\.toppings).filter { Self.key($0) == key }.map(\.amount)
+    }
+
+    /// Häufigste Menge anzeigen; beim Ändern bekommen alle Pizzen mit dieser Zutat die neue Menge
+    private func binding(for key: String) -> Binding<Double> {
+        Binding {
+            let values = amounts(of: key)
+            let counts = Dictionary(values.map { ($0, 1) }, uniquingKeysWith: +)
+            return counts.max { $0.value == $1.value ? $0.key > $1.key : $0.value < $1.value }?.key ?? 0
+        } set: { newValue in
+            for pizza in pizzas {
+                var toppings = pizza.toppings
+                var changed = false
+                for index in toppings.indices where Self.key(toppings[index]) == key && toppings[index].amount != newValue {
+                    toppings[index].amount = newValue
+                    changed = true
+                }
+                if changed { pizza.toppings = toppings }
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    ForEach(groups) { group in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(group.name)
+                                if Set(amounts(of: group.key)).count > 1 {
+                                    Text("On \(group.count) pizzas, amounts differ")
+                                        .font(.caption).foregroundStyle(.orange)
+                                } else {
+                                    Text("On \(group.count) pizzas")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                            AmountField(value: binding(for: group.key))
+                            Text(LocalizedStringKey(group.unit)).foregroundStyle(.secondary)
+                        }
+                    }
+                } footer: {
+                    Text("Amount per pizza. A change applies to every pizza with this topping; you can still change single pizzas afterwards.")
+                }
+            }
+            .navigationTitle("Topping amounts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+            }
+        }
     }
 }
 
