@@ -49,6 +49,8 @@ struct GuestEvening: Codable, Identifiable, Hashable {
     var done: Bool?
     /// Feste Mengen statt Gästebestellung: Pizza-Name -> Anzahl (nil = Gäste bestellen über die Gästeseite)
     var fixedCounts: [String: Int]?
+    /// Bei festen Mengen: Zusatzzutaten pro Sorte (Pizza-Name -> Extras), gelten für jede Pizza dieser Sorte
+    var fixedExtras: [String: [String]]?
 
     /// Pizzen werden mit festen Mengen geplant (ohne Gästeliste und Gästeseite)
     var isFixed: Bool { fixedCounts != nil }

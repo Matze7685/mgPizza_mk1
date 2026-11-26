@@ -57,8 +57,10 @@ enum PrepQueueStore {
         var items: [PrepItem] = []
         if orders.isEmpty {
             for pizza in pizzas where pizza.isOnMenu && pizza.orderCount > 0 {
+                // Extras pro Sorte (Anlass mit festen Mengen)
+                let extra = pizza.guestExtras.filter { $0.value > 0 }.keys.sorted()
                 for n in 0..<pizza.orderCount {
-                    items.append(PrepItem(id: "menu|\(pizza.name)|\(n)", guest: "", pizza: pizza.name))
+                    items.append(PrepItem(id: "menu|\(pizza.name)|\(n)", guest: "", pizza: pizza.name, extra: extra))
                 }
             }
             return items

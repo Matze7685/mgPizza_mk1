@@ -6552,16 +6552,6 @@
         }
       }
     },
-    "Set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. Preparation and shopping list use these numbers." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lege fest, wie viele Pizzen du von jeder Sorte machst, z. B. 5× Salami und 5× Thunfisch. Zubereitung und Einkaufsliste rechnen mit diesen Zahlen."
-          }
-        }
-      }
-    },
     "Split view: preparation order" : {
       "localizations" : {
         "de" : {
@@ -6588,6 +6578,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diese Zutaten können Gäste auf der Gästeseite als Extra ankreuzen. Die Menge pro Pizza wird für die Einkaufsliste verwendet, ändern ist optional."
+          }
+        }
+      }
+    },
+    "Set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. Extras apply to every pizza of that kind. Preparation and shopping list use these numbers." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lege fest, wie viele Pizzen du von jeder Sorte machst, z. B. 5× Salami und 5× Thunfisch. Extras gelten für jede Pizza dieser Sorte. Zubereitung und Einkaufsliste rechnen mit diesen Zahlen."
+          }
+        }
+      }
+    },
+    "Add extras" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extras hinzufügen"
+          }
+        }
+      }
+    },
+    "Extra: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extra: %@"
+          }
+        }
+      }
+    },
+    "Extras for %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extras für %@"
           }
         }
       }
