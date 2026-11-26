@@ -75,10 +75,37 @@ const mergeExtra = i => {
   splitExtra(extras[i]).forEach(x => { if (!out.some(o => o.toLowerCase() === x.toLowerCase())) out.push(x); });
   return out;
 };
+// Anonyme Anmeldung: Jedes Gerät bekommt automatisch eine eigene Kennung (kein Login, keine Mail, kein PIN).
+// Die Firestore-Regeln (docs/README.md) erlauben Lesen/Ändern/Löschen einer Bestellung nur mit dieser Kennung.
+// Vorab im Firebase: Authentication → Anmeldemethode → „Anonym“ aktivieren.
+let idToken = "", tokenUntil = 0, myUid = "";
+const mem = {};
+const store = {get: k => { try { return localStorage.getItem(k); } catch (e) { return mem[k] || null; } },
+               set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } }};
+async function login() {
+  if (idToken && Date.now() < tokenUntil - 60000) return;
+  const refresh = store.get("pizzaRefresh");
+  let r, d;
+  if (refresh) {
+    r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${API_KEY}`, {method: "POST",
+      headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(refresh)}`});
+    if (r.ok) { d = await r.json(); idToken = d.id_token; store.set("pizzaRefresh", d.refresh_token); myUid = d.user_id; tokenUntil = Date.now() + (+d.expires_in) * 1000; return; }
+    if (r.status !== 400) throw new Error("login");   // Netzwerk/Server: nicht gleich ein neues Gerät anlegen
+  }
+  r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, {method: "POST",
+    headers: {"Content-Type": "application/json"}, body: JSON.stringify({returnSecureToken: true})});
+  if (!r.ok) throw new Error("login");
+  d = await r.json(); idToken = d.idToken; store.set("pizzaRefresh", d.refreshToken); myUid = d.localId; tokenUntil = Date.now() + (+d.expiresIn) * 1000;
+}
+async function api(url, opts = {}) {
+  await login();
+  return fetch(url, {...opts, headers: {...(opts.headers || {}), Authorization: `Bearer ${idToken}`}});
+}
 let event, guest = "", extras = [], extraSel = [], customExtra = "", counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [], note = "", hadOrder = false;
 
 async function load() {
   if (!eventId) { app.textContent = "Link unvollständig."; return; }
+  try { await login(); } catch (e) { app.textContent = "Anmeldung nicht möglich. Der Gastgeber muss in Firebase die anonyme Anmeldung aktivieren (siehe docs/README.md)."; return; }
   const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}?key=${API_KEY}`);
   if (!r.ok) { app.textContent = "Speisekarte nicht gefunden."; return; }
   event = JSON.parse((await r.json()).fields.data.stringValue);
@@ -133,24 +160,28 @@ function lineHTML(l) {
 }
 const orderHTML = o => o.lines.map(lineHTML).map(x => `<span>${x}</span>`).join("");
 
+// Nur die eigenen Bestellungen dieses Geräts (fremde kann die Seite weder sehen noch laden)
 async function fetchOrders() {
   try {
-    const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders?key=${API_KEY}&pageSize=300`);
+    const r = await api(`${base}/events/${encodeURIComponent(eventId)}:runQuery?key=${API_KEY}`, {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({structuredQuery: {from: [{collectionId: "orders"}], where: {fieldFilter: {field: {fieldPath: "owner"}, op: "EQUAL", value: {stringValue: myUid}}}}})});
     if (!r.ok) return {};
     const out = {};
-    ((await r.json()).documents || []).forEach(d => {
-      try { const o = JSON.parse(d.fields.data.stringValue); out[slug(o.guest)] = o; } catch (e) {}
+    (await r.json()).forEach(x => {
+      if (!x.document) return;
+      try { const o = JSON.parse(x.document.fields.data.stringValue); out[slug(o.guest)] = o; } catch (e) {}
     });
     return out;
   } catch (e) { return {}; }
 }
 
-async function showNames() {
+async function showNames(taken) {
   if (!event.guests.length) { app.innerHTML = header() + "<p style='margin:16px'>Der Gastgeber hat noch keine Gäste eingetragen.</p>"; return; }
   const draw = orders => {
-    app.innerHTML = header() + `<label>${event.closed ? "Bestellungen" : "Wer bist du?"}</label><div class="guests">${event.guests.map((g, i) => {
+    app.innerHTML = header() + (taken ? `<div class="closed">Die Bestellung von ${esc(taken)} gehört zu einem anderen Gerät und ist nicht sichtbar. Anderes Handy oder Browserdaten gelöscht? Der Gastgeber kann sie für dich freigeben.</div>` : "")
+      + `<label>${event.closed ? "Deine Bestellung" : "Wer bist du?"}</label><div class="guests">${event.guests.map((g, i) => {
       const o = orders && orders[slug(g)];
-      const sub = orders === null ? "" : (o ? `<span class="ordered">✔ bestellt:${orderHTML(o)}</span>` : `<span class="open">noch nichts bestellt</span>`);
+      const sub = o ? `<span class="ordered">✔ bestellt:${orderHTML(o)}</span>` : "";   // nur eigene Bestellungen
       return `<button class="guestbtn" data-g="${i}" ${event.closed ? "disabled" : ""}>${esc(g)}${sub}</button>`;
     }).join("")}</div>`;
     // Geschlossener Abend: Bestellungen nur anzeigen, nicht mehr ändern
@@ -170,7 +201,8 @@ async function pick(name) {
   customCount = 0; customToppings = new Set(); customExtra = ""; note = ""; hadOrder = false;
   app.innerHTML = header() + "<p style='margin:16px'>Lade deine Bestellung …</p>";
   try {
-    const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`);
+    const r = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`);
+    if (r.status === 403) { showNames(guest); return; }   // gehört einem anderen Gerät
     if (r.ok) {
       const o = JSON.parse((await r.json()).fields.data.stringValue);
       hadOrder = true; note = o.note || "";
@@ -216,8 +248,10 @@ async function removeLine(i) {
 // Die gespeicherte Bestellung des Gastes komplett löschen
 async function deleteOrder() {
   if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, "Ja, Bestellung löschen")) return;
-  const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
-  if (r.ok) showNames(); else document.getElementById("msg").textContent = "Löschen hat nicht geklappt – bitte nochmal versuchen.";
+  const r = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
+  if (r.ok) showNames(); else document.getElementById("msg").textContent = r.status === 403
+    ? "Das ist die Bestellung eines anderen Geräts – nur der Gastgeber kann sie löschen."
+    : "Löschen hat nicht geklappt – bitte nochmal versuchen.";
 }
 
 function render() {
@@ -242,7 +276,7 @@ function render() {
     <textarea id="note" rows="2" placeholder="Anmerkung (optional)">${esc(note)}</textarea>
     <button class="send" id="send">Bestellung abschicken</button><div id="msg"></div>
     ${hadOrder ? `<button class='delorder' id='delorder'>Gesamte Bestellung von ${esc(guest)} löschen</button>` : ""}`;
-  document.getElementById("change").onclick = showNames;
+  document.getElementById("change").onclick = () => showNames();
   app.querySelectorAll(".count button").forEach(b => b.onclick = () => {
     const d = +b.dataset.d;
     if (b.dataset.i === "custom") {
@@ -285,11 +319,14 @@ async function send() {
   }
   if (!lines.length) { msg.textContent = "Bitte mindestens eine Pizza wählen."; return; }
   const order = {guest, lines, note: note.trim()};
-  const r = await fetch(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {
+  // Bestellung gehört diesem Gerät (neu oder frei/alt: wird jetzt übernommen)
+  const r = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {
     method: "PATCH", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({fields: {data: {stringValue: JSON.stringify(order)}}})
+    body: JSON.stringify({fields: {data: {stringValue: JSON.stringify(order)}, owner: {stringValue: myUid}}})
   });
-  msg.textContent = r.ok ? "Danke! Bestellung gespeichert ✔ (du kannst sie jederzeit erneut abschicken)" : "Fehler beim Senden – bitte nochmal versuchen.";
+  msg.textContent = r.ok ? "Danke! Bestellung gespeichert ✔ (du kannst sie jederzeit erneut abschicken)"
+    : r.status === 403 ? "Diese Bestellung gehört einem anderen Gerät – der Gastgeber kann sie freigeben."
+    : "Fehler beim Senden – bitte nochmal versuchen.";
   if (r.ok) setTimeout(showNames, 1500);
 }
 load().catch(() => app.textContent = "Fehler beim Laden.");
