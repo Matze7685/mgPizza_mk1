@@ -251,7 +251,7 @@ struct OrdersFoldView: View {
         var amount: String? = nil
     }
 
-    /// Normale Zutaten ohne Mengen; nur Zusatzzutaten (mehr als normal) mit Menge
+    /// Zutaten ohne Mengenangaben: normale, Zusatzzutaten (grün) und abgewählte (rot)
     private func ingredients(_ item: PrepItem) -> [Ingredient] {
         let base: [String]
         if let custom = item.custom {
@@ -261,24 +261,66 @@ struct OrdersFoldView: View {
             base = toppings.map(\.name).filter { !item.without.contains($0) }
         }
         var list = base.map { Ingredient(name: $0, kind: .normal) }
-        for name in item.extra {
-            let standard = ExtraDefaults.amount(for: name)
-            list.append(Ingredient(name: name, kind: .extra, amount: MenuPizza.formatted(standard.amount, unit: standard.unit)))
-        }
+        // Zusatzzutaten nur als Name (grün), ohne Mengenangabe
+        list += item.extra.map { Ingredient(name: $0, kind: .extra) }
         list += item.without.map { Ingredient(name: $0, kind: .without) }
         return list
     }
 
     /// Zutaten in 2 oder 3 Spalten (Einstellung); Schrift umso größer, je weniger Zutaten es sind
+    /// Grundzutaten, die immer oben untereinander stehen (Reihenfolge = Reihenfolge beim Belegen)
+    private static let baseEmojis = ["🍅", "🧀", "⚪️"]
+
+    /// Index der Grundzutat (0 Tomatensauce, 1 Reibekäse, 2 Mozzarella) oder nil
+    private static func baseLayer(of ingredient: Ingredient) -> Int? {
+        guard ingredient.kind != .without else { return nil }
+        let name = Bundle.main.localizedString(forKey: ingredient.name, value: nil, table: nil).lowercased()
+        if name.contains("tomatensauce") || name.contains("tomato sauce") || name.contains("sugo") { return 0 }
+        if MenuPizza.isGratedCheese(ingredient.name) { return 1 }
+        if name.contains("mozzarella") { return 2 }
+        return nil
+    }
+
+    /// Oben untereinander: Tomatensauce, Reibekäse, Mozzarella (mit Emoji); darunter die übrigen Zutaten
+    /// in 2 oder 3 Spalten (Einstellung). Schrift umso größer, je weniger Zutaten es sind
     private func ingredientGrid(_ item: PrepItem, scale: CGFloat) -> some View {
-        let list = ingredients(item)
+        let all = ingredients(item)
+        let base = all.enumerated()
+            .compactMap { entry in Self.baseLayer(of: entry.element).map { (layer: $0, index: entry.offset) } }
+            .sorted { ($0.layer, $0.index) < ($1.layer, $1.index) }
+        let baseIndices = Set(base.map(\.index))
+        let rest = all.indices.filter { !baseIndices.contains($0) }.map { all[$0] }
         let columns = max(1, min(3, foldColumns))
-        let rows = (list.count + columns - 1) / columns
-        let size: CGFloat = (rows <= 3 ? 30 : rows <= 5 ? 24 : rows <= 7 ? 20 : 17) * scale
-        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12, alignment: .leading), count: columns),
-                         alignment: .leading, spacing: 8) {
-            ForEach(list.indices, id: \.self) { index in
-                ingredientCell(list[index].name, kind: list[index].kind, amount: list[index].amount, size: size)
+        let rows = base.count + (rest.count + columns - 1) / columns
+        let size: CGFloat = (rows <= 4 ? 30 : rows <= 6 ? 24 : rows <= 8 ? 20 : 17) * scale
+        return VStack(alignment: .leading, spacing: 8) {
+            if !base.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(base, id: \.index) { entry in
+                        let ingredient = all[entry.index]
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text(Self.baseEmojis[entry.layer])
+                            Text(LocalizedStringKey(ingredient.name)).bold()
+                                .foregroundStyle(ingredient.kind == .extra ? Color.green : Color.primary)
+                            if ingredient.kind == .extra {
+                                Text("extra").font(.system(size: size * 0.55).weight(.semibold)).foregroundStyle(.green)
+                                if let amount = ingredient.amount {
+                                    Text(amount).font(.system(size: size * 0.55)).monospacedDigit().foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .font(.system(size: size))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    }
+                }
+                if !rest.isEmpty { Divider() }
+            }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12, alignment: .leading), count: columns),
+                      alignment: .leading, spacing: 8) {
+                ForEach(rest.indices, id: \.self) { index in
+                    ingredientCell(rest[index].name, kind: rest[index].kind, amount: rest[index].amount, size: size)
+                }
             }
         }
     }
