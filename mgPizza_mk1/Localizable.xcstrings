@@ -5462,36 +5462,6 @@
         }
       }
     },
-    "Split view: orders on top" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geteilte Ansicht: Bestellungen oben"
-          }
-        }
-      }
-    },
-    "For a foldable iPhone in laptop posture: the orders fill the upper screen, the controls stay on the lower one." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für ein faltbares iPhone in Laptop-Stellung: Oben stehen groß die Bestellungen, unten bleibt die Bedienung."
-          }
-        }
-      }
-    },
-    "%lld round · %lld Detroit" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld rund · %lld Detroit"
-          }
-        }
-      }
-    },
     "No orders yet." : {
       "localizations" : {
         "de" : {
@@ -5518,56 +5488,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ohne %@"
-          }
-        }
-      }
-    },
-    "%lld× without %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld× ohne %@"
-          }
-        }
-      }
-    },
-    "Fetch the guest orders below to see who ordered what." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lade unten die Gästebestellungen, dann siehst du hier, wer was bestellt hat."
-          }
-        }
-      }
-    },
-    "Show on top" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oben anzeigen"
-          }
-        }
-      }
-    },
-    "By pizza" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nach Pizza"
-          }
-        }
-      }
-    },
-    "By guest" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nach Gast"
           }
         }
       }
@@ -5618,16 +5538,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Groß"
-          }
-        }
-      }
-    },
-    "Reset baked" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gebacken zurücksetzen"
           }
         }
       }
@@ -5808,6 +5718,136 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Auf Standard zurücksetzen"
+          }
+        }
+      }
+    },
+    "Split view: guests on top, preparation below" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilte Ansicht: oben Gast, unten Zubereitung"
+          }
+        }
+      }
+    },
+    "For a foldable iPhone in laptop posture: the upper screen shows the guest with their pizza and ingredients, the lower one the order of preparation." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für ein faltbares iPhone in Laptop-Stellung: Oben stehen der Gast mit seiner Pizza und den Zutaten, unten die Reihenfolge der Zubereitung."
+          }
+        }
+      }
+    },
+    "Next: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danach: %@"
+          }
+        }
+      }
+    },
+    "All pizzas done! 🍕" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Pizzen fertig! 🍕"
+          }
+        }
+      }
+    },
+    "Pizza done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizza fertig"
+          }
+        }
+      }
+    },
+    "Done sorting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortieren beenden"
+          }
+        }
+      }
+    },
+    "Sort by guest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Gast sortieren"
+          }
+        }
+      }
+    },
+    "Sort by pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Pizza sortieren"
+          }
+        }
+      }
+    },
+    "Reset done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haken zurücksetzen"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        }
+      }
+    },
+    "Order of preparation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reihenfolge der Zubereitung"
+          }
+        }
+      }
+    },
+    "Tap a pizza to show it on top. Tap “Reorder” and drag to change the order." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf eine Pizza, um sie oben anzuzeigen. Mit „Sortieren“ kannst du die Reihenfolge per Ziehen ändern."
+          }
+        }
+      }
+    },
+    "Reorder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortieren"
           }
         }
       }

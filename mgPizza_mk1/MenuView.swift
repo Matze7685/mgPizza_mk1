@@ -75,9 +75,9 @@ struct MenuView: View {
 
             if mode == .orders {
                 Section {
-                    Button("Split view: orders on top", systemImage: "rectangle.split.1x2") { isShowingFoldView = true }
+                    Button("Split view: guests on top, preparation below", systemImage: "rectangle.split.1x2") { isShowingFoldView = true }
                 } footer: {
-                    Text("For a foldable iPhone in laptop posture: the orders fill the upper screen, the controls stay on the lower one.")
+                    Text("For a foldable iPhone in laptop posture: the upper screen shows the guest with their pizza and ingredients, the lower one the order of preparation.")
                 }
 
                 Section {

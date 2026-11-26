@@ -785,6 +785,7 @@ struct GuestLinkSheet: View {
         do {
             try await service.releaseOrder(id: eventID, guest: name)
             orders = try await service.fetchOrders(id: eventID)
+            PrepQueueStore.saveOrders(orders, event: eventID)   // für die geteilte Ansicht (Gästenamen)
             status = String(localized: "Order of \(name) released. The next device that saves it takes it over.")
         } catch { status = error.localizedDescription }
     }
@@ -831,6 +832,7 @@ struct GuestLinkSheet: View {
         isBusy = true; defer { isBusy = false }
         do {
             orders = try await service.fetchOrders(id: eventID)
+            PrepQueueStore.saveOrders(orders, event: eventID)   // für die geteilte Ansicht (Gästenamen)
             var evening = current
             evening.orderCount = orders.count
             GuestEvenings.upsert(evening)
