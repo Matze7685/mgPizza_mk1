@@ -166,8 +166,12 @@ struct ExtraAmount: Codable, Identifiable, Hashable {
 
 enum ExtraDefaults {
     private static let key = "extraDefaults_v1"
+    /// Später zur Standardliste dazugekommene Zutaten einmalig in gespeicherte Listen übernehmen
+    private static let addedKey = "extraDefaultsAdded_v2"
+    private static let addedLater = ["Tomatensauce"]
 
     static let builtIn: [ExtraAmount] = [
+        .init(name: "Tomatensauce", amount: 80),
         .init(name: "Ananas", amount: 50), .init(name: "Champignons", amount: 60), .init(name: "Pilze", amount: 60),
         .init(name: "Oliven", amount: 15), .init(name: "Mais", amount: 30), .init(name: "Paprika", amount: 40),
         .init(name: "Speck", amount: 40), .init(name: "Zwiebel", amount: 20), .init(name: "Rucola", amount: 15),
@@ -180,7 +184,15 @@ enum ExtraDefaults {
 
     static var all: [ExtraAmount] {
         guard let data = UserDefaults.standard.data(forKey: key),
-              let list = try? JSONDecoder().decode([ExtraAmount].self, from: data) else { return builtIn }
+              var list = try? JSONDecoder().decode([ExtraAmount].self, from: data) else { return builtIn }
+        if !UserDefaults.standard.bool(forKey: addedKey) {
+            let have = Set(list.map { normalized($0.name) })
+            for name in addedLater where !have.contains(normalized(name)) {
+                if let item = builtIn.first(where: { $0.name == name }) { list.insert(item, at: 0) }
+            }
+            save(list)
+            UserDefaults.standard.set(true, forKey: addedKey)
+        }
         return list
     }
 
@@ -188,13 +200,20 @@ enum ExtraDefaults {
         UserDefaults.standard.set(try? JSONEncoder().encode(list), forKey: key)
     }
 
-    /// Menge pro Pizza für einen frei eingetippten Namen; unbekannt -> 1 Stück
+    private static func normalized(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            .replacingOccurrences(of: "soße", with: "sauce").replacingOccurrences(of: "sosse", with: "sauce")
+    }
+
+    /// Menge pro Pizza für einen frei eingetippten Namen; unbekannt -> 1 Stück.
+    /// Genauer Name zuerst, sonst der längste passende Name („Tomatensauce“ vor „Tomaten“).
     static func amount(for name: String) -> (amount: Double, unit: String) {
-        let wanted = name.trimmingCharacters(in: .whitespaces).lowercased()
+        let wanted = normalized(name)
         guard !wanted.isEmpty else { return (1, "pcs") }
-        let list = all.filter { !$0.name.isEmpty }
-        let match = list.first { $0.name.lowercased() == wanted }
-            ?? list.first { wanted.contains($0.name.lowercased()) || $0.name.lowercased().contains(wanted) }
+        let list = all.filter { !normalized($0.name).isEmpty }
+        let match = list.first { normalized($0.name) == wanted }
+            ?? list.filter { wanted.contains(normalized($0.name)) || normalized($0.name).contains(wanted) }
+                .max { normalized($0.name).count < normalized($1.name).count }
         return match.map { ($0.amount, $0.unit) } ?? (1, "pcs")
     }
 }
@@ -206,18 +225,7 @@ struct ExtraDefaultsEditor: View {
         List {
             Section {
                 ForEach($items) { $item in
-                    HStack {
-                        TextField("Ingredient", text: $item.name)
-                        TextField("Amount", value: $item.amount, format: .number.precision(.fractionLength(0...2)))
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 60)
-                        Picker("Unit", selection: $item.unit) {
-                            ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
-                        }
-                        .labelsHidden()
-                        .fixedSize()
-                    }
+                    ExtraAmountRow(item: $item)
                 }
                 .onDelete { items.remove(atOffsets: $0) }
                 Button("Add ingredient", systemImage: "plus") { items.append(ExtraAmount(name: "", amount: 30)) }
@@ -229,6 +237,46 @@ struct ExtraDefaultsEditor: View {
         .navigationTitle("Extra amounts")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: items) { _, new in ExtraDefaults.save(new) }
+    }
+}
+
+/// Eine Zeile im Mengen-Editor. Die Menge wird schon beim Tippen übernommen
+/// (ein Zahlenfeld mit Format speichert erst nach „Return“, das es auf dem Ziffernblock nicht gibt).
+private struct ExtraAmountRow: View {
+    @Binding var item: ExtraAmount
+    @State private var text = ""
+
+    var body: some View {
+        HStack {
+            TextField("Ingredient", text: $item.name)
+            TextField("Amount", text: $text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 60)
+            Picker("Unit", selection: $item.unit) {
+                ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
+            }
+            .labelsHidden()
+            .fixedSize()
+        }
+        .onAppear { text = Self.format(item.amount) }
+        .onChange(of: text) { _, new in
+            if let value = Self.parse(new), value != item.amount { item.amount = value }
+        }
+        // z. B. nach „Standard wiederherstellen“
+        .onChange(of: item.amount) { _, new in
+            if Self.parse(text) != new { text = Self.format(new) }
+        }
+    }
+
+    private static func format(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0...2)).grouping(.never))
+    }
+
+    private static func parse(_ text: String) -> Double? {
+        let cleaned = text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
+        guard let value = Double(cleaned), value >= 0 else { return nil }
+        return value
     }
 }
 
