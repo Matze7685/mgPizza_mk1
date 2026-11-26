@@ -232,6 +232,13 @@ struct ExtraDefaultsEditor: View {
     }
 }
 
+/// Das Firebase-Projekt dieser App (gleiche Werte wie oben in docs/index.html, der Web-API-Key ist öffentlich).
+/// Muss nicht mehr eingetragen werden; nur wer ein eigenes Projekt nutzt, ändert die Felder im Gästelink-Fenster.
+enum GuestFirebaseDefaults {
+    static let project = "mgpizza-app"
+    static let apiKey = "AIzaSyCea9qvMqHYYgk8dAe5hGcDGMuobLgP6Tc"
+}
+
 struct GuestOrderService {
     var project: String
     var apiKey: String
@@ -408,8 +415,8 @@ struct GuestLinkSheet: View {
     var date: Date
     var pizzas: [MenuPizza]          // nur die auf der Karte
 
-    @AppStorage("fbProject") private var project = ""
-    @AppStorage("fbKey") private var apiKey = ""
+    @AppStorage("fbProject") private var project = GuestFirebaseDefaults.project
+    @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
     @AppStorage("guestPageURL") private var pageURL = ""
     @AppStorage("guestNames") private var guestNames = ""
     @AppStorage("menuEventID") private var eventID = ""
