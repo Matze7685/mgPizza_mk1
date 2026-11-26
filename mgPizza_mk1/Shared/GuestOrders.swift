@@ -275,6 +275,17 @@ struct GuestOrderService {
         try await write("PATCH", "events/\(id)", fields: ["data": string(json), "hostUid": string(uid)])
     }
 
+    /// Push-Token dieses iPhones für Pizza-Push hinterlegen (Mac mini liest es mit seinem Dienstkonto, Gäste nicht)
+    func savePushToken(_ token: String, sandbox: Bool) async throws {
+        let uid = try await GuestHostAuth.shared.session(apiKey: apiKey).uid
+        try await write("PATCH", "pushTokens/\(token)", fields: ["hostUid": string(uid), "sandbox": ["booleanValue": sandbox],
+                                                              "updated": ["timestampValue": ISO8601DateFormatter().string(from: Date())]])
+    }
+
+    func deletePushToken(_ token: String) async throws {
+        try await write("DELETE", "pushTokens/\(token)")
+    }
+
     func fetchOrders(id: String) async throws -> [GuestOrder] {
         let (data, response) = try await send(URLRequest(url: try url("events/\(id)/orders", query: "&pageSize=300")))
         try check(response)
@@ -406,6 +417,8 @@ struct GuestLinkSheet: View {
     @AppStorage("menuDate") private var menuDate: Double = Date().timeIntervalSince1970
     @AppStorage("guestIntro") private var intro = ""
     @AppStorage("guestOrdersClosed") private var ordersClosed = false
+    @AppStorage(GuestPush.enabledKey) private var pushEnabled = false
+    @AppStorage(GuestPush.statusKey) private var pushStatus = ""
     @State private var orders: [GuestOrder] = []
     @State private var status = ""
     @State private var isBusy = false
@@ -543,6 +556,16 @@ struct GuestLinkSheet: View {
                     Text("Orders")
                 } footer: {
                     Text("Importing replaces the order counts in the menu. A lock means the order belongs to the guest's device. Swipe to release it (e.g. new phone) or delete it.")
+                }
+
+                Section {
+                    Toggle("Push for guest orders", systemImage: "bell.badge", isOn: $pushEnabled)
+                        .onChange(of: pushEnabled) { _, on in Task { on ? await GuestPush.enable() : await GuestPush.disable() } }
+                    if pushEnabled && !pushStatus.isEmpty {
+                        Text(pushStatus).font(.caption).foregroundStyle(.secondary)
+                    }
+                } footer: {
+                    Text("A notification on this iPhone when a guest orders, changes or deletes an order. Needs Pizza-Push on the Mac mini (hosting/mac-mini/pizza-push).")
                 }
 
                 Section {

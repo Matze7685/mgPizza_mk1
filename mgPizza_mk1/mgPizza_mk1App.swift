@@ -16,7 +16,17 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         UNUserNotificationCenter.current().delegate = self
         DoughNotifications.refreshAuthorizationStatus()
         _ = OvenMonitor.shared   // Bluetooth sofort wiederherstellen, auch wenn iOS die App im Hintergrund startet
+        GuestPush.refreshIfEnabled()
         return true
+    }
+
+    // Push bei Gästebestellungen (GuestPush): Token von Apple an Firestore weitergeben
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        GuestPush.didRegister(deviceToken: deviceToken)
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        GuestPush.didFail(error)
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter,
