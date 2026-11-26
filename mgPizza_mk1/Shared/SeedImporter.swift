@@ -110,7 +110,7 @@ enum SeedImporter {
                                      coolTemp: d.coolTemp, coolTime: d.coolTime,
                                      dateSelection: date(d.meal),
                                      oilRatio: pct(d.oil), sugarRatio: pct(d.sugar),
-                                     kneadSteps: d.knead.map(haloCoreSteps) ?? glutenFreeSteps,
+                                     kneadSteps: d.knead.map { haloCoreSteps($0) } ?? glutenFreeSteps,
                                      name: "\(d.date) · \(Int(d.balls))× \(Int(d.ballWeight)) g" + (d.flourName.isEmpty ? "" : " · \(d.flourName)"))
         recipe.createdAt = date(d.date)
 

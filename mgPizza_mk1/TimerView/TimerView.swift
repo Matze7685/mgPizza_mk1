@@ -67,49 +67,14 @@ struct TimerView: View {
                 didReceive response: UNNotificationResponse,
                 withCompletionHandler completionHandler:
                    @escaping () -> Void) {
-       // Get the meeting ID from the original notification.
-       let userInfo = response.notification.request.content.userInfo
-            
-       if response.notification.request.content.categoryIdentifier ==
-                  "MEETING_INVITATION" {
-          // Retrieve the meeting details.
-          let meetingID = userInfo["MEETING_ID"] as! String
-          let userID = userInfo["USER_ID"] as! String
-                
-          switch response.actionIdentifier {
-          case "ACCEPT_ACTION":
-//             sharedMeetingManager.acceptMeeting(user: userID,
-//                   meetingID: meetingID)
-             break
-                    
-          case "DECLINE_ACTION":
-//             sharedMeetingManager.declineMeeting(user: userID,
-//                   meetingID: meetingID)
-             break
-                    
-          case UNNotificationDefaultActionIdentifier,
-               UNNotificationDismissActionIdentifier:
-             // Queue meeting-related notifications for later
-             //  if the user does not act.
-//             sharedMeetingManager.queueMeetingForDelivery(user: userID,
-//                   meetingID: meetingID)
-             break
-                    
-          default:
-             break
-          }
-       }
-       else {
-          // Handle other notification types...
-       }
-            
+       // Aktuell keine eigenen Notification-Aktionen – nur abschließen.
        // Always call the completion handler when done.
        completionHandler()
     }
 }
 
 #Preview {
-    var dateEnd: Date = Date(timeIntervalSince1970: TimeInterval(1786515330))
+    let dateEnd: Date = Date(timeIntervalSince1970: TimeInterval(1786515330))
     TimerView(dateEnd: dateEnd)
         .environmentObject(TimerLogic())
 }
