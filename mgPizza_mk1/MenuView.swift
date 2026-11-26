@@ -1381,32 +1381,33 @@ struct NewPizzaSheet: View {
                 result[index].amount = common
             }
         }
-        // Pizza-Reibekäse gehört auf jede Pizza: immer anbieten und vorauswählen
-        let cheese = MenuPizza.gratedCheese
-        let cheeseKey = Self.key(cheese.name, cheese.unit)
-        if let index = result.firstIndex(where: { $0.key == cheeseKey }) {
+        // Reibekäse gehört auf jede Pizza: vorhandenen Eintrag (egal wie er heißt) vorauswählen, nur wenn keiner da ist neu anbieten
+        if let index = result.firstIndex(where: { MenuPizza.isGratedCheese($0.name) }) {
             result[index].selected = true
         } else {
-            result.append(Choice(key: cheeseKey, name: cheese.name, unit: cheese.unit, amount: cheese.amount, selected: true))
+            let cheese = MenuPizza.gratedCheese
+            result.append(Choice(key: Self.key(cheese.name, cheese.unit), name: cheese.name, unit: cheese.unit,
+                                 amount: cheese.amount, selected: true))
         }
-        choices = result
+        choices = result.sorted { Self.displayName($0.name).localizedStandardCompare(Self.displayName($1.name)) == .orderedAscending }
     }
 
-    /// Belag der Vorlage übernehmen: genau diese Zutaten mit ihren Mengen, in ihrer Reihenfolge oben
+    /// Angezeigter Name (Belag-Namen sind teils englische Schlüssel, z. B. „Cooked ham“ → „Schinken“)
+    private static func displayName(_ name: String) -> String {
+        Bundle.main.localizedString(forKey: name, value: nil, table: nil)
+    }
+
+    /// Belag der Vorlage übernehmen: genau diese Zutaten mit ihren Mengen anhaken (Liste bleibt alphabetisch)
     private func apply(template id: PersistentIdentifier?) {
         guard let pizza = pizzas.first(where: { $0.persistentModelID == id }) else { return }
         for index in choices.indices { choices[index].selected = false }
-        var front: [Choice] = []
         for topping in pizza.toppings where !topping.name.trimmingCharacters(in: .whitespaces).isEmpty {
             let key = Self.key(topping.name, topping.unit)
             if let index = choices.firstIndex(where: { $0.key == key }) {
-                var choice = choices.remove(at: index)
-                choice.amount = topping.amount
-                choice.selected = true
-                front.append(choice)
+                choices[index].amount = topping.amount
+                choices[index].selected = true
             }
         }
-        choices = front + choices
     }
 
     private var selectedCount: Int { choices.filter(\.selected).count }
