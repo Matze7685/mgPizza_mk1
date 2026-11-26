@@ -92,10 +92,7 @@ struct SauceDetailView: View {
                 ForEach($sauce.ingredients) { $ingredient in
                     HStack {
                         TextField("Ingredient", text: $ingredient.name)
-                        TextField("Amount", value: amountBinding($ingredient), format: .number.precision(.fractionLength(0...2)))
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 70)
+                        AmountField(value: amountBinding($ingredient), width: 70)
                         Picker("Unit", selection: $ingredient.unit) {
                             ForEach(SauceUnit.allCases) { unit in
                                 Text(LocalizedStringKey(unit.rawValue)).tag(unit)

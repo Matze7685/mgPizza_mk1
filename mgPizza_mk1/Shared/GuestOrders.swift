@@ -240,33 +240,45 @@ struct ExtraDefaultsEditor: View {
     }
 }
 
-/// Eine Zeile im Mengen-Editor. Die Menge wird schon beim Tippen übernommen
-/// (ein Zahlenfeld mit Format speichert erst nach „Return“, das es auf dem Ziffernblock nicht gibt).
+/// Eine Zeile im Mengen-Editor.
 private struct ExtraAmountRow: View {
     @Binding var item: ExtraAmount
-    @State private var text = ""
 
     var body: some View {
         HStack {
             TextField("Ingredient", text: $item.name)
-            TextField("Amount", text: $text)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(width: 60)
+            AmountField(value: $item.amount)
             Picker("Unit", selection: $item.unit) {
                 ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
             }
             .labelsHidden()
             .fixedSize()
         }
-        .onAppear { text = Self.format(item.amount) }
-        .onChange(of: text) { _, new in
-            if let value = Self.parse(new), value != item.amount { item.amount = value }
-        }
-        // z. B. nach „Standard wiederherstellen“
-        .onChange(of: item.amount) { _, new in
-            if Self.parse(text) != new { text = Self.format(new) }
-        }
+    }
+}
+
+/// Mengenfeld, das die Zahl schon beim Tippen übernimmt. Ein Zahlenfeld mit Format
+/// (`TextField(value:format:)`) speichert erst nach „Return“, den es auf dem Ziffernblock nicht gibt,
+/// deshalb gingen eingetippte Mengen verloren. Komma und Punkt gehen beide.
+struct AmountField: View {
+    @Binding var value: Double
+    var width: CGFloat = 60
+    @State private var text = ""
+
+    var body: some View {
+        TextField("Amount", text: $text)
+            .keyboardType(.decimalPad)
+            .multilineTextAlignment(.trailing)
+            .frame(width: width)
+            .onAppear { text = Self.format(value) }
+            .onChange(of: text) { _, new in
+                if let parsed = Self.parse(new), parsed != value { value = parsed }
+            }
+            // Wert von außen geändert (z. B. „Standard wiederherstellen“, andere Pizza-Anzahl)
+            .onChange(of: value) { _, new in
+                if let parsed = Self.parse(text), abs(parsed - new) < 0.005 { return }
+                text = Self.format(new)
+            }
     }
 
     private static func format(_ value: Double) -> String {
