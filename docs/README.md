@@ -10,6 +10,12 @@
    service cloud.firestore {
      match /databases/{db}/documents {
        function signedIn() { return request.auth != null; }
+       // Ein Gast pro Gerät: das Gerät ist unter events/<abend>/devices/<uid> an genau einen Namen gebunden
+       function boundTo(e, o) { return signedIn() && get(/databases/$(db)/documents/events/$(e)/devices/$(request.auth.uid)).data.guest == o; }
+       function ownsOrder(e, o) {
+         let p = /databases/$(db)/documents/events/$(e)/orders/$(o);
+         return exists(p) && get(p).data.get('owner', '') == request.auth.uid;
+       }
        function isHost(e) { return signedIn() && request.auth.uid == get(/databases/$(db)/documents/events/$(e)).data.get('hostUid', ''); }
 
        match /events/{event} {
@@ -25,13 +31,22 @@
            allow get: if resource == null || resource.data.get('owner', '') == ''
              || (signedIn() && resource.data.owner == request.auth.uid) || isHost(event);
            allow list: if (signedIn() && resource.data.get('owner', '') == request.auth.uid) || isHost(event);
-           allow create: if signedIn() && (request.resource.data.owner == request.auth.uid || isHost(event));
+           allow create: if signedIn() && ((request.resource.data.owner == request.auth.uid && boundTo(event, order)) || isHost(event));
            allow update: if signedIn() && (
-               (resource.data.get('owner', '') == '' && request.resource.data.owner == request.auth.uid)
-               || (resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid)
+               (resource.data.get('owner', '') == '' && request.resource.data.owner == request.auth.uid && boundTo(event, order))
+               || (resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid && boundTo(event, order))
                || isHost(event));
            allow delete: if resource == null
              || (signedIn() && resource.data.get('owner', '') == request.auth.uid) || isHost(event);
+         }
+
+         // Welcher Name gehört zu welchem Gerät. Wechseln/Aufheben nur, wenn unter dem alten Namen keine eigene Bestellung mehr liegt.
+         match /devices/{uid} {
+           allow get: if (signedIn() && request.auth.uid == uid) || isHost(event);
+           allow create: if signedIn() && request.auth.uid == uid;
+           allow update, delete: if resource == null
+             || (signedIn() && request.auth.uid == uid && !ownsOrder(event, resource.data.guest))
+             || isHost(event);
          }
        }
 
@@ -52,6 +67,8 @@
    }
    ```
    **So funktioniert der Schutz:** Die Gästeseite meldet jedes Gerät anonym an. An jeder Bestellung steht die Kennung (`owner`) des Geräts.
+   **Pro Handy nur ein Gast:** Beim ersten Abschicken wird das Handy an den gewählten Namen gebunden, andere Namen sind dann gesperrt.
+   Wer sich vertan hat, tippt auf „Auswahl aufheben“ (löscht die eigene Bestellung) und wählt neu.
    Nur dieses Gerät kann sie lesen, ändern oder löschen; **fremde Bestellungen sind auf der Gästeseite unsichtbar und serverseitig nicht abrufbar.**
    Der Gastgeber (Kennung als `hostUid` am Abend, wird beim Veröffentlichen in der App gesetzt) sieht und verwaltet alle Bestellungen.
    Handy gewechselt oder Browserdaten gelöscht? In der App unter *Guest link* die Bestellung nach links wischen → *Für neues Gerät freigeben*.

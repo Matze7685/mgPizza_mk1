@@ -101,6 +101,30 @@ async function api(url, opts = {}) {
   await login();
   return fetch(url, {...opts, headers: {...(opts.headers || {}), Authorization: `Bearer ${idToken}`}});
 }
+// Ein Gast pro Gerät: events/<abend>/devices/<uid> merkt sich den gewählten Namen (serverseitig durch die Regeln erzwungen)
+let myGuest = "";
+const deviceURL = () => `${base}/events/${encodeURIComponent(eventId)}/devices/${myUid}?key=${API_KEY}`;
+async function loadDevice() {
+  try { const r = await api(deviceURL()); myGuest = r.ok ? (((await r.json()).fields || {}).guest || {}).stringValue || "" : ""; } catch (e) { myGuest = ""; }
+}
+async function bindDevice(name) {
+  if (myGuest === slug(name)) return true;
+  const r = await api(deviceURL(), {method: "PATCH", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({fields: {guest: {stringValue: slug(name)}}})});
+  if (r.ok) myGuest = slug(name);
+  return r.ok;
+}
+const myName = () => event.guests.find(g => slug(g) === myGuest) || myGuest;
+// Falsch gewählt: eigene Bestellung (falls vorhanden) löschen und das Gerät wieder freigeben
+async function unbind() {
+  const n = myName();
+  if (!await ask(`Du bist nicht ${n}?`, `Deine Auswahl „${n}“ wird aufgehoben und eine schon abgeschickte Bestellung von ${n} gelöscht. Danach kannst du deinen richtigen Namen wählen.`, "Auswahl aufheben")) return;
+  const o = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${myGuest}?key=${API_KEY}`, {method: "DELETE"});
+  if (o.ok) { const g = guest; guest = n; ping("delete"); guest = g; }
+  const r = await api(deviceURL(), {method: "DELETE"});
+  if (r.ok) myGuest = "";
+  showNames();
+}
 let event, guest = "", extras = [], extraSel = [], customExtra = "", counts = [], without = [], customCount = 0, customToppings = new Set(), pool = [], note = "", hadOrder = false;
 
 async function load() {
@@ -123,6 +147,7 @@ async function load() {
     const names = new Set();
     p.extraOptions = pool.filter(t => !own.has(t.name.toLowerCase()) && !names.has(t.name.toLowerCase()) && names.add(t.name.toLowerCase())).map(t => t.name);
   });
+  await loadDevice();
   showNames();
 }
 
@@ -182,8 +207,11 @@ async function showNames(taken) {
       + `<label>${event.closed ? "Deine Bestellung" : "Wer bist du?"}</label><div class="guests">${event.guests.map((g, i) => {
       const o = orders && orders[slug(g)];
       const sub = o ? `<span class="ordered">✔ bestellt:${orderHTML(o)}</span>` : "";   // nur eigene Bestellungen
-      return `<button class="guestbtn" data-g="${i}" ${event.closed ? "disabled" : ""}>${esc(g)}${sub}</button>`;
-    }).join("")}</div>`;
+      const other = myGuest && slug(g) !== myGuest;   // dieses Gerät gehört schon einem anderen Namen
+      return `<button class="guestbtn" data-g="${i}" ${event.closed || other ? "disabled" : ""}>${esc(g)}${sub}</button>`;
+    }).join("")}</div>`
+      + (myGuest && !event.closed ? `<div class="hello"><div>Dieses Handy gehört zu <b>${esc(myName())}</b>.</div><a id="unbind">Nicht ${esc(myName())}? Auswahl aufheben</a></div>` : "");
+    const ub = document.getElementById("unbind"); if (ub) ub.onclick = unbind;
     // Geschlossener Abend: Bestellungen nur anzeigen, nicht mehr ändern
     if (!event.closed) app.querySelectorAll(".guestbtn").forEach(b => b.onclick = () => pick(event.guests[+b.dataset.g]));
   };
@@ -193,6 +221,7 @@ async function showNames(taken) {
 
 // Schritt 2: Pizzen wählen (eine frühere Bestellung wird geladen und angezeigt)
 async function pick(name) {
+  if (myGuest && slug(name) !== myGuest) { showNames(); return; }   // nur ein Gast pro Gerät
   guest = name;
   counts = event.pizzas.map(() => 0);
   without = event.pizzas.map(() => new Set());
@@ -262,7 +291,7 @@ function ping(action) {
 async function deleteOrder() {
   if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, "Ja, Bestellung löschen")) return;
   const r = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
-  if (r.ok) { ping("delete"); showNames(); } else document.getElementById("msg").textContent = r.status === 403
+  if (r.ok) { ping("delete"); await api(deviceURL(), {method: "DELETE"}).then(x => { if (x.ok) myGuest = ""; }).catch(() => {}); showNames(); } else document.getElementById("msg").textContent = r.status === 403
     ? "Das ist die Bestellung eines anderen Geräts – nur der Gastgeber kann sie löschen."
     : "Löschen hat nicht geklappt – bitte nochmal versuchen.";
 }
@@ -332,6 +361,7 @@ async function send() {
   }
   if (!lines.length) { msg.textContent = "Bitte mindestens eine Pizza wählen."; return; }
   const order = {guest, lines, note: note.trim()};
+  if (!await bindDevice(guest)) { msg.textContent = `Dieses Handy ist schon für ${myName() || "einen anderen Gast"} eingetragen. Pro Handy kann nur ein Gast bestellen.`; return; }
   // Bestellung gehört diesem Gerät (neu oder frei/alt: wird jetzt übernommen)
   const r = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {
     method: "PATCH", headers: {"Content-Type": "application/json"},
