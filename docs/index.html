@@ -151,6 +151,8 @@ async function load() {
     const own = new Set(p.toppings.map(t => t.name.toLowerCase()));
     const names = new Set();
     p.extraOptions = pool.filter(t => !own.has(t.name.toLowerCase()) && !names.has(t.name.toLowerCase()) && names.add(t.name.toLowerCase())).map(t => t.name);
+    // Immer angebotene Extras (z. B. Parmesan), auch wenn sie auf keiner Pizza der Karte sind
+    (event.extras || []).forEach(n => { const k = n.toLowerCase(); if (!own.has(k) && !names.has(k)) { names.add(k); p.extraOptions.push(n); } });
   });
   await loadDevice();
   showNames();

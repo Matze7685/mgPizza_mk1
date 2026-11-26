@@ -6282,6 +6282,56 @@
         }
       }
     },
+    "Template" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorlage"
+          }
+        }
+      }
+    },
+    "With a template, its toppings and amounts are ticked. You can change everything." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Vorlage sind deren Zutaten und Mengen schon angehakt. Du kannst alles ändern."
+          }
+        }
+      }
+    },
+    "Other topping" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere Zutat"
+          }
+        }
+      }
+    },
+    "All toppings of your pizzas. Tick what goes on this pizza and adjust the amount." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Zutaten deiner Pizzen. Hake an, was auf diese Pizza kommt, und passe die Menge an."
+          }
+        }
+      }
+    },
+    "Pizza cheese (grated)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizza-Reibekäse"
+          }
+        }
+      }
+    },
     "Reopen event" : {
       "localizations" : {
         "de" : {

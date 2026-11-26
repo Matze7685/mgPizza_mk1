@@ -27,6 +27,7 @@ struct GuestEvent: Codable {
     var pizzas: [PizzaDTO]
     var intro: String?            // Begrüßungstext / Anlass auf der Gästeseite
     var closed: Bool?             // true: Gäste sehen die Karte, können aber nicht mehr bestellen
+    var extras: [String]?         // immer angebotene Zusatzzutaten (z. B. Parmesan), auch wenn keine Pizza sie hat
 }
 
 /// Ein Abend/Anlass mit eigenem Gästelink. Die Liste liegt nur lokal in der App (Übersicht für den Gastgeber);
