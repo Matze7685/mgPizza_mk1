@@ -34,6 +34,11 @@
   .guestbtn .ordered{color:var(--green)}
   .guestbtn .open{color:#7a6a55;font-style:italic}
   .hello{margin:16px 16px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .me{margin:16px;padding:14px;background:#fff;border:1px solid #e0d2b4;border-top:6px solid var(--green);border-radius:8px;box-shadow:2px 3px 0 #e8dcc2}
+  .me .mehead{display:flex;flex-direction:column;margin-bottom:6px}.me .mehead span{color:#7a6a55;font-style:italic;font-size:.9em}
+  .me .mehead b{font-size:1.4em;color:var(--red)}
+  .me small{display:block;color:#7a6a55;margin-top:10px}
+  .me .logout{margin-top:12px;background:transparent;border:1px solid var(--red);color:var(--red);cursor:pointer}
   .hello a{color:var(--green);text-decoration:underline;cursor:pointer;font-size:.95em}
   .sum{margin:12px 16px 0;padding:12px 14px;background:#fff;border:1px dashed var(--green);border-radius:6px}
   .sum b{color:var(--red)}
@@ -118,7 +123,7 @@ const myName = () => event.guests.find(g => slug(g) === myGuest) || myGuest;
 // Falsch gewählt: eigene Bestellung (falls vorhanden) löschen und das Gerät wieder freigeben
 async function unbind() {
   const n = myName();
-  if (!await ask(`Du bist nicht ${n}?`, `Deine Auswahl „${n}“ wird aufgehoben und eine schon abgeschickte Bestellung von ${n} gelöscht. Danach kannst du deinen richtigen Namen wählen.`, "Auswahl aufheben")) return;
+  if (!await ask(`Abmelden – du bist nicht ${n}?`, `Deine Auswahl „${n}“ wird aufgehoben und eine schon abgeschickte Bestellung von ${n} gelöscht. Danach kannst du deinen richtigen Namen wählen.`, "Abmelden")) return;
   const o = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${myGuest}?key=${API_KEY}`, {method: "DELETE"});
   if (o.ok) { const g = guest; guest = n; ping("delete"); guest = g; }
   const r = await api(deviceURL(), {method: "DELETE"});
@@ -203,14 +208,25 @@ async function fetchOrders() {
 async function showNames(taken) {
   if (!event.guests.length) { app.innerHTML = header() + "<p style='margin:16px'>Der Gastgeber hat noch keine Gäste eingetragen.</p>"; return; }
   const draw = orders => {
-    app.innerHTML = header() + (taken ? `<div class="closed">Die Bestellung von ${esc(taken)} gehört zu einem anderen Gerät und ist nicht sichtbar. Anderes Handy oder Browserdaten gelöscht? Der Gastgeber kann sie für dich freigeben.</div>` : "")
-      + `<label>${event.closed ? "Deine Bestellung" : "Wer bist du?"}</label><div class="guests">${event.guests.map((g, i) => {
+    const banner = taken ? `<div class="closed">Die Bestellung von ${esc(taken)} gehört zu einem anderen Gerät und ist nicht sichtbar. Anderes Handy oder Browserdaten gelöscht? Der Gastgeber kann sie für dich freigeben.</div>` : "";
+    const btn = (g, i) => {
       const o = orders && orders[slug(g)];
       const sub = o ? `<span class="ordered">✔ bestellt:${orderHTML(o)}</span>` : "";   // nur eigene Bestellungen
-      const other = myGuest && slug(g) !== myGuest;   // dieses Gerät gehört schon einem anderen Namen
-      return `<button class="guestbtn" data-g="${i}" ${event.closed || other ? "disabled" : ""}>${esc(g)}${sub}</button>`;
-    }).join("")}</div>`
-      + (myGuest && !event.closed ? `<div class="hello"><div>Dieses Handy gehört zu <b>${esc(myName())}</b>.</div><a id="unbind">Nicht ${esc(myName())}? Auswahl aufheben</a></div>` : "");
+      return `<button class="guestbtn" data-g="${i}" ${event.closed ? "disabled" : ""}>${esc(g)}${sub}</button>`;
+    };
+    if (myGuest) {
+      // Angemeldet: nur der eigene Name, wie nach einem Login
+      const i = event.guests.findIndex(g => slug(g) === myGuest);
+      app.innerHTML = header() + banner + `<div class="me">
+        <div class="mehead"><span>Angemeldet als</span><b>${esc(myName())}</b></div>
+        ${i >= 0 ? `<div class="guests" style="margin:0">${btn(event.guests[i], i)}</div>` : ""}
+        <small>Dieses Handy gehört zu ${esc(myName())}. ${event.closed ? "" : "Tippe auf deinen Namen, um deine Bestellung zu ändern."}</small>
+        ${event.closed ? "" : `<button class="logout" id="unbind">Nicht ${esc(myName())}? Abmelden</button>`}
+      </div>`;
+    } else {
+      app.innerHTML = header() + banner
+        + `<label>${event.closed ? "Bestellungen" : "Wer bist du?"}</label><div class="guests">${event.guests.map(btn).join("")}</div>`;
+    }
     const ub = document.getElementById("unbind"); if (ub) ub.onclick = unbind;
     // Geschlossener Abend: Bestellungen nur anzeigen, nicht mehr ändern
     if (!event.closed) app.querySelectorAll(".guestbtn").forEach(b => b.onclick = () => pick(event.guests[+b.dataset.g]));

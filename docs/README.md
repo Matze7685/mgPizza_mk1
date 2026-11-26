@@ -68,7 +68,7 @@
    ```
    **So funktioniert der Schutz:** Die Gästeseite meldet jedes Gerät anonym an. An jeder Bestellung steht die Kennung (`owner`) des Geräts.
    **Pro Handy nur ein Gast:** Beim ersten Abschicken wird das Handy an den gewählten Namen gebunden, andere Namen sind dann gesperrt.
-   Wer sich vertan hat, tippt auf „Auswahl aufheben“ (löscht die eigene Bestellung) und wählt neu.
+   Wer sich vertan hat, tippt auf „Abmelden“ (löscht die eigene Bestellung) und wählt neu.
    Nur dieses Gerät kann sie lesen, ändern oder löschen; **fremde Bestellungen sind auf der Gästeseite unsichtbar und serverseitig nicht abrufbar.**
    Der Gastgeber (Kennung als `hostUid` am Abend, wird beim Veröffentlichen in der App gesetzt) sieht und verwaltet alle Bestellungen.
    Handy gewechselt oder Browserdaten gelöscht? In der App unter *Guest link* die Bestellung nach links wischen → *Für neues Gerät freigeben*.
