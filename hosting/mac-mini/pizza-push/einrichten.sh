@@ -61,7 +61,7 @@ say "2/4  Programm kopieren …"
 cp "$SCRIPT_DIR/pizza_push.py" "$DIR/pizza_push.py"
 
 say "3/4  Test-Nachricht schicken …"
-echo "  (Vorher in der App unter Menü → Guest link „Push for guest orders“ einschalten.)"
+echo "  (Vorher in der App: Anlass → Pizzen & Mengen → Gästeseite → „Push bei Gästebestellungen“ einschalten.)"
 "$PYTHON" "$DIR/pizza_push.py" --test || fail "Test fehlgeschlagen, siehe Meldung oben."
 
 say "4/4  Im Hintergrund starten …"

@@ -50,7 +50,7 @@ Bei GitHub Pages reicht das Zusammenführen auf GitHub.
 
 ### 5. App: Push einschalten
 
-App neu aus Xcode aufs iPhone spielen → Menü → **Guest link** → **Push bei Gästebestellungen** einschalten → Mitteilungen erlauben.
+App neu aus Xcode aufs iPhone spielen → Tab **Anlass** → ganz unten **Pizzen & Mengen** → Abschnitt **Gästeseite** → **Push bei Gästebestellungen** einschalten → Mitteilungen erlauben.
 Darunter steht danach „Aktiv …“. Steht dort ein Fehler, sind meist Projekt-ID/API-Key leer oder die Regeln noch alt.
 
 Push kommt nur für Abende, die von **diesem** iPhone veröffentlicht wurden. Einen älteren Abend einmal mit *Publish menu* neu veröffentlichen.
