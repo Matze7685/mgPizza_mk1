@@ -6282,16 +6282,6 @@
         }
       }
     },
-    "Parmesan (grated)" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Parmesan (gerieben)"
-          }
-        }
-      }
-    },
     "Template" : {
       "localizations" : {
         "de" : {
@@ -6328,6 +6318,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle Zutaten deiner Pizzen. Hake an, was auf diese Pizza kommt, und passe die Menge an."
+          }
+        }
+      }
+    },
+    "Pizza cheese (grated)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizza-Reibekäse"
           }
         }
       }

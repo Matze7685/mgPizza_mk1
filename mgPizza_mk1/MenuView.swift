@@ -601,7 +601,7 @@ struct EventDetailView: View {
         let event = GuestEvent(title: title, date: date, guests: guests, pizzas: eventPizzas.map { pizza in
             .init(name: pizza.name, info: pizza.info,
                   toppings: pizza.toppings.map { .init(name: $0.name, amount: $0.amount, unit: $0.unit) })
-        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil)
+        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil, extras: MenuPizza.alwaysOfferedExtras)
         let first = !isPublished
         do {
             try await service.publish(event, id: eventID)
@@ -1132,7 +1132,7 @@ struct NewPizzaSheet: View {
                 result[index].amount = common
             }
         }
-        // Reibekäse gehört auf jede Pizza: immer anbieten und vorauswählen
+        // Pizza-Reibekäse gehört auf jede Pizza: immer anbieten und vorauswählen
         let cheese = MenuPizza.gratedCheese
         let cheeseKey = Self.key(cheese.name, cheese.unit)
         if let index = result.firstIndex(where: { $0.key == cheeseKey }) {

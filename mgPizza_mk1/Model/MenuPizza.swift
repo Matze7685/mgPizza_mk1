@@ -56,18 +56,21 @@ class MenuPizza {
 
 // MARK: - Reibekäse
 extension MenuPizza {
-    /// Geriebener Hartkäse (Parmesan/Grana) zum Bestreuen: ca. 10 g pro Pizza
-    static var gratedCheese: Topping { Topping(name: String(localized: "Parmesan (grated)"), amount: 10) }
+    /// Pizza-Reibekäse (geriebene Mischung, z. B. Gouda/Emmentaler) zusätzlich zum Mozzarella: ca. 30 g pro Pizza
+    static var gratedCheese: Topping { Topping(name: String(localized: "Pizza cheese (grated)"), amount: 30) }
 
-    /// Hat die Pizza schon Reibekäse (Parmesan, Grana, Pecorino …)?
+    /// Parmesan ist keine Standardzutat mehr, sondern wird Gästen immer als Extra angeboten
+    static let alwaysOfferedExtras = ["Parmesan"]
+
+    /// Hat die Pizza schon Pizza-Reibekäse?
     var hasGratedCheese: Bool {
         toppings.contains { topping in
             let name = Bundle.main.localizedString(forKey: topping.name, value: nil, table: nil).lowercased()
-            return ["parmesan", "parmigiano", "grana", "pecorino", "reibekäse", "grated cheese"].contains { name.contains($0) }
+            return ["reibekäse", "pizza cheese"].contains { name.contains($0) }
         }
     }
 
-    /// Einmalig: jeder gespeicherten Pizza Reibekäse geben (außer Pizzen ohne Käse wie Marinara und Gäste-Pizzen)
+    /// Einmalig: jeder gespeicherten Pizza Pizza-Reibekäse geben (außer Marinara, die ohne Käse ist, und Gäste-Pizzen)
     static func addGratedCheeseIfNeeded(into context: ModelContext) {
         let key = "addGratedCheese_v1"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
