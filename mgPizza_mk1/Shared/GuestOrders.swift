@@ -586,14 +586,18 @@ struct GuestLinkSheet: View {
                 }
 
                 Section {
-                    TextField("Firebase project ID", text: $project).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("Firebase API key", text: $apiKey).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("Guest page address (https://…)", text: $pageURL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .keyboardType(.URL)
-                } header: {
-                    Text("Setup (once)")
-                } footer: {
-                    Text("Steps: see docs/README.md in the repository.")
+                    // Alles vorbelegt: normalerweise nichts zu tun. Nur für ein eigenes Firebase-Projekt oder eine andere Adresse.
+                    DisclosureGroup("Advanced (already set up)") {
+                        TextField("Firebase project ID", text: $project).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        TextField("Firebase API key", text: $apiKey).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        TextField("Guest page address (https://…)", text: $pageURL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                            .keyboardType(.URL)
+                        Button("Reset to defaults", systemImage: "arrow.uturn.backward") {
+                            project = GuestFirebaseDefaults.project
+                            apiKey = GuestFirebaseDefaults.apiKey
+                            pageURL = GuestFirebaseDefaults.pageURL
+                        }
+                    }
                 }
 
                 if !status.isEmpty {
@@ -633,6 +637,10 @@ struct GuestLinkSheet: View {
                 }
             }
             .onAppear {
+                // Früher leer gespeicherte Felder mit den festen Werten füllen
+                if project.trimmingCharacters(in: .whitespaces).isEmpty { project = GuestFirebaseDefaults.project }
+                if apiKey.trimmingCharacters(in: .whitespaces).isEmpty { apiKey = GuestFirebaseDefaults.apiKey }
+                if pageURL.trimmingCharacters(in: .whitespaces).isEmpty { pageURL = GuestFirebaseDefaults.pageURL }
                 if eventID.isEmpty { eventID = Self.newID() }
                 // Erster Start mit Übersicht: den bisher genutzten Abend übernehmen
                 if !GuestEvenings.exists {
