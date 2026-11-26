@@ -17,6 +17,7 @@ struct EventsView: View {
     @AppStorage("guestOrdersClosed") private var ordersClosed = false
     @AppStorage("menuHiddenPizzas") private var hiddenText = ""
     @AppStorage("menuEventDone") private var isDone = false
+    @AppStorage("menuFixedMode") private var isFixed = false
     @State private var evenings: [GuestEvening] = []
     @State private var showingNew = false
     @State private var created: GuestEvening?
@@ -58,8 +59,9 @@ struct EventsView: View {
             // Nach dem Anlegen direkt in den neuen Anlass
             if let created { openEvening = created; self.created = nil }
         }) {
-            NewEventSheet { title, date, text in
-                let evening = GuestEvening(id: GuestEvenings.newID(), title: title, date: date, intro: text)
+            NewEventSheet { title, date, text, fixed in
+                var evening = GuestEvening(id: GuestEvenings.newID(), title: title, date: date, intro: text)
+                if fixed { evening.fixedCounts = [:] }
                 GuestEvenings.upsert(evening)
                 created = evening
                 reload()
@@ -118,6 +120,10 @@ struct EventsView: View {
     }
 
     private func details(_ evening: GuestEvening) -> String {
+        if let counts = evening.fixedCounts {
+            let total = counts.values.reduce(0, +)
+            return String(localized: "\(total) pizzas · fixed quantities")
+        }
         var parts = [String(localized: "\(evening.guests.count) guests")]
         if let count = evening.orderCount { parts.append(String(localized: "\(count) orders")) }
         if evening.publishedAt == nil {
@@ -153,6 +159,7 @@ struct EventsView: View {
             ordersClosed = false
             hiddenText = ""
             isDone = false
+            isFixed = false
         }
         reload()
     }
@@ -185,6 +192,7 @@ struct EventDetailView: View {
     @AppStorage("guestOrdersClosed") private var ordersClosed = false
     @AppStorage("menuHiddenPizzas") private var hiddenText = ""
     @AppStorage("menuEventDone") private var isDone = false
+    @AppStorage("menuFixedMode") private var isFixed = false
     @State private var orders: [GuestOrder] = []
     @State private var publishedAt: Date?
     @State private var status = ""
@@ -217,8 +225,12 @@ struct EventDetailView: View {
     private var available: [MenuPizza] { pizzas.filter { $0.isOnMenu && !$0.isGuestCustom } }
     /// Die Karte dieses Anlasses
     private var eventPizzas: [MenuPizza] { available.filter { !hidden.contains($0.name) } }
-    /// Für Bestellungen: Karte + eigene Pizzen der Gäste
-    private var orderPizzas: [MenuPizza] { eventPizzas + pizzas.filter(\.isGuestCustom) }
+    /// Für Bestellungen: Karte + eigene Pizzen der Gäste; bei festen Mengen alle auswählbaren Pizzen
+    private var orderPizzas: [MenuPizza] { isFixed ? available : eventPizzas + pizzas.filter(\.isGuestCustom) }
+    /// Feste Mengen dieses Anlasses (Pizza-Name -> Anzahl), nur Pizzen mit Anzahl > 0
+    private var fixedCounts: [String: Int] {
+        Dictionary(available.filter { $0.orderCount > 0 }.map { ($0.name, $0.orderCount) }, uniquingKeysWith: +)
+    }
     private var totalOrders: Int { orderPizzas.reduce(0) { $0 + $1.orderCount } }
     private var roundCount: Int { orderPizzas.filter { !$0.isDetroit }.reduce(0) { $0 + $1.orderCount } }
     private var detroitCount: Int { orderPizzas.filter(\.isDetroit).reduce(0) { $0 + $1.orderCount } }
@@ -227,16 +239,22 @@ struct EventDetailView: View {
     /// Der Anlass, wie er in der Übersicht gespeichert wird
     private var current: GuestEvening {
         GuestEvening(id: eventID, title: title, date: date, intro: intro, guests: guests, closed: ordersClosed,
-                     hiddenPizzas: hidden.isEmpty ? nil : Array(hidden).sorted(), done: isDone ? true : nil)
+                     hiddenPizzas: hidden.isEmpty ? nil : Array(hidden).sorted(), done: isDone ? true : nil,
+                     fixedCounts: isFixed ? fixedCounts : nil)
     }
 
     var body: some View {
         Form {
             if eventID == evening.id {
                 eventSection
-                guestSection
-                menuSection
-                ordersSection
+                if isFixed {
+                    fixedPizzasSection
+                    fixedPrepSection
+                } else {
+                    guestSection
+                    menuSection
+                    ordersSection
+                }
                 if totalOrders > 0 { toppingsSection }
                 Section {
                     if isDone {
@@ -262,7 +280,8 @@ struct EventDetailView: View {
         .task {
             if eventID != evening.id { switchTo(evening) }
             publishedAt = GuestEvenings.all.first { $0.id == evening.id }?.publishedAt
-            if isPublished { await loadOrders(updateShopping: false) }
+            // Bei festen Mengen keine Gästebestellungen übernehmen (würden die Mengen überschreiben)
+            if isPublished && !isFixed { await loadOrders(updateShopping: false) }
         }
         // Jede Änderung gleich in der Übersicht speichern
         .onChange(of: current) { _, new in if new.id == evening.id { GuestEvenings.upsert(new) } }
@@ -315,14 +334,49 @@ struct EventDetailView: View {
         Section {
             TextField("Pizza night", text: $menuTitle)
             DatePicker("Date", selection: dateBinding)
-            TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical)
-                .lineLimit(1...5)
+            if !isFixed {
+                TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical)
+                    .lineLimit(1...5)
+            }
+            PlanModePicker(isFixed: Binding { isFixed } set: { setFixed($0) })
         } header: {
             Text("1 · Event")
         } footer: {
-            if isPublished {
+            if isFixed {
+                Text("Fixed quantities: you decide how many of each pizza you make. No guest list, no guest page.")
+            } else if isPublished {
                 Text("Changes reach the guests after publishing the menu again.")
             }
+        }
+    }
+
+    // MARK: Feste Mengen
+
+    private var fixedPizzasSection: some View {
+        Section {
+            ForEach(available) { pizza in
+                MenuPizzaRow(pizza: pizza, number: nil, showsOrders: true) { editingPizza = pizza }
+                    .opacity(pizza.orderCount > 0 ? 1 : 0.6)
+            }
+            if available.isEmpty {
+                Text("No pizzas available – choose them in “Pizzas & amounts”.").foregroundStyle(.secondary)
+            } else {
+                LabeledContent("Total", value: String(localized: "\(totalOrders) pizzas"))
+                    .font(.headline)
+            }
+        } header: {
+            Text("2 · Pizzas")
+        } footer: {
+            Text("Set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. Preparation and shopping list use these numbers.")
+        }
+    }
+
+    private var fixedPrepSection: some View {
+        Section {
+            Button("Split view: preparation order", systemImage: "rectangle.split.1x2") { showingFoldView = true }
+                .disabled(totalOrders == 0)
+        } header: {
+            Text("3 · Preparation")
         }
     }
 
@@ -534,8 +588,30 @@ struct EventDetailView: View {
         guestNames = evening.guests.joined(separator: "\n")
         hiddenText = (evening.hiddenPizzas ?? []).joined(separator: "\n")
         isDone = evening.done == true
+        isFixed = evening.isFixed
         orders = []
         resetOrderCounts()
+        // Feste Mengen wiederherstellen
+        if let counts = evening.fixedCounts {
+            for pizza in pizzas where !pizza.isGuestCustom { pizza.orderCount = counts[pizza.name] ?? 0 }
+        }
+    }
+
+    /// Zwischen „Gäste bestellen“ und „Feste Mengen“ wechseln. Vorhandene Zahlen bleiben als Startwert stehen.
+    private func setFixed(_ fixed: Bool) {
+        guard fixed != isFixed else { return }
+        isFixed = fixed
+        if fixed {
+            // Eigene Pizzen der Gäste gehören nicht zu festen Mengen
+            for pizza in pizzas where pizza.isGuestCustom { modelContext.delete(pizza) }
+            orders = []
+            PrepQueueStore.saveOrders([], event: eventID)
+            // Gästeseite schließen, damit dort niemand mehr bestellt
+            if isPublished && !ordersClosed {
+                ordersClosed = true
+                Task { await publish(quiet: true) }
+            }
+        }
     }
 
     /// Anlass erledigt: wandert zu „Vergangene“, Bestellung wird geschlossen
@@ -669,7 +745,8 @@ struct EventDetailView: View {
     /// Zutaten dieses Anlasses auf die Einkaufsliste (ersetzt frühere, noch nicht abgehakte Einträge)
     private func updateShoppingList() {
         let all = (try? modelContext.fetch(FetchDescriptor<MenuPizza>())) ?? []
-        let ordered = all.filter { $0.isGuestCustom || ($0.isOnMenu && !hidden.contains($0.name)) }
+        let ordered = isFixed ? all.filter { $0.isOnMenu && !$0.isGuestCustom }
+                              : all.filter { $0.isGuestCustom || ($0.isOnMenu && !hidden.contains($0.name)) }
         ShoppingItem.replace(MenuPizza.shoppingItems(of: ordered, sauce: sauce), source: title, in: modelContext)
     }
 
@@ -685,6 +762,7 @@ struct EventDetailView: View {
         ordersClosed = false
         hiddenText = ""
         isDone = false
+        isFixed = false
         resetOrderCounts()
         dismiss()
     }
@@ -761,9 +839,10 @@ struct GuestPickerSheet: View {
 /// Neuen Anlass anlegen: nur Name und Datum (Text optional). Danach geht es direkt zu Gästen und Speisekarte.
 struct NewEventSheet: View {
     @Environment(\.dismiss) private var dismiss
-    var onCreate: (String, Date, String) -> Void
+    var onCreate: (String, Date, String, Bool) -> Void
 
     @State private var title = ""
+    @State private var fixed = false
     @State private var date = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: .now) ?? .now
     @State private var intro = ""
 
@@ -773,9 +852,18 @@ struct NewEventSheet: View {
                 Section {
                     TextField("Name of the event, e.g. Anna's 40th", text: $title)
                     DatePicker("Date", selection: $date)
-                    TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical).lineLimit(1...4)
+                    if !fixed {
+                        TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical).lineLimit(1...4)
+                    }
+                }
+                Section {
+                    PlanModePicker(isFixed: $fixed)
                 } footer: {
-                    Text("Next you add the guests and publish the menu.")
+                    if fixed {
+                        Text("Next you set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. No guest list needed.")
+                    } else {
+                        Text("Next you add the guests and publish the menu.")
+                    }
                 }
             }
             .navigationTitle("New event")
@@ -784,14 +872,28 @@ struct NewEventSheet: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        onCreate(title.trimmingCharacters(in: .whitespaces), date, intro.trimmingCharacters(in: .whitespacesAndNewlines))
+                        onCreate(title.trimmingCharacters(in: .whitespaces), date,
+                                 fixed ? "" : intro.trimmingCharacters(in: .whitespacesAndNewlines), fixed)
                         dismiss()
                     }
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
+    }
+}
+
+/// Wie werden die Pizzen eines Anlasses geplant: Gäste bestellen selbst oder feste Mengen pro Sorte
+struct PlanModePicker: View {
+    @Binding var isFixed: Bool
+
+    var body: some View {
+        Picker("Pizzas", selection: $isFixed) {
+            Text("Guests order").tag(false)
+            Text("Fixed quantities").tag(true)
+        }
+        .pickerStyle(.segmented)
     }
 }
 
