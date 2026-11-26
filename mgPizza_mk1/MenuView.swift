@@ -1389,7 +1389,18 @@ struct NewPizzaSheet: View {
             result.append(Choice(key: Self.key(cheese.name, cheese.unit), name: cheese.name, unit: cheese.unit,
                                  amount: cheese.amount, selected: true))
         }
-        choices = result.sorted { Self.displayName($0.name).localizedStandardCompare(Self.displayName($1.name)) == .orderedAscending }
+        // Reibekäse und Mozzarella ganz oben, der Rest alphabetisch
+        choices = result.sorted { a, b in
+            let rankA = Self.rank(a.name), rankB = Self.rank(b.name)
+            if rankA != rankB { return rankA < rankB }
+            return Self.displayName(a.name).localizedStandardCompare(Self.displayName(b.name)) == .orderedAscending
+        }
+    }
+
+    private static func rank(_ name: String) -> Int {
+        if MenuPizza.isGratedCheese(name) { return 0 }
+        if displayName(name).lowercased().contains("mozzarella") { return 1 }
+        return 2
     }
 
     /// Angezeigter Name (Belag-Namen sind teils englische Schlüssel, z. B. „Cooked ham“ → „Schinken“)
