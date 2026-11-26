@@ -46,6 +46,11 @@ struct GuestEvening: Codable, Identifiable, Hashable {
 
     /// Von Hand als erledigt markiert
     var done: Bool?
+    /// Feste Mengen statt Gästebestellung: Pizza-Name -> Anzahl (nil = Gäste bestellen über die Gästeseite)
+    var fixedCounts: [String: Int]?
+
+    /// Pizzen werden mit festen Mengen geplant (ohne Gästeliste und Gästeseite)
+    var isFixed: Bool { fixedCounts != nil }
 
     /// Anlass vorbei: als erledigt markiert oder Datum liegt vor heute (Wechsel automatisch um Mitternacht)
     var isPast: Bool { done == true || date < Calendar.current.startOfDay(for: .now) }

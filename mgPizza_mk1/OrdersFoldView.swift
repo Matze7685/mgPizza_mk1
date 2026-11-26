@@ -97,6 +97,8 @@ struct OrdersFoldView: View {
     @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
     @AppStorage("menuEventID") private var eventID = ""
     @AppStorage("menuTitle") private var menuTitle = ""
+    /// Anlass mit festen Mengen: keine Gästebestellungen abholen, nur die Stückzahlen pro Sorte
+    @AppStorage("menuFixedMode") private var isFixed = false
     /// Abstand für den Knick in der Mitte (Punkte); dort steht kein Inhalt
     @AppStorage("foldHingeGap") private var hingeGap: Double = 24
     /// Halbbildschirme tauschen (falls das Gerät andersherum gehalten wird)
@@ -145,8 +147,8 @@ struct OrdersFoldView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true     // Display bleibt beim Backen an
-            rebuild(orders: PrepQueueStore.orders(event: eventID))
-            if !eventID.isEmpty { Task { await fetch() } }
+            rebuild(orders: isFixed ? [] : PrepQueueStore.orders(event: eventID))
+            if !eventID.isEmpty && !isFixed { Task { await fetch() } }
         }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .onChange(of: queue) { _, new in PrepQueueStore.saveQueue(new, event: eventID) }
@@ -264,8 +266,10 @@ struct OrdersFoldView: View {
                     .buttonStyle(.bordered)
 
                 Menu {
-                    Button("Fetch guest orders", systemImage: "icloud.and.arrow.down") { Task { await fetch() } }
-                        .disabled(isBusy || eventID.isEmpty)
+                    if !isFixed {
+                        Button("Fetch guest orders", systemImage: "icloud.and.arrow.down") { Task { await fetch() } }
+                            .disabled(isBusy || eventID.isEmpty)
+                    }
                     Button("Sort by guest", systemImage: "person.2") { sortByGuest() }
                     Button("Sort by pizza", systemImage: "list.number") { sortByPizza() }
                     Button("Reset done", systemImage: "arrow.counterclockwise") {

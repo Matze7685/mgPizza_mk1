@@ -18,6 +18,7 @@ Rezeptdetail: nur Bereich der aktuellen Phase aufgeklappt, Tipps/Feedback/Rezept
 - `RecipeContainer/*` – Setup-Assistent (3 Schritte + Ergebnis). START → Rezept beginnen & per `Shared/AppRouter.swift` hineinwechseln.
 - `Model/SauceRecipe.swift`, `SauceView.swift` – Saucen (Einheiten %, g, ml, Stk., TL) + Zutaten-Tipps.
 - `Model/MenuPizza.swift`, `MenuView.swift` – Speisekarte für Gäste (Text/PDF teilen, Bestellungen, Belag → Einkaufsliste).
+- Anlass mit **festen Mengen** (`GuestEvening.fixedCounts`, AppStorage `menuFixedMode`): statt Gästeliste/Gästeseite Stückzahl pro Sorte (z. B. 5× Salami, 5× Thunfisch). Zahlen stehen beim aktuellen Anlass in `MenuPizza.orderCount` und werden pro Anlass gespeichert/wiederhergestellt; geteilte Ansicht holt dann keine Gästebestellungen.
 - `ShoppingListView.swift` – Einkaufsliste + Auswahl-Sheet.
 - `OrdersFoldView.swift` – geteilte Ansicht (Bestellungen › „Geteilte Ansicht“) für faltbares iPhone in Laptop-Stellung: oben aktuelle Pizza groß (Gast, Pizza, Zutaten mit Mengen, Zusatzzutaten grün, abgewählte rot), unten Reihenfolge der Zubereitung (verschiebbar, abhaken, „Pizza fertig“ → nächste). Reihenfolge + geladene Gästebestellungen pro Abend in UserDefaults (`foldQueue_<id>`, `foldOrders_<id>`, `PrepQueueStore`). Teilung exakt in Bildschirmmitte; iOS hat keine Scharnier-API, daher manuell geöffnet.
 - `NotificationModel.swift` – Erinnerungen (Teig raus −1 h / raus / Servieren, Knetschritte).

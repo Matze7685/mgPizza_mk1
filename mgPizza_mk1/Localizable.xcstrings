@@ -6361,6 +6361,106 @@
           }
         }
       }
+    },
+    "%lld pizzas · fixed quantities" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Pizzen · feste Mengen"
+          }
+        }
+      }
+    },
+    "Next you set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. No guest list needed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danach legst du fest, wie viele Pizzen du von jeder Sorte machst, z. B. 5× Salami und 5× Thunfisch. Eine Gästeliste brauchst du nicht."
+          }
+        }
+      }
+    },
+    "Guests order" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gäste bestellen"
+          }
+        }
+      }
+    },
+    "Fixed quantities" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feste Mengen"
+          }
+        }
+      }
+    },
+    "Fixed quantities: you decide how many of each pizza you make. No guest list, no guest page." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feste Mengen: Du legst fest, wie viele Pizzen du von jeder Sorte machst. Ohne Gästeliste und ohne Gästeseite."
+          }
+        }
+      }
+    },
+    "%lld pizzas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Pizzen"
+          }
+        }
+      }
+    },
+    "2 · Pizzas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 · Pizzen"
+          }
+        }
+      }
+    },
+    "Set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. Preparation and shopping list use these numbers." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lege fest, wie viele Pizzen du von jeder Sorte machst, z. B. 5× Salami und 5× Thunfisch. Zubereitung und Einkaufsliste rechnen mit diesen Zahlen."
+          }
+        }
+      }
+    },
+    "Split view: preparation order" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilte Ansicht: Reihenfolge der Zubereitung"
+          }
+        }
+      }
+    },
+    "3 · Preparation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 · Zubereitung"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
