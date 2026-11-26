@@ -305,10 +305,7 @@ struct MenuPizzaEditor: View {
                     ForEach($pizza.toppings) { $topping in
                         HStack {
                             TextField("Topping", text: $topping.name)
-                            TextField("Amount", value: $topping.amount, format: .number.precision(.fractionLength(0...2)))
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 60)
+                            AmountField(value: $topping.amount)
                             Picker("Unit", selection: $topping.unit) {
                                 ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { unit in
                                     Text(LocalizedStringKey(unit)).tag(unit)
