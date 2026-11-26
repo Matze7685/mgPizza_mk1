@@ -2,6 +2,66 @@
   "sourceLanguage" : "en",
   "strings" : {
     "" : {},
+    "Topping amounts for all pizzas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belagmengen für alle Pizzen"
+          }
+        }
+      }
+    },
+    "Change e.g. the tomato sauce once and every pizza on the menu gets the new amount." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Z. B. Tomatensauce einmal ändern, dann bekommt jede Pizza auf der Karte die neue Menge."
+          }
+        }
+      }
+    },
+    "On %lld pizzas, amounts differ" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf %lld Pizzen, Mengen unterschiedlich"
+          }
+        }
+      }
+    },
+    "On %lld pizzas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf %lld Pizzen"
+          }
+        }
+      }
+    },
+    "Amount per pizza. A change applies to every pizza with this topping; you can still change single pizzas afterwards." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menge pro Pizza. Eine Änderung gilt für jede Pizza mit dieser Zutat. Einzelne Pizzen kannst du danach trotzdem anders einstellen."
+          }
+        }
+      }
+    },
+    "Topping amounts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belagmengen"
+          }
+        }
+      }
+    },
     "%% = share of the tomato weight. g / ml / pcs / tsp = amount for all %lld pizzas, scales when you change the pizza count. Tip: Neapolitan style uses only crushed raw tomatoes + ~1.5–2%% salt; basil and oil go on the pizza." : {
       "localizations" : {
         "de" : {
