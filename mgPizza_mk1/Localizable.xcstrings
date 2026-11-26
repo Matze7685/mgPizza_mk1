@@ -5641,6 +5641,66 @@
           }
         }
       }
+    },
+    "Push for guest orders" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push bei Gästebestellungen"
+          }
+        }
+      }
+    },
+    "A notification on this iPhone when a guest orders, changes or deletes an order. Needs Pizza-Push on the Mac mini (hosting/mac-mini/pizza-push)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitteilung auf diesem iPhone, wenn ein Gast bestellt, seine Bestellung ändert oder löscht. Dafür muss Pizza-Push auf dem Mac mini laufen (hosting/mac-mini/pizza-push)."
+          }
+        }
+      }
+    },
+    "Notifications are turned off for this app in the iOS settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitteilungen sind für diese App in den iOS-Einstellungen ausgeschaltet."
+          }
+        }
+      }
+    },
+    "Registering …" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird angemeldet …"
+          }
+        }
+      }
+    },
+    "Active. You get a notification when a guest orders, changes or deletes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiv. Du bekommst eine Mitteilung, wenn ein Gast bestellt, ändert oder löscht."
+          }
+        }
+      }
+    },
+    "Push registration failed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push-Anmeldung fehlgeschlagen: %@"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

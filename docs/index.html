@@ -245,11 +245,24 @@ async function removeLine(i) {
   render();
 }
 
+// „Klingel“ für den Gastgeber: Der Mac mini (hosting/mac-mini/pizza-push) sieht daran sofort, dass sich eine Bestellung
+// geändert hat, und schickt ihm eine Push-Nachricht. Enthält nur Abend, Bestellung und Zeitpunkt. Schlägt das fehl,
+// ist die Bestellung trotzdem gespeichert.
+function ping(action) {
+  const order = slug(guest);
+  api(`${base}:commit?key=${API_KEY}`, {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({writes: [{
+      update: {name: `projects/${PROJECT}/databases/(default)/documents/pings/${eventId}~${order}`,
+               fields: {event: {stringValue: eventId}, order: {stringValue: order}, action: {stringValue: action}}},
+      updateTransforms: [{fieldPath: "at", setToServerValue: "REQUEST_TIME"}]}]})
+  }).catch(() => {});
+}
+
 // Die gespeicherte Bestellung des Gastes komplett löschen
 async function deleteOrder() {
   if (!await ask(`Gesamte Bestellung von ${guest} löschen?`, `Achtung: Das ist die Bestellung von ${guest}. Das Löschen kann nicht rückgängig gemacht werden.`, "Ja, Bestellung löschen")) return;
   const r = await api(`${base}/events/${encodeURIComponent(eventId)}/orders/${slug(guest)}?key=${API_KEY}`, {method: "DELETE"});
-  if (r.ok) showNames(); else document.getElementById("msg").textContent = r.status === 403
+  if (r.ok) { ping("delete"); showNames(); } else document.getElementById("msg").textContent = r.status === 403
     ? "Das ist die Bestellung eines anderen Geräts – nur der Gastgeber kann sie löschen."
     : "Löschen hat nicht geklappt – bitte nochmal versuchen.";
 }
@@ -327,7 +340,7 @@ async function send() {
   msg.textContent = r.ok ? "Danke! Bestellung gespeichert ✔ (du kannst sie jederzeit erneut abschicken)"
     : r.status === 403 ? "Diese Bestellung gehört einem anderen Gerät – der Gastgeber kann sie freigeben."
     : "Fehler beim Senden – bitte nochmal versuchen.";
-  if (r.ok) setTimeout(showNames, 1500);
+  if (r.ok) { ping("save"); setTimeout(showNames, 1500); }
 }
 load().catch(() => app.textContent = "Fehler beim Laden.");
 </script>

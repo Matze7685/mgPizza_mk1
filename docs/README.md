@@ -34,6 +34,20 @@
              || (signedIn() && resource.data.get('owner', '') == request.auth.uid) || isHost(event);
          }
        }
+
+       // Push bei Gästebestellungen (hosting/mac-mini/pizza-push). Lesen darf beides nur der Mac mini mit seinem Dienstkonto.
+       match /pushTokens/{token} {
+         // Das iPhone des Gastgebers meldet sich für Push an (nur mit seiner eigenen Kennung)
+         allow create, update: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+         allow delete: if resource == null || (signedIn() && resource.data.hostUid == request.auth.uid);
+       }
+       match /pings/{ping} {
+         // „Klingel“ der Gästeseite nach Speichern/Löschen: nur Abend, Bestellung, Aktion und Zeitpunkt
+         allow create, update: if signedIn()
+           && request.resource.data.keys().hasOnly(['at', 'event', 'order', 'action'])
+           && request.resource.data.at == request.time
+           && request.resource.data.event is string && request.resource.data.order is string;
+       }
      }
    }
    ```
@@ -49,6 +63,13 @@
 7. GitHub → Repo **Settings → Pages → Branch wählen, Ordner `/docs`**. Adresse: `https://<user>.github.io/<repo>/`.
 8. In der App: Menü → *Guest link* → Projekt-ID, API-Key und Seitenadresse eintragen (einmalig), Gäste eintragen, *Publish menu*, Link teilen.
 9. Später: *Fetch orders* → *Import into menu & toppings* → Zutaten landen in der Einkaufsliste-Funktion.
+
+## Push bei Gästebestellungen
+
+Auf Wunsch schickt der Mac mini dir eine Mitteilung aufs iPhone, sobald ein Gast bestellt, seine Bestellung ändert oder löscht
+(z. B. „🍕 Annas 40er · Anna hat bestellt: 2× Margherita (ohne Basilikum)“). Einrichtung:
+[`hosting/mac-mini/pizza-push/ANLEITUNG.md`](../hosting/mac-mini/pizza-push/ANLEITUNG.md). Die Regeln oben enthalten dafür
+schon `pushTokens` und `pings`.
 
 ## Mehrere Abende / Anlässe
 
