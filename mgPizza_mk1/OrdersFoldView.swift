@@ -105,6 +105,10 @@ struct OrdersFoldView: View {
     @AppStorage("foldHingeGap") private var hingeGap: Double = 24
     /// Halbbildschirme tauschen (falls das Gerät andersherum gehalten wird)
     @AppStorage("foldSwapHalves") private var swapHalves = false
+    /// Spalten für die Zutaten oben (Einstellungen)
+    @AppStorage("foldColumns") private var foldColumns = 2
+    /// Nächste Pizza inkl. Zutaten neben der aktuellen anzeigen (Einstellungen)
+    @AppStorage("foldShowNext") private var showNextPizza = false
 
     @State private var queue: [PrepItem] = []
     /// Oben angezeigte Pizza; ohne Auswahl die erste noch nicht fertige
@@ -169,34 +173,39 @@ struct OrdersFoldView: View {
 
     private var overview: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center, spacing: 12) {
                 Text(title).font(.headline).foregroundStyle(.secondary).lineLimit(1)
                 Spacer()
                 Text("\(doneCount)/\(queue.count)")
                     .font(.title2.bold()).monospacedDigit()
                     .foregroundStyle(!queue.isEmpty && doneCount == queue.count ? Color.green : Color.primary)
+                Button {
+                    finishCurrent()
+                } label: {
+                    Label("Next pizza", systemImage: "chevron.right.circle.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(current == nil || current?.done == true)
             }
 
             if let item = current {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            if !item.guest.isEmpty {
-                                Text(item.guest).font(.system(size: 34, weight: .bold, design: .rounded)).lineLimit(1)
-                            }
-                            Text(pizzaTitle(item)).font(.title2.weight(.semibold))
-                                .foregroundStyle(item.guest.isEmpty ? .primary : .secondary)
+                if showNextPizza, let next {
+                    HStack(alignment: .top, spacing: 12) {
+                        pizzaPanel(item, scale: 0.8)
+                        Divider()
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Next").font(.caption.weight(.semibold)).textCase(.uppercase).foregroundStyle(.secondary)
+                            pizzaPanel(next, scale: 0.7)
                         }
-                        ingredientList(item)
-                        if let next {
-                            Text("Next: \(next.guest.isEmpty ? pizzaTitle(next) : "\(next.guest) – \(pizzaTitle(next))")")
-                                .font(.subheadline).foregroundStyle(.secondary)
-                        }
+                        .opacity(0.6)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 8)
+                } else {
+                    pizzaPanel(item, scale: 1)
+                    if let next {
+                        Text("Next: \(next.guest.isEmpty ? pizzaTitle(next) : "\(next.guest) – \(pizzaTitle(next))")")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
                 }
-                .opacity(item.done ? 0.5 : 1)
             } else {
                 Spacer()
                 (queue.isEmpty ? Text("No orders yet.") : Text("All pizzas done! 🍕"))
@@ -206,49 +215,97 @@ struct OrdersFoldView: View {
         }
         .padding(.horizontal)
         .padding(.top, 8)
+        .padding(.bottom, 4)
+    }
+
+    /// Gast, Pizza und Zutaten einer Pizza
+    private func pizzaPanel(_ item: PrepItem, scale: CGFloat) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    if !item.guest.isEmpty {
+                        Text(item.guest).font(.system(size: 34 * scale, weight: .bold, design: .rounded))
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                    }
+                    Text(pizzaTitle(item)).font(.system(size: 22 * scale, weight: .semibold))
+                        .foregroundStyle(item.guest.isEmpty ? .primary : .secondary)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                }
+                ingredientGrid(item, scale: scale)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 8)
+        }
+        .opacity(item.done ? 0.5 : 1)
     }
 
     private func pizzaTitle(_ item: PrepItem) -> String {
         item.custom == nil ? item.pizza : String(localized: "Custom pizza")
     }
 
-    /// Normale Zutaten (ohne abgewählte) + Zusatzzutaten, jeweils mit Menge für eine Pizza
-    @ViewBuilder
-    private func ingredientList(_ item: PrepItem) -> some View {
-        let base: [(name: String, amount: String)] = {
-            if let custom = item.custom {
-                return custom.map { ($0.name, MenuPizza.formatted($0.amount, unit: $0.unit)) }
-            }
+    private enum IngredientKind { case normal, extra, without }
+
+    private struct Ingredient {
+        var name: String
+        var kind: IngredientKind
+        var amount: String? = nil
+    }
+
+    /// Normale Zutaten ohne Mengen; nur Zusatzzutaten (mehr als normal) mit Menge
+    private func ingredients(_ item: PrepItem) -> [Ingredient] {
+        let base: [String]
+        if let custom = item.custom {
+            base = custom.map(\.name)
+        } else {
             let toppings = pizzas.first { $0.name == item.pizza }?.toppings ?? []
-            return toppings.filter { !item.without.contains($0.name) }
-                .map { ($0.name, MenuPizza.formatted($0.amount, unit: $0.unit)) }
-        }()
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(base.indices, id: \.self) { index in
-                ingredientRow(base[index].name, base[index].amount, color: .primary, symbol: "circle.fill")
-            }
-            ForEach(item.extra, id: \.self) { name in
-                let standard = ExtraDefaults.amount(for: name)
-                ingredientRow(name, MenuPizza.formatted(standard.amount, unit: standard.unit), color: .green, symbol: "plus.circle.fill")
-            }
-            ForEach(item.without, id: \.self) { name in
-                HStack(spacing: 8) {
-                    Image(systemName: "minus.circle.fill").foregroundStyle(.red)
-                    Text("without \(name)").strikethrough().foregroundStyle(.red)
-                }
-                .font(.title3)
+            base = toppings.map(\.name).filter { !item.without.contains($0) }
+        }
+        var list = base.map { Ingredient(name: $0, kind: .normal) }
+        for name in item.extra {
+            let standard = ExtraDefaults.amount(for: name)
+            list.append(Ingredient(name: name, kind: .extra, amount: MenuPizza.formatted(standard.amount, unit: standard.unit)))
+        }
+        list += item.without.map { Ingredient(name: $0, kind: .without) }
+        return list
+    }
+
+    /// Zutaten in 2 oder 3 Spalten (Einstellung); Schrift umso größer, je weniger Zutaten es sind
+    private func ingredientGrid(_ item: PrepItem, scale: CGFloat) -> some View {
+        let list = ingredients(item)
+        let columns = max(1, min(3, foldColumns))
+        let rows = (list.count + columns - 1) / columns
+        let size: CGFloat = (rows <= 3 ? 30 : rows <= 5 ? 24 : rows <= 7 ? 20 : 17) * scale
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12, alignment: .leading), count: columns),
+                         alignment: .leading, spacing: 8) {
+            ForEach(list.indices, id: \.self) { index in
+                ingredientCell(list[index].name, kind: list[index].kind, amount: list[index].amount, size: size)
             }
         }
     }
 
-    private func ingredientRow(_ name: String, _ amount: String, color: Color, symbol: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: symbol).font(.caption).foregroundStyle(color)
-            Text(LocalizedStringKey(name)).foregroundStyle(color)
-            Spacer()
-            Text(amount).monospacedDigit().foregroundStyle(.secondary)
+    private func ingredientCell(_ name: String, kind: IngredientKind, amount: String?, size: CGFloat) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            switch kind {
+            case .normal:
+                Image(systemName: "circle.fill").font(.system(size: size * 0.35)).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(name))
+            case .extra:
+                Image(systemName: "plus.circle.fill").font(.system(size: size * 0.7)).foregroundStyle(.green)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(LocalizedStringKey(name)).foregroundStyle(.green).bold()
+                    if let amount {
+                        Text(amount).font(.system(size: size * 0.55)).monospacedDigit().foregroundStyle(.secondary)
+                    }
+                }
+            case .without:
+                Image(systemName: "minus.circle.fill").font(.system(size: size * 0.7)).foregroundStyle(.red)
+                Text(LocalizedStringKey(name)).strikethrough().foregroundStyle(.red)
+            }
         }
-        .font(.title3)
+        .font(.system(size: size))
+        .lineLimit(2)
+        .minimumScaleFactor(0.6)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Untere Hälfte: Reihenfolge der Zubereitung
@@ -280,6 +337,11 @@ struct OrdersFoldView: View {
                     }
                     Divider()
                     Toggle("Swap top and bottom", isOn: $swapHalves)
+                    Toggle("Show next pizza with ingredients", isOn: $showNextPizza)
+                    Picker("Ingredient columns", selection: $foldColumns) {
+                        Text("2").tag(2)
+                        Text("3").tag(3)
+                    }
                     Picker("Gap for the fold", selection: $hingeGap) {
                         Text("None").tag(0.0)
                         Text("Small").tag(24.0)

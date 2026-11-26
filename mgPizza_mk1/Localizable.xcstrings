@@ -6621,6 +6621,66 @@
           }
         }
       }
+    },
+    "Next pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächste Pizza"
+          }
+        }
+      }
+    },
+    "Next" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danach"
+          }
+        }
+      }
+    },
+    "Show next pizza with ingredients" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächste Pizza mit Zutaten anzeigen"
+          }
+        }
+      }
+    },
+    "Ingredient columns" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spalten für Zutaten"
+          }
+        }
+      }
+    },
+    "Split view" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilte Ansicht"
+          }
+        }
+      }
+    },
+    "For the split view of the orders (foldable iPhone in laptop posture): how many columns the ingredients use on the upper screen, and whether the next pizza is shown next to it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für die geteilte Ansicht der Bestellungen (faltbares iPhone in Laptop-Stellung): wie viele Spalten die Zutaten oben nutzen und ob die nächste Pizza daneben angezeigt wird."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

@@ -11,6 +11,8 @@ struct SettingsView: View {
     @AppStorage("doughSpeak") private var doughSpeak = false
     @AppStorage("showDoughStatus") private var showDoughStatus = true
     @AppStorage("mixerCapacity") private var mixerCapacity: Double = 2500
+    @AppStorage("foldColumns") private var foldColumns = 2
+    @AppStorage("foldShowNext") private var foldShowNext = false
 
     var body: some View {
         List {
@@ -50,6 +52,17 @@ struct SettingsView: View {
                 Text("Dough")
             } footer: {
                 Text("Announces “dough out in 1 hour”, “take the dough out” and “serving” on the selected speaker (e.g. HomePod). Only works while the app is running – keep it open or in the background (e.g. with the oven probe connected). The normal notification always comes.")
+            }
+            Section {
+                Picker("Ingredient columns", selection: $foldColumns) {
+                    Text("2").tag(2)
+                    Text("3").tag(3)
+                }
+                Toggle("Show next pizza with ingredients", isOn: $foldShowNext)
+            } header: {
+                Text("Split view")
+            } footer: {
+                Text("For the split view of the orders (foldable iPhone in laptop posture): how many columns the ingredients use on the upper screen, and whether the next pizza is shown next to it.")
             }
             Section("Oven") {
                 NavigationLink {
