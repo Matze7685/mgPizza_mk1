@@ -43,8 +43,11 @@ struct GuestEvening: Codable, Identifiable, Hashable {
     /// Pizzen, die bei diesem Anlass nicht auf der Karte stehen (Namen)
     var hiddenPizzas: [String]?
 
-    /// Anlass vorbei: Datum liegt vor heute
-    var isPast: Bool { date < Calendar.current.startOfDay(for: .now) }
+    /// Von Hand als erledigt markiert
+    var done: Bool?
+
+    /// Anlass vorbei: als erledigt markiert oder Datum liegt vor heute (Wechsel automatisch um Mitternacht)
+    var isPast: Bool { done == true || date < Calendar.current.startOfDay(for: .now) }
 }
 
 enum GuestEvenings {
