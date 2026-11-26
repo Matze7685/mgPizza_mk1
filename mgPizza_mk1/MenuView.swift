@@ -160,6 +160,7 @@ struct EventsView: View {
             hiddenText = ""
             isDone = false
             isFixed = false
+            UserDefaults.standard.removeObject(forKey: "menuFixedExtras")
         }
         reload()
     }
@@ -193,6 +194,9 @@ struct EventDetailView: View {
     @AppStorage("menuHiddenPizzas") private var hiddenText = ""
     @AppStorage("menuEventDone") private var isDone = false
     @AppStorage("menuFixedMode") private var isFixed = false
+    /// Feste Mengen: Extras pro Sorte als JSON (Pizza-Name -> Extras)
+    @AppStorage("menuFixedExtras") private var fixedExtrasJSON = ""
+    @State private var choosingExtras: MenuPizza?
     @State private var orders: [GuestOrder] = []
     @State private var publishedAt: Date?
     @State private var status = ""
@@ -231,6 +235,9 @@ struct EventDetailView: View {
     private var fixedCounts: [String: Int] {
         Dictionary(available.filter { $0.orderCount > 0 }.map { ($0.name, $0.orderCount) }, uniquingKeysWith: +)
     }
+    private var fixedExtras: [String: [String]] {
+        (try? JSONDecoder().decode([String: [String]].self, from: Data(fixedExtrasJSON.utf8))) ?? [:]
+    }
     private var totalOrders: Int { orderPizzas.reduce(0) { $0 + $1.orderCount } }
     private var roundCount: Int { orderPizzas.filter { !$0.isDetroit }.reduce(0) { $0 + $1.orderCount } }
     private var detroitCount: Int { orderPizzas.filter(\.isDetroit).reduce(0) { $0 + $1.orderCount } }
@@ -240,7 +247,8 @@ struct EventDetailView: View {
     private var current: GuestEvening {
         GuestEvening(id: eventID, title: title, date: date, intro: intro, guests: guests, closed: ordersClosed,
                      hiddenPizzas: hidden.isEmpty ? nil : Array(hidden).sorted(), done: isDone ? true : nil,
-                     fixedCounts: isFixed ? fixedCounts : nil)
+                     fixedCounts: isFixed ? fixedCounts : nil,
+                     fixedExtras: isFixed && !fixedExtras.isEmpty ? fixedExtras : nil)
     }
 
     var body: some View {
@@ -285,6 +293,13 @@ struct EventDetailView: View {
         }
         // Jede Änderung gleich in der Übersicht speichern
         .onChange(of: current) { _, new in if new.id == evening.id { GuestEvenings.upsert(new) } }
+        // Extras folgen der Stückzahl ihrer Sorte (für Belag und Einkaufsliste)
+        .onChange(of: fixedCounts) { _, _ in if isFixed { syncFixedExtras() } }
+        .sheet(item: $choosingExtras) { pizza in
+            ExtrasPickerSheet(pizza: pizza, selected: Set(fixedExtras[pizza.name] ?? [])) { names in
+                setExtras(names, for: pizza)
+            }
+        }
         .task(id: shareText) { pdfURL = MenuPDF.render(title: title, date: date, pizzas: eventPizzas) }
         .alert("Rename guest", isPresented: Binding { renaming != nil } set: { if !$0 { renaming = nil } }) {
             TextField("Name", text: $renameText)
@@ -355,8 +370,22 @@ struct EventDetailView: View {
     private var fixedPizzasSection: some View {
         Section {
             ForEach(available) { pizza in
-                MenuPizzaRow(pizza: pizza, number: nil, showsOrders: true) { editingPizza = pizza }
-                    .opacity(pizza.orderCount > 0 ? 1 : 0.6)
+                VStack(alignment: .leading, spacing: 6) {
+                    MenuPizzaRow(pizza: pizza, number: nil, showsOrders: true) { editingPizza = pizza }
+                    if pizza.orderCount > 0 {
+                        let extras = fixedExtras[pizza.name] ?? []
+                        Button { choosingExtras = pizza } label: {
+                            if extras.isEmpty {
+                                Label("Add extras", systemImage: "plus.circle").font(.subheadline)
+                            } else {
+                                Label("Extra: \(extras.joined(separator: ", "))", systemImage: "plus.circle.fill")
+                                    .font(.subheadline).foregroundStyle(.green)
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                .opacity(pizza.orderCount > 0 ? 1 : 0.6)
             }
             if available.isEmpty {
                 Text("No pizzas available – choose them in “Pizzas & amounts”.").foregroundStyle(.secondary)
@@ -367,7 +396,7 @@ struct EventDetailView: View {
         } header: {
             Text("2 · Pizzas")
         } footer: {
-            Text("Set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. Preparation and shopping list use these numbers.")
+            Text("Set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. Extras apply to every pizza of that kind. Preparation and shopping list use these numbers.")
         }
     }
 
@@ -595,13 +624,43 @@ struct EventDetailView: View {
         if let counts = evening.fixedCounts {
             for pizza in pizzas where !pizza.isGuestCustom { pizza.orderCount = counts[pizza.name] ?? 0 }
         }
+        fixedExtrasJSON = Self.encode(evening.fixedExtras ?? [:])
+        if evening.isFixed { syncFixedExtras() }
+    }
+
+    private static func encode(_ extras: [String: [String]]) -> String {
+        guard !extras.isEmpty, let data = try? JSONEncoder().encode(extras) else { return "" }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    /// Extras einer Sorte setzen (feste Mengen)
+    private func setExtras(_ names: [String], for pizza: MenuPizza) {
+        var all = fixedExtras
+        all[pizza.name] = names.isEmpty ? nil : names
+        fixedExtrasJSON = Self.encode(all)
+        syncFixedExtras()
+    }
+
+    /// Feste Mengen: jedes Extra zählt so oft, wie Pizzen dieser Sorte gemacht werden
+    private func syncFixedExtras() {
+        let extras = fixedExtras
+        for pizza in available {
+            let names = pizza.orderCount > 0 ? extras[pizza.name] ?? [] : []
+            let wanted = Dictionary(names.map { ($0, pizza.orderCount) }, uniquingKeysWith: { a, _ in a })
+            if pizza.guestExtras != wanted { pizza.guestExtras = wanted }
+        }
     }
 
     /// Zwischen „Gäste bestellen“ und „Feste Mengen“ wechseln. Vorhandene Zahlen bleiben als Startwert stehen.
     private func setFixed(_ fixed: Bool) {
         guard fixed != isFixed else { return }
         isFixed = fixed
+        if !fixed {
+            fixedExtrasJSON = ""
+            for pizza in available { pizza.guestExtras = [:] }
+        }
         if fixed {
+            for pizza in available { pizza.guestExtras = [:] }
             // Eigene Pizzen der Gäste gehören nicht zu festen Mengen
             for pizza in pizzas where pizza.isGuestCustom { modelContext.delete(pizza) }
             orders = []
@@ -700,7 +759,9 @@ struct EventDetailView: View {
         let event = GuestEvent(title: title, date: date, guests: guests, pizzas: eventPizzas.map { pizza in
             .init(name: pizza.name, info: pizza.info,
                   toppings: pizza.toppings.map { .init(name: $0.name, amount: $0.amount, unit: $0.unit) })
-        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil, extras: MenuPizza.alwaysOfferedExtras)
+        }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil, extras: MenuPizza.alwaysOfferedExtras,
+           extraAmounts: ExtraDefaults.all.filter { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
+               .map { GuestEvent.Topping(name: $0.name.trimmingCharacters(in: .whitespaces), amount: $0.amount, unit: $0.unit) })
         let first = !isPublished
         do {
             try await service.publish(event, id: eventID)
@@ -763,6 +824,7 @@ struct EventDetailView: View {
         hiddenText = ""
         isDone = false
         isFixed = false
+        fixedExtrasJSON = ""
         resetOrderCounts()
         dismiss()
     }
@@ -877,6 +939,67 @@ struct NewEventSheet: View {
                         dismiss()
                     }
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}
+
+/// Feste Mengen: Zusatzzutaten für eine Sorte ankreuzen (Liste „Zusatzmengen pro Pizza“, Mengen kommen von dort)
+struct ExtrasPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let pizza: MenuPizza
+    @State var selected: Set<String>
+    var onSave: ([String]) -> Void
+
+    /// Gespeicherte Zusatzzutaten ohne das, was schon auf der Pizza ist
+    private var options: [String] {
+        var seen = Set<String>()
+        let own = pizza.toppings.map { $0.name.lowercased() }
+        return (ExtraDefaults.all.map(\.name) + MenuPizza.alwaysOfferedExtras + selected.sorted())
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { name in
+                let key = name.lowercased()
+                guard !key.isEmpty, !seen.contains(key) else { return false }
+                seen.insert(key)
+                return !own.contains { $0 == key || $0.hasPrefix(key + " ") || $0.hasPrefix(key + "(") }
+            }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    var body: some View {
+        NavigationStack {
+            // Zwei Spalten, alphabetisch (wie auf der Gästeseite)
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
+                          alignment: .leading, spacing: 14) {
+                    ForEach(options, id: \.self) { name in
+                        Button {
+                            if selected.contains(name) { selected.remove(name) } else { selected.insert(name) }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: selected.contains(name) ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3).foregroundStyle(selected.contains(name) ? .green : .gray)
+                                Text(name).foregroundStyle(.primary).lineLimit(2)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Extras for \(pizza.name)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        onSave(options.filter { selected.contains($0) })
+                        dismiss()
+                    }
                 }
             }
         }
