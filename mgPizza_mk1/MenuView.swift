@@ -16,6 +16,7 @@ struct EventsView: View {
     @AppStorage("guestIntro") private var intro = ""
     @AppStorage("guestOrdersClosed") private var ordersClosed = false
     @AppStorage("menuHiddenPizzas") private var hiddenText = ""
+    @AppStorage("menuEventDone") private var isDone = false
     @State private var evenings: [GuestEvening] = []
     @State private var showingNew = false
     @State private var created: GuestEvening?
@@ -151,6 +152,7 @@ struct EventsView: View {
             intro = ""
             ordersClosed = false
             hiddenText = ""
+            isDone = false
         }
         reload()
     }
@@ -182,6 +184,7 @@ struct EventDetailView: View {
     @AppStorage("guestIntro") private var intro = ""
     @AppStorage("guestOrdersClosed") private var ordersClosed = false
     @AppStorage("menuHiddenPizzas") private var hiddenText = ""
+    @AppStorage("menuEventDone") private var isDone = false
     @State private var orders: [GuestOrder] = []
     @State private var publishedAt: Date?
     @State private var status = ""
@@ -205,7 +208,8 @@ struct EventDetailView: View {
     private var date: Date { Date(timeIntervalSince1970: menuDate) }
     private var dateBinding: Binding<Date> { Binding { date } set: { menuDate = $0.timeIntervalSince1970 } }
     private var title: String { menuTitle.isEmpty ? String(localized: "Pizza night") : menuTitle }
-    private var isPast: Bool { date < Calendar.current.startOfDay(for: .now) }
+    private var isOverByDate: Bool { date < Calendar.current.startOfDay(for: .now) }
+    private var isPast: Bool { isDone || isOverByDate }
     private var isPublished: Bool { publishedAt != nil }
     private var guestLink: URL? { GuestEvenings.link(id: eventID) }
 
@@ -223,7 +227,7 @@ struct EventDetailView: View {
     /// Der Anlass, wie er in der Übersicht gespeichert wird
     private var current: GuestEvening {
         GuestEvening(id: eventID, title: title, date: date, intro: intro, guests: guests, closed: ordersClosed,
-                     hiddenPizzas: hidden.isEmpty ? nil : Array(hidden).sorted())
+                     hiddenPizzas: hidden.isEmpty ? nil : Array(hidden).sorted(), done: isDone ? true : nil)
     }
 
     var body: some View {
@@ -235,7 +239,16 @@ struct EventDetailView: View {
                 ordersSection
                 if totalOrders > 0 { toppingsSection }
                 Section {
+                    if isDone {
+                        Button("Reopen event", systemImage: "arrow.uturn.backward") { isDone = false }
+                    } else if !isOverByDate {
+                        Button("Mark event as done", systemImage: "checkmark.seal") { markDone() }
+                    }
                     Button("Delete event", systemImage: "trash", role: .destructive) { confirmingDelete = true }
+                } footer: {
+                    if !isDone && !isOverByDate {
+                        Text("An event moves to “Past” automatically at midnight after its day, or right away when you mark it as done. Orders are then closed.")
+                    }
                 }
                 if !status.isEmpty {
                     Section { Text(status).font(.callout) }
@@ -520,8 +533,18 @@ struct EventDetailView: View {
         ordersClosed = evening.closed
         guestNames = evening.guests.joined(separator: "\n")
         hiddenText = (evening.hiddenPizzas ?? []).joined(separator: "\n")
+        isDone = evening.done == true
         orders = []
         resetOrderCounts()
+    }
+
+    /// Anlass erledigt: wandert zu „Vergangene“, Bestellung wird geschlossen
+    private func markDone() {
+        isDone = true
+        if !ordersClosed {
+            ordersClosed = true
+            if isPublished { Task { await publish(quiet: true) } }
+        }
     }
 
     private func resetOrderCounts() {
@@ -661,6 +684,7 @@ struct EventDetailView: View {
         intro = ""
         ordersClosed = false
         hiddenText = ""
+        isDone = false
         resetOrderCounts()
         dismiss()
     }
