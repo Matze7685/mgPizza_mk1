@@ -63,11 +63,12 @@ extension MenuPizza {
     static let alwaysOfferedExtras = ["Parmesan"]
 
     /// Hat die Pizza schon Pizza-Reibekäse?
-    var hasGratedCheese: Bool {
-        toppings.contains { topping in
-            let name = Bundle.main.localizedString(forKey: topping.name, value: nil, table: nil).lowercased()
-            return ["reibekäse", "pizza cheese"].contains { name.contains($0) }
-        }
+    var hasGratedCheese: Bool { toppings.contains { Self.isGratedCheese($0.name) } }
+
+    /// „Reibekäse“, „Pizza-Reibekäse“, „Pizza cheese (grated)“ …
+    static func isGratedCheese(_ name: String) -> Bool {
+        let text = Bundle.main.localizedString(forKey: name, value: nil, table: nil).lowercased()
+        return ["reibekäse", "pizza cheese"].contains { text.contains($0) }
     }
 
     /// Einmalig: jeder gespeicherten Pizza Pizza-Reibekäse geben (außer Marinara, die ohne Käse ist, und Gäste-Pizzen)
