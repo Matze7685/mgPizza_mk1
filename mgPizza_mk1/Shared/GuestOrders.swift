@@ -237,6 +237,8 @@ struct ExtraDefaultsEditor: View {
 enum GuestFirebaseDefaults {
     static let project = "mgpizza-app"
     static let apiKey = "AIzaSyCea9qvMqHYYgk8dAe5hGcDGMuobLgP6Tc"
+    /// Feste Adresse der Gästeseite (Mac mini). Pro Anlass hängt die App nur `?e=…` an, die Adresse bleibt immer gleich.
+    static let pageURL = "https://guderjahn.homeip.net/"
 }
 
 struct GuestOrderService {
@@ -417,7 +419,7 @@ struct GuestLinkSheet: View {
 
     @AppStorage("fbProject") private var project = GuestFirebaseDefaults.project
     @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
-    @AppStorage("guestPageURL") private var pageURL = ""
+    @AppStorage("guestPageURL") private var pageURL = GuestFirebaseDefaults.pageURL
     @AppStorage("guestNames") private var guestNames = ""
     @AppStorage("menuEventID") private var eventID = ""
     @AppStorage("menuTitle") private var menuTitle = ""
@@ -435,6 +437,7 @@ struct GuestLinkSheet: View {
     @State private var renameText = ""
     @State private var removing: String?
     @State private var deletingOrder: String?
+    @State private var showingNewEvent = false
 
     private var guests: [String] {
         guestNames.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -466,11 +469,12 @@ struct GuestLinkSheet: View {
                         .lineLimit(1...5)
                     Toggle("Orders closed", isOn: $ordersClosed)
                     NavigationLink {
-                        GuestEveningsView(currentID: eventID, pageURL: pageURL, service: service) { switchTo($0) }
+                        GuestEveningsView(currentID: eventID, pageURL: pageURL, service: service, onSelect: { switchTo($0) },
+                                          onNew: { showingNewEvent = true })
                     } label: {
-                        LabeledContent("All evenings", value: "\(eveningCount)")
+                        LabeledContent("All events", value: "\(eveningCount)")
                     }
-                    Button("New evening (new link)", systemImage: "sparkles") { startNewEvening() }
+                    Button("New event", systemImage: "sparkles") { showingNewEvent = true }
                 } header: {
                     Text("Evening")
                 } footer: {
@@ -616,6 +620,11 @@ struct GuestLinkSheet: View {
             } message: {
                 Text("If this guest has already ordered, the order is deleted too.")
             }
+            .sheet(isPresented: $showingNewEvent) {
+                NewGuestEventSheet { newTitle, newDate, newIntro in
+                    Task { await createEvening(title: newTitle, date: newDate, intro: newIntro) }
+                }
+            }
             .confirmationDialog("Delete the order of \(deletingOrder ?? "")?", isPresented: Binding { deletingOrder != nil } set: { if !$0 { deletingOrder = nil } },
                                 titleVisibility: .visible) {
                 Button("Delete order", role: .destructive) {
@@ -643,14 +652,20 @@ struct GuestLinkSheet: View {
     private var service: GuestOrderService { .init(project: project.trimmingCharacters(in: .whitespaces),
                                                    apiKey: apiKey.trimmingCharacters(in: .whitespaces)) }
 
-    /// Neuer Abend mit neuem Link; der bisherige bleibt in der Übersicht erhalten
-    private func startNewEvening() {
+    /// Neuen Anlass anlegen: eigener Link, Karte und Gäste bleiben, wird sofort veröffentlicht, der Link liegt danach in der Zwischenablage
+    private func createEvening(title newTitle: String, date newDate: Date, intro newIntro: String) async {
         if GuestEvenings.all.contains(where: { $0.id == eventID }) { GuestEvenings.upsert(current) }
         eventID = Self.newID()
-        orders = []
-        intro = ""
+        menuTitle = newTitle
+        menuDate = newDate.timeIntervalSince1970
+        intro = newIntro
         ordersClosed = false
-        status = String(localized: "New evening created. Set title and date in the menu, then publish.")
+        orders = []
+        await publish(title: newTitle, date: newDate)
+        if let link = guestLink {
+            UIPasteboard.general.string = link.absoluteString
+            status = String(localized: "Event created and published. The guest link is copied: paste it into your message.")
+        }
     }
 
     /// Zu einem anderen Abend aus der Übersicht wechseln (Link, Titel, Datum, Gäste, Text)
@@ -725,16 +740,18 @@ struct GuestLinkSheet: View {
         } catch { status = error.localizedDescription }
     }
 
-    private func publish() async {
+    private func publish(title overrideTitle: String? = nil, date overrideDate: Date? = nil) async {
         isBusy = true; defer { isBusy = false }
+        let eventTitle = overrideTitle ?? title
+        let eventDate = overrideDate ?? date
         let text = intro.trimmingCharacters(in: .whitespacesAndNewlines)
-        let event = GuestEvent(title: title, date: date, guests: guests, pizzas: pizzas.map { pizza in
+        let event = GuestEvent(title: eventTitle, date: eventDate, guests: guests, pizzas: pizzas.map { pizza in
             .init(name: pizza.name, info: pizza.info,
                   toppings: pizza.toppings.map { .init(name: $0.name, amount: $0.amount, unit: $0.unit) })
         }, intro: text.isEmpty ? nil : text, closed: ordersClosed ? true : nil)
         do {
             try await service.publish(event, id: eventID)
-            var evening = current
+            var evening = GuestEvening(id: eventID, title: eventTitle, date: eventDate, intro: intro, guests: guests, closed: ordersClosed)
             evening.publishedAt = .now
             GuestEvenings.upsert(evening)
             eveningCount = GuestEvenings.all.count
@@ -785,6 +802,7 @@ struct GuestEveningsView: View {
     var pageURL: String
     var service: GuestOrderService
     var onSelect: (GuestEvening) -> Void
+    var onNew: () -> Void = {}
 
     @State private var evenings = GuestEvenings.all
     @State private var isRefreshing = false
@@ -796,7 +814,13 @@ struct GuestEveningsView: View {
     var body: some View {
         List {
             if evenings.isEmpty {
-                Text("No evenings yet. Publish a menu to add one.").foregroundStyle(.secondary)
+                ContentUnavailableView {
+                    Label("No events yet", systemImage: "party.popper")
+                } description: {
+                    Text("Create your first event: title, date, done. The guest link is ready right away.")
+                } actions: {
+                    Button("New event", action: onNew).buttonStyle(.borderedProminent)
+                }
             }
             if !upcoming.isEmpty {
                 Section("Upcoming") { ForEach(upcoming) { row($0) } }
@@ -806,12 +830,15 @@ struct GuestEveningsView: View {
             }
             Section {
             } footer: {
-                Text("Tap an evening to work on it. Swipe right to open or copy its link. Removing it here only hides it in the app; its guest link keeps working.")
+                Text("Tap an event to work on it. Swipe right to open or copy its link. Removing it here only hides it in the app; its guest link keeps working.")
             }
         }
-        .navigationTitle("All evenings")
+        .navigationTitle("All events")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("New event", systemImage: "plus", action: onNew)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Refresh orders", systemImage: "arrow.clockwise") { Task { await refresh() } }
                     .disabled(isRefreshing || evenings.isEmpty)
@@ -825,18 +852,27 @@ struct GuestEveningsView: View {
             onSelect(evening)
             dismiss()
         } label: {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Text(evening.title).font(.headline).foregroundStyle(.primary)
-                    Spacer()
-                    if evening.id == currentID {
-                        Text("Current").font(.caption.bold()).foregroundStyle(.tint)
-                    }
+            HStack(spacing: 12) {
+                VStack(spacing: 0) {
+                    Text(evening.date.formatted(.dateTime.day())).font(.title2.bold())
+                    Text(evening.date.formatted(.dateTime.month(.abbreviated))).font(.caption.smallCaps())
                 }
-                Text(evening.date.formatted(.dateTime.weekday(.abbreviated).day().month().year().hour().minute()))
-                    .font(.caption).foregroundStyle(.secondary)
-                Text(details(evening)).font(.caption).foregroundStyle(.secondary)
+                .frame(width: 46, height: 46)
+                .background(.tint.opacity(evening.id == currentID ? 0.25 : 0.12), in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack {
+                        Text(evening.title).font(.headline).foregroundStyle(.primary)
+                        if evening.id == currentID {
+                            Text("Current").font(.caption2.bold()).padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(.tint, in: Capsule()).foregroundStyle(.white)
+                        }
+                    }
+                    Text(evening.date.formatted(.dateTime.weekday(.wide).hour().minute()))
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text(details(evening)).font(.caption).foregroundStyle(.secondary)
+                }
             }
+            .padding(.vertical, 2)
         }
         .swipeActions(edge: .trailing) {
             Button("Remove", systemImage: "trash", role: .destructive) {
@@ -876,5 +912,42 @@ struct GuestEveningsView: View {
             GuestEvenings.upsert(updated)
         }
         evenings = GuestEvenings.all
+    }
+}
+
+/// Neuen Anlass anlegen: nur Titel und Datum (Text optional); Karte und Gäste bleiben, Veröffentlichen passiert automatisch
+struct NewGuestEventSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var onCreate: (String, Date, String) -> Void
+
+    @State private var title = ""
+    @State private var date = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: .now) ?? .now
+    @State private var intro = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name of the event, e.g. Anna's 40th", text: $title)
+                    DatePicker("Date", selection: $date)
+                    TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical).lineLimit(1...4)
+                } footer: {
+                    Text("The menu and the guest list stay as they are; you can change them afterwards. The event is published right away and its guest link is copied.")
+                }
+            }
+            .navigationTitle("New event")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        onCreate(title.trimmingCharacters(in: .whitespaces), date, intro.trimmingCharacters(in: .whitespacesAndNewlines))
+                        dismiss()
+                    }
+                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }

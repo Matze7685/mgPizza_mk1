@@ -5701,6 +5701,96 @@
           }
         }
       }
+    },
+    "All events" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Anlässe"
+          }
+        }
+      }
+    },
+    "New event" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Anlass"
+          }
+        }
+      }
+    },
+    "No events yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Anlässe"
+          }
+        }
+      }
+    },
+    "Create your first event: title, date, done. The guest link is ready right away." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lege deinen ersten Anlass an: Name, Datum, fertig. Der Gästelink ist sofort bereit."
+          }
+        }
+      }
+    },
+    "Tap an event to work on it. Swipe right to open or copy its link. Removing it here only hides it in the app; its guest link keeps working." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf einen Anlass, um ihn zu bearbeiten. Nach rechts wischen öffnet oder kopiert den Link. Entfernen blendet ihn nur in der App aus, der Gästelink funktioniert weiter."
+          }
+        }
+      }
+    },
+    "Event created and published. The guest link is copied: paste it into your message." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anlass erstellt und veröffentlicht. Der Gästelink ist kopiert: füge ihn in deine Nachricht ein."
+          }
+        }
+      }
+    },
+    "Name of the event, e.g. Anna's 40th" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name des Anlasses, z. B. Annas 40er"
+          }
+        }
+      }
+    },
+    "The menu and the guest list stay as they are; you can change them afterwards. The event is published right away and its guest link is copied." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speisekarte und Gästeliste bleiben wie sie sind und lassen sich danach ändern. Der Anlass wird sofort veröffentlicht und der Gästelink kopiert."
+          }
+        }
+      }
+    },
+    "Create" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellen"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"
