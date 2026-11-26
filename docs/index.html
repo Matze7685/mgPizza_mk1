@@ -157,7 +157,8 @@ async function load() {
     event.pizzas.forEach(p => {
       const names = new Set();
       p.extraOptions = [...event.extraAmounts.map(t => t.name), ...(event.extras || [])]
-        .filter(n => { const k = (n || "").toLowerCase(); return k && !onPizza(p, k) && !names.has(k) && names.add(k); });
+        .filter(n => { const k = (n || "").toLowerCase(); return k && !onPizza(p, k) && !names.has(k) && names.add(k); })
+        .sort((a, b) => a.localeCompare(b, "de"));
     });
   } else
   // Ältere App ohne Mengenliste: alles aus der Karte, was nicht schon drauf ist

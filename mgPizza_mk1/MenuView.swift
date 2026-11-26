@@ -965,20 +965,31 @@ struct ExtrasPickerSheet: View {
                 seen.insert(key)
                 return !own.contains { $0 == key || $0.hasPrefix(key + " ") || $0.hasPrefix(key + "(") }
             }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
 
     var body: some View {
         NavigationStack {
-            List(options, id: \.self) { name in
-                Button {
-                    if selected.contains(name) { selected.remove(name) } else { selected.insert(name) }
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: selected.contains(name) ? "checkmark.circle.fill" : "circle")
-                            .font(.title3).foregroundStyle(selected.contains(name) ? .green : .gray)
-                        Text(name).foregroundStyle(.primary)
+            // Zwei Spalten, alphabetisch (wie auf der Gästeseite)
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
+                          alignment: .leading, spacing: 14) {
+                    ForEach(options, id: \.self) { name in
+                        Button {
+                            if selected.contains(name) { selected.remove(name) } else { selected.insert(name) }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: selected.contains(name) ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3).foregroundStyle(selected.contains(name) ? .green : .gray)
+                                Text(name).foregroundStyle(.primary).lineLimit(2)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
+                .padding()
             }
             .navigationTitle("Extras for \(pizza.name)")
             .navigationBarTitleDisplayMode(.inline)
