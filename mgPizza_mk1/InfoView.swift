@@ -205,6 +205,11 @@ enum Changelog {
     }
 
     static let entries: [Entry] = [
+        Entry(version: "1.7", builds: "80", date: "26.11.26", title: "Geteilte Ansicht", changes: [
+            "Oben nur noch Zutatennamen, Mengen nur bei Zusatzzutaten",
+            "Zutaten größer in 2 oder 3 Spalten (Einstellungen), optional die nächste Pizza mit Zutaten daneben",
+            "Button „Nächste Pizza“ in der oberen Hälfte",
+        ]),
         Entry(version: "1.6", builds: "79", date: "26.11.26", title: "Info", changes: [
             "Info-Seite in den Einstellungen mit Version, Build und Changelog",
             "Pizzazähler aus allen Teigrezepten: gesamt, dieses Jahr, rund/Detroit, Teig und Mehl in kg, größter Teig",
