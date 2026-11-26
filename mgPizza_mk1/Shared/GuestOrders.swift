@@ -637,6 +637,10 @@ struct GuestLinkSheet: View {
                 }
             }
             .onAppear {
+                // Früher leer gespeicherte Felder mit den festen Werten füllen
+                if project.trimmingCharacters(in: .whitespaces).isEmpty { project = GuestFirebaseDefaults.project }
+                if apiKey.trimmingCharacters(in: .whitespaces).isEmpty { apiKey = GuestFirebaseDefaults.apiKey }
+                if pageURL.trimmingCharacters(in: .whitespaces).isEmpty { pageURL = GuestFirebaseDefaults.pageURL }
                 if eventID.isEmpty { eventID = Self.newID() }
                 // Erster Start mit Übersicht: den bisher genutzten Abend übernehmen
                 if !GuestEvenings.exists {
