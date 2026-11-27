@@ -43,8 +43,15 @@ struct ActivityView: View {
     var body: some View {
         List {
             if activeRecipes.isEmpty {
-                ContentUnavailableView("No dough running", systemImage: "timer",
-                                       description: Text("Open a recipe and tap “Bake now”, or create a new one with the + button."))
+                ContentUnavailableView {
+                    Label("No dough running", systemImage: "timer")
+                } description: {
+                    Text("Open a recipe and tap “Bake now”, or create a new one with the + button.")
+                } actions: {
+                    Button("New dough") { AppRouter.shared.showNewRecipe = true }
+                        .buttonStyle(.borderedProminent)
+                    Button("Recipes") { AppRouter.shared.selectedTab = .recipes }
+                }
             } else {
                 let ordered = prioritized(now: .now)
                 // Hero: das Wichtigste groß, der Rest kompakt darunter
@@ -55,7 +62,7 @@ struct ActivityView: View {
                                 ActiveRecipeCard(recipe: hero, now: context.date)
                             }
                         }
-                        .listRowBackground(Color.orange.opacity(0.12))
+                        .listRowBackground(Theme.doughBackground)
                     }
                 }
                 if ordered.count > 1 {

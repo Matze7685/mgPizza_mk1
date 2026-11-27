@@ -1,0 +1,4 @@
+# Persönliche Xcode-Dateien (Fenster, Haltepunkte, Schemata pro Benutzer)
+xcuserdata/
+*.xcuserstate
+.DS_Store

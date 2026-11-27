@@ -98,7 +98,7 @@ enum GuestEvenings {
 
     /// Adresse der Gästeseite (Einstellung, sonst die feste Adresse)
     static var pageURL: String {
-        let value = (UserDefaults.standard.string(forKey: "guestPageURL") ?? "").trimmingCharacters(in: .whitespaces)
+        let value = (UserDefaults.standard.string(forKey: AppKeys.guestPageURL) ?? "").trimmingCharacters(in: .whitespaces)
         return value.isEmpty ? GuestFirebaseDefaults.pageURL : value
     }
 
@@ -116,8 +116,8 @@ extension GuestOrderService {
             let text = (UserDefaults.standard.string(forKey: key) ?? "").trimmingCharacters(in: .whitespaces)
             return text.isEmpty ? fallback : text
         }
-        return GuestOrderService(project: value("fbProject", GuestFirebaseDefaults.project),
-                                 apiKey: value("fbKey", GuestFirebaseDefaults.apiKey))
+        return GuestOrderService(project: value(AppKeys.fbProject, GuestFirebaseDefaults.project),
+                                 apiKey: value(AppKeys.fbKey, GuestFirebaseDefaults.apiKey))
     }
 }
 

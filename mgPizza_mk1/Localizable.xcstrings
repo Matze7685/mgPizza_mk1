@@ -6751,6 +6751,566 @@
           }
         }
       }
+    },
+    "Preview of the app icon" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorschau des App-Symbols"
+          }
+        }
+      }
+    },
+    "Take a selfie or choose a photo" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selfie machen oder Foto wählen"
+          }
+        }
+      }
+    },
+    "No face found. The mustache sits in the middle – move it with the sliders below." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Gesicht gefunden. Der Schnurrbart sitzt in der Mitte – mit den Reglern unten verschieben."
+          }
+        }
+      }
+    },
+    "Take selfie" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selfie machen"
+          }
+        }
+      }
+    },
+    "Choose from photos" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Fotos wählen"
+          }
+        }
+      }
+    },
+    "Best: face straight to the camera, good light, plain background." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Am besten: Gesicht gerade zur Kamera, gutes Licht, ruhiger Hintergrund."
+          }
+        }
+      }
+    },
+    "Look" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stil"
+          }
+        }
+      }
+    },
+    "Background" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hintergrund"
+          }
+        }
+      }
+    },
+    "Chef's hat" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kochmütze"
+          }
+        }
+      }
+    },
+    "Cut out person" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Person freistellen"
+          }
+        }
+      }
+    },
+    "Mustache" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schnurrbart"
+          }
+        }
+      }
+    },
+    "Shape" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Form"
+          }
+        }
+      }
+    },
+    "Color" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe"
+          }
+        }
+      }
+    },
+    "Size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größe"
+          }
+        }
+      }
+    },
+    "Up / down" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoch / runter"
+          }
+        }
+      }
+    },
+    "Left / right" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links / rechts"
+          }
+        }
+      }
+    },
+    "Zoom" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom"
+          }
+        }
+      }
+    },
+    "Pizza app icon" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizza-App-Symbol"
+          }
+        }
+      }
+    },
+    "Share icon (1024 × 1024)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symbol teilen (1024 × 1024)"
+          }
+        }
+      }
+    },
+    "iOS doesn't let an app swap its own icon for a picture made on the phone. Send the picture to Claude in the chat (or AirDrop it to your Mac and drop it into Assets › AppIcon in Xcode). After the next build it's your home screen icon." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS erlaubt einer App nicht, ihr eigenes Symbol durch ein auf dem iPhone erstelltes Bild zu ersetzen. Schick das Bild an Claude im Chat (oder per AirDrop an den Mac und in Xcode unter Assets › AppIcon hineinziehen). Nach dem nächsten Build ist es dein Symbol am Homescreen."
+          }
+        }
+      }
+    },
+    "Icon studio" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Icon-Studio"
+          }
+        }
+      }
+    },
+    "Cartoon" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartoon"
+          }
+        }
+      }
+    },
+    "Comic (halftone)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comic (Raster)"
+          }
+        }
+      }
+    },
+    "Pop art" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pop-Art"
+          }
+        }
+      }
+    },
+    "Italian flag" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Italienische Flagge"
+          }
+        }
+      }
+    },
+    "Tomato red" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomatenrot"
+          }
+        }
+      }
+    },
+    "Basil green" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basilikumgrün"
+          }
+        }
+      }
+    },
+    "Mozzarella" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mozzarella"
+          }
+        }
+      }
+    },
+    "Handlebar" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lenker"
+          }
+        }
+      }
+    },
+    "Bushy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buschig"
+          }
+        }
+      }
+    },
+    "Extra curly" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extra gezwirbelt"
+          }
+        }
+      }
+    },
+    "Black" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarz"
+          }
+        }
+      }
+    },
+    "Dark brown" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dunkelbraun"
+          }
+        }
+      }
+    },
+    "Ginger" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rot"
+          }
+        }
+      }
+    },
+    "Grey" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grau"
+          }
+        }
+      }
+    },
+    "Turn a selfie into a comic-style app icon with an Italian mustache." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mach aus einem Selfie ein App-Symbol im Comic-Stil mit italienischem Schnurrbart."
+          }
+        }
+      }
+    },
+    "New dough" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Teig"
+          }
+        }
+      }
+    },
+    "Saved data could not be opened. Changes are not kept. (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespeicherte Daten ließen sich nicht öffnen. Änderungen werden nicht gespeichert. (%@)"
+          }
+        }
+      }
+    },
+    "Plan dough: %lld dough balls" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teig planen: %lld Teiglinge"
+          }
+        }
+      }
+    },
+    "Plan dough: %lld Detroit pans" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teig planen: %lld Detroit-Bleche"
+          }
+        }
+      }
+    },
+    "New orders arrive automatically every minute while this page is open, or pull down to refresh. Without guest page: enter the counts by hand under “Pizzas ordered”. Swipe an order to release it for a new phone or to delete it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neue Bestellungen kommen jede Minute automatisch, solange diese Seite offen ist, oder durch Herunterziehen. Ohne Gästeseite: Anzahl von Hand unter „Bestellte Pizzen“ eintragen. Bestellung wischen, um sie für ein neues Handy freizugeben oder zu löschen."
+          }
+        }
+      }
+    },
+    "A pizza night, a birthday, a team lunch: plan the pizzas, invite guests and collect their orders." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizzaabend, Geburtstag, Team-Mittagessen: Pizzen planen, Gäste einladen und Bestellungen sammeln."
+          }
+        }
+      }
+    },
+    "Share list" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste teilen"
+          }
+        }
+      }
+    },
+    "Take the dough out of the fridge and spread it into %lld pans (%lld g each)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teig aus dem Kühlschrank nehmen und auf %lld Bleche verteilen (je %lld g)."
+          }
+        }
+      }
+    },
+    "Take the dough out of the fridge and shape %lld dough balls of %lld g." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teig aus dem Kühlschrank nehmen und %lld Teiglinge à %lld g formen."
+          }
+        }
+      }
+    },
+    "%lld of %lld guests ordered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld von %lld Gästen haben bestellt"
+          }
+        }
+      }
+    },
+    "Pizza status" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizza-Status"
+          }
+        }
+      }
+    },
+    "Next dough step and your next pizza event." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächster Teigschritt und dein nächster Pizza-Anlass."
+          }
+        }
+      }
+    },
+    "No event planned" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Anlass geplant"
+          }
+        }
+      }
+    },
+    "🍕 Nothing planned" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🍕 Nichts geplant"
+          }
+        }
+      }
+    },
+    "Options" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optionen"
+          }
+        }
+      }
+    },
+    "Mark as not done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als nicht erledigt markieren"
+          }
+        }
+      }
+    },
+    "Mark as done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als erledigt markieren"
+          }
+        }
+      }
+    },
+    "Available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verfügbar"
+          }
+        }
+      }
+    },
+    "Not available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar"
+          }
+        }
+      }
+    },
+    "%lld of 5 stars" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld von 5 Sternen"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

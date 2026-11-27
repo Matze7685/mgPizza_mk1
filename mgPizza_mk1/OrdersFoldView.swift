@@ -95,20 +95,20 @@ struct OrdersFoldView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
 
-    @AppStorage("fbProject") private var project = GuestFirebaseDefaults.project
-    @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
-    @AppStorage("menuEventID") private var eventID = ""
-    @AppStorage("menuTitle") private var menuTitle = ""
+    @AppStorage(AppKeys.fbProject) private var project = GuestFirebaseDefaults.project
+    @AppStorage(AppKeys.fbKey) private var apiKey = GuestFirebaseDefaults.apiKey
+    @AppStorage(AppKeys.menuEventID) private var eventID = ""
+    @AppStorage(AppKeys.menuTitle) private var menuTitle = ""
     /// Anlass mit festen Mengen: keine Gästebestellungen abholen, nur die Stückzahlen pro Sorte
-    @AppStorage("menuFixedMode") private var isFixed = false
+    @AppStorage(AppKeys.menuFixedMode) private var isFixed = false
     /// Abstand für den Knick in der Mitte (Punkte); dort steht kein Inhalt
     @AppStorage("foldHingeGap") private var hingeGap: Double = 24
     /// Halbbildschirme tauschen (falls das Gerät andersherum gehalten wird)
     @AppStorage("foldSwapHalves") private var swapHalves = false
     /// Spalten für die Zutaten oben (Einstellungen)
-    @AppStorage("foldColumns") private var foldColumns = 2
+    @AppStorage(AppKeys.foldColumns) private var foldColumns = 2
     /// Nächste Pizza inkl. Zutaten neben der aktuellen anzeigen (Einstellungen)
-    @AppStorage("foldShowNext") private var showNextPizza = false
+    @AppStorage(AppKeys.foldShowNext) private var showNextPizza = false
 
     @State private var queue: [PrepItem] = []
     /// Oben angezeigte Pizza; ohne Auswahl die erste noch nicht fertige
@@ -410,6 +410,7 @@ struct OrdersFoldView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle").font(.title2)
                 }
+                .accessibilityLabel("Options")
 
                 Button("Close") { dismiss() }
             }
@@ -443,6 +444,7 @@ struct OrdersFoldView: View {
                     .font(.title2).foregroundStyle(item.done ? .green : .gray)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(item.done ? "Mark as not done" : "Mark as done")
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(position). \(item.guest.isEmpty ? pizzaTitle(item) : item.guest)").font(.headline)

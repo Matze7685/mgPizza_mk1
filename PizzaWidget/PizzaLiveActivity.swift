@@ -13,6 +13,7 @@ import WidgetKit
 struct PizzaWidgetBundle: WidgetBundle {
     var body: some Widget {
         PizzaLiveActivity()
+        PizzaStatusWidget()
     }
 }
 

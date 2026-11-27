@@ -205,6 +205,17 @@ enum Changelog {
     }
 
     static let entries: [Entry] = [
+        Entry(version: "1.8", builds: "83", date: "27.11.26", title: "Rundum besser", changes: [
+            "Icon-Studio (Einstellungen): Selfie → Comic-Gesicht mit italienischem Schnurrbart und Kochmütze als App-Symbol-Bild",
+            "Pizzaabend-Assistent: im Anlass „Teig planen“ – bestes Rezept als Vorlage, Anzahl aus den Bestellungen, Servieren zum Anlass",
+            "Bestellungen kommen automatisch (jede Minute, solange der Anlass offen ist) oder per Herunterziehen",
+            "Schnellaktionen am App-Symbol: Bestellungen, Geteilte Ansicht, Neuer Teig, Einkaufsliste",
+            "Homescreen- und Sperrbildschirm-Widget: nächster Teigschritt und nächster Anlass",
+            "Einkaufsliste teilen (Erinnerungen, Nachrichten, WhatsApp)",
+            "Teiglinge formen: Anzahl und Gewicht beim Herausnehmen und in der Erinnerung",
+            "Akzentfarbe Tomatenrot passend zur Gästeseite, leere Seiten mit Knopf zum Loslegen, VoiceOver-Beschriftungen",
+            "Technik: Speisekarte in mehrere Dateien aufgeteilt, Einstellungsnamen gebündelt, kein Absturz bei Datenbankfehler, erste automatische Tests",
+        ]),
         Entry(version: "1.7", builds: "80–82", date: "26.11.26", title: "Geteilte Ansicht", changes: [
             "⋯-Menü: Spalten und Knick-Abstand als beschriftete Untermenüs, „Nächste Pizza daneben“ zeigt die Hälfte immer an",
             "Tomatensauce, Reibekäse und Mozzarella stehen oben immer untereinander (🍅 🧀 ⚪️)",
