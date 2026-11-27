@@ -205,6 +205,12 @@ enum Changelog {
     }
 
     static let entries: [Entry] = [
+        Entry(version: "1.9", builds: "84", date: "27.11.26", title: "Icon zeichnen", changes: [
+            "Neues App-Symbol: Mathias als Comic-Pizzakoch mit Schnurrbart und Kochmütze",
+            "Icon-Studio zeichnet mit Apple Intelligence (Image Playground) eine echte Illustration aus dem Selfie: Pizzakoch mit Schnurrbart, Kochmütze, Pizza und Italien-Hintergrund",
+            "Stile Animation, Illustration und Skizze, eigener Extrawunsch",
+            "Foto-Filter bleibt als Alternative, jetzt mit schärferem Ausschnitt",
+        ]),
         Entry(version: "1.8", builds: "83", date: "27.11.26", title: "Rundum besser", changes: [
             "Icon-Studio (Einstellungen): Selfie → Comic-Gesicht mit italienischem Schnurrbart und Kochmütze als App-Symbol-Bild",
             "Pizzaabend-Assistent: im Anlass „Teig planen“ – bestes Rezept als Vorlage, Anzahl aus den Bestellungen, Servieren zum Anlass",

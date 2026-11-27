@@ -7311,6 +7311,156 @@
           }
         }
       }
+    },
+    "Animation (3D comic)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animation (3D-Comic)"
+          }
+        }
+      }
+    },
+    "Illustration (drawn)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illustration (gezeichnet)"
+          }
+        }
+      }
+    },
+    "Sketch" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skizze"
+          }
+        }
+      }
+    },
+    "Method" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Methode"
+          }
+        }
+      }
+    },
+    "Draw (Apple Intelligence)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichnen (Apple Intelligence)"
+          }
+        }
+      }
+    },
+    "Photo filter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto-Filter"
+          }
+        }
+      }
+    },
+    "Italian mustache" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Italienischer Schnurrbart"
+          }
+        }
+      }
+    },
+    "Pizza in hand" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pizza in der Hand"
+          }
+        }
+      }
+    },
+    "Italian flag background" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hintergrund Italien-Flagge"
+          }
+        }
+      }
+    },
+    "Extra wish (optional), e.g. “winking”" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extrawunsch (optional), z. B. „zwinkernd“"
+          }
+        }
+      }
+    },
+    "Draw icon" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symbol zeichnen"
+          }
+        }
+      }
+    },
+    "Draw again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu zeichnen"
+          }
+        }
+      }
+    },
+    "Drawing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichnen"
+          }
+        }
+      }
+    },
+    "Image Playground draws a real illustration from your photo (on the iPhone, nothing is uploaded). In the window you can pick a different look of the person, change the style or add ideas, then tap “Done”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image Playground zeichnet aus deinem Foto eine echte Illustration (direkt auf dem iPhone, nichts wird hochgeladen). Im Fenster kannst du das Aussehen der Person anpassen, den Stil wechseln oder Ideen ergänzen und dann auf „Fertig“ tippen."
+          }
+        }
+      }
+    },
+    "Drawing needs Apple Intelligence. Turn it on under Settings › Apple Intelligence & Siri, or use the photo filter." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Zeichnen braucht es Apple Intelligence. Einschalten unter Einstellungen › Apple Intelligence & Siri, oder den Foto-Filter verwenden."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

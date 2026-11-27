@@ -173,11 +173,11 @@ nonisolated enum IconRenderer {
 
     // MARK: Foto vorbereiten
 
-    /// Aufrecht drehen und auf höchstens 1600 Punkte verkleinern
+    /// Aufrecht drehen und auf höchstens 3000 Punkte verkleinern (mehr Details im Gesicht)
     private static func normalized(_ photo: UIImage) -> CGImage? {
         let longest = max(photo.size.width, photo.size.height)
         guard longest > 0 else { return nil }
-        let factor = min(1, 1600 / longest)
+        let factor = min(1, 3000 / longest)
         let target = CGSize(width: (photo.size.width * factor).rounded(), height: (photo.size.height * factor).rounded())
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
