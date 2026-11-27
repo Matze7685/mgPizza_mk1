@@ -16,6 +16,7 @@
 		A7C0FFEE0000000E00AA0000 /* AppKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C0FFEE0000000D00AA0000 /* AppKeys.swift */; };
 		A7C0FFEE0000001000AA0000 /* WidgetSnapshot+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C0FFEE0000000F00AA0000 /* WidgetSnapshot+App.swift */; };
 		A7C0FFEE0000001200AA0000 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C0FFEE0000001100AA0000 /* Theme.swift */; };
+		A7C0FFEE0000002A00AA0000 /* IntroAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C0FFEE0000002900AA0000 /* IntroAnimationView.swift */; };
 		A7C0FFEE0000001400AA0000 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C0FFEE0000001300AA0000 /* WidgetSnapshot.swift */; };
 		A7C0FFEE0000001500AA0000 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C0FFEE0000001300AA0000 /* WidgetSnapshot.swift */; };
 		A7C0FFEE0000001700AA0000 /* PizzaStatusWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C0FFEE0000001600AA0000 /* PizzaStatusWidget.swift */; };
@@ -112,6 +113,7 @@
 		A7C0FFEE0000000D00AA0000 /* AppKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppKeys.swift; sourceTree = "<group>"; };
 		A7C0FFEE0000000F00AA0000 /* WidgetSnapshot+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WidgetSnapshot+App.swift"; sourceTree = "<group>"; };
 		A7C0FFEE0000001100AA0000 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A7C0FFEE0000002900AA0000 /* IntroAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroAnimationView.swift; sourceTree = "<group>"; };
 		A7C0FFEE0000001300AA0000 /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
 		A7C0FFEE0000001600AA0000 /* PizzaStatusWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PizzaStatusWidget.swift; sourceTree = "<group>"; };
 		A7C0FFEE0000001800AA0000 /* PizzaWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PizzaWidget.entitlements; sourceTree = "<group>"; };
@@ -346,6 +348,7 @@
 			isa = PBXGroup;
 			children = (
 				A7C0FFEE0000001100AA0000 /* Theme.swift */,
+				A7C0FFEE0000002900AA0000 /* IntroAnimationView.swift */,
 				C7DC0DEA302EE68C003738AA /* Buttons */,
 			);
 			path = Styles;
@@ -527,6 +530,7 @@
 				A7C0FFEE0000000E00AA0000 /* AppKeys.swift in Sources */,
 				A7C0FFEE0000001000AA0000 /* WidgetSnapshot+App.swift in Sources */,
 				A7C0FFEE0000001200AA0000 /* Theme.swift in Sources */,
+				A7C0FFEE0000002A00AA0000 /* IntroAnimationView.swift in Sources */,
 				A7C0FFEE0000001400AA0000 /* WidgetSnapshot.swift in Sources */,
 				D1B2C3D4000000020000DD02 /* MenuView.swift in Sources */,
 				F0D0F0D0000000010000FF02 /* OrdersFoldView.swift in Sources */,
@@ -605,11 +609,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 84;
+				CURRENT_PROJECT_VERSION = 85;
 				DEVELOPMENT_TEAM = WVD937X98R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -626,11 +630,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 84;
+				CURRENT_PROJECT_VERSION = 85;
 				DEVELOPMENT_TEAM = WVD937X98R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -649,7 +653,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = mgPizza_mk1/mgPizza_mk1.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 84;
+				CURRENT_PROJECT_VERSION = 85;
 				DEVELOPMENT_TEAM = WVD937X98R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -670,7 +674,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -690,7 +694,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = mgPizza_mk1/mgPizza_mk1.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 84;
+				CURRENT_PROJECT_VERSION = 85;
 				DEVELOPMENT_TEAM = WVD937X98R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -711,7 +715,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -851,7 +855,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 84;
+				CURRENT_PROJECT_VERSION = 85;
 				DEVELOPMENT_TEAM = WVD937X98R;
 				GENERATE_INFOPLIST_FILE = YES;
 				CODE_SIGN_ENTITLEMENTS = PizzaWidget/PizzaWidget.entitlements;
@@ -864,7 +868,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1.PizzaWidget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -880,7 +884,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 84;
+				CURRENT_PROJECT_VERSION = 85;
 				DEVELOPMENT_TEAM = WVD937X98R;
 				GENERATE_INFOPLIST_FILE = YES;
 				CODE_SIGN_ENTITLEMENTS = PizzaWidget/PizzaWidget.entitlements;
@@ -893,7 +897,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.einfachschwimmen.mgPizza-mk1.PizzaWidget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

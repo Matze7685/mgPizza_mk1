@@ -20,6 +20,8 @@ final class AppRouter: ObservableObject {
     @Published var openEventID: String?
     /// Geteilte Ansicht (Zubereitung) des aktuellen Anlasses öffnen
     @Published var showFoldView = false
+    /// Intro überspringen (Start über Schnellaktion oder Mitteilung)
+    @Published var skipIntro = false
 
     func open(_ recipe: RecipeSetupData) {
         // Kurz warten, bis das Setup-Sheet geschlossen ist
@@ -65,6 +67,7 @@ final class AppRouter: ObservableObject {
     @discardableResult
     func handle(_ item: UIApplicationShortcutItem) -> Bool {
         guard let shortcut = Shortcut(rawValue: item.type) else { return false }
+        skipIntro = true
         // Kurz warten, damit die Oberfläche nach dem Start steht
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             switch shortcut {

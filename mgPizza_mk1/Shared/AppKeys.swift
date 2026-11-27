@@ -31,6 +31,8 @@ nonisolated enum AppKeys {
     static let mixerCapacity = "mixerCapacity"
     static let foldColumns = "foldColumns"
     static let foldShowNext = "foldShowNext"
+    /// Intro-Animation (Ofen) beim App-Start
+    static let showIntro = "showIntro"
 }
 
 /// Der Anlass, der gerade in der App offen ist (Werte liegen in den Einstellungen, siehe `AppKeys.menu…`/`guest…`)
