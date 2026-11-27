@@ -205,6 +205,11 @@ enum Changelog {
     }
 
     static let entries: [Entry] = [
+        Entry(version: "1.10", builds: "85", date: "27.11.26", title: "Ofen-Intro", changes: [
+            "Intro beim App-Start: Der Pizzaofen heizt mit Flammen ein, die rohe Pizza kommt rein, bäckt kurz und kommt fertig wieder raus",
+            "Antippen überspringt, abschaltbar und zum Ansehen in den Einstellungen",
+            "Entfällt bei „Bewegung reduzieren“ und beim Öffnen über Schnellaktion oder Mitteilung",
+        ]),
         Entry(version: "1.9", builds: "84", date: "27.11.26", title: "Icon zeichnen", changes: [
             "Neues App-Symbol: Mathias als Comic-Pizzakoch mit Schnurrbart und Kochmütze",
             "Icon-Studio zeichnet mit Apple Intelligence (Image Playground) eine echte Illustration aus dem Selfie: Pizzakoch mit Schnurrbart, Kochmütze, Pizza und Italien-Hintergrund",

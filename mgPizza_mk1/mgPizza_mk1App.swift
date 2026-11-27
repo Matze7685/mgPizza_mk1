@@ -45,6 +45,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Vorher klingelten App-Alarm und Benachrichtigung getrennt, was trotz Entprellung doppelt zu hören war.
         completionHandler([.banner, .sound, .list])
     }
+
+    // Über eine Mitteilung geöffnet (z. B. „Teig raus“): direkt in die App, ohne Intro
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        AppRouter.shared.skipIntro = true
+        completionHandler()
+    }
 }
 
 /// Fehler beim Öffnen der Datenbank (nil = alles in Ordnung)
@@ -83,6 +91,7 @@ struct mgPizza_mk1App: App {
             MainView()
                 .environmentObject(TimerLogic())
                 .environmentObject(ovenMonitor)
+                .introAnimation()
         }
         .modelContainer(sharedModelContainer)
     }

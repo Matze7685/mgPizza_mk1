@@ -7461,6 +7461,76 @@
           }
         }
       }
+    },
+    "Tap to skip" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippen zum Überspringen"
+          }
+        }
+      }
+    },
+    "Intro: the pizza oven heats up and bakes a pizza" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intro: Der Pizzaofen heizt ein und backt eine Pizza"
+          }
+        }
+      }
+    },
+    "Double-tap to skip" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppeltippen zum Überspringen"
+          }
+        }
+      }
+    },
+    "Buon appetito!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buon appetito!"
+          }
+        }
+      }
+    },
+    "Intro animation at start" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intro-Animation beim Start"
+          }
+        }
+      }
+    },
+    "Play intro" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intro abspielen"
+          }
+        }
+      }
+    },
+    "When the app starts, the oven heats up and bakes a pizza (about 5 seconds, tap to skip). Not shown with Reduce Motion or when you open the app from a quick action or notification." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Start der App heizt der Ofen ein und backt eine Pizza (etwa 5 Sekunden, Tippen überspringt). Entfällt bei „Bewegung reduzieren“ und wenn du die App über eine Schnellaktion oder Mitteilung öffnest."
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

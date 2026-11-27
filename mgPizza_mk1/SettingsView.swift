@@ -13,6 +13,8 @@ struct SettingsView: View {
     @AppStorage(AppKeys.mixerCapacity) private var mixerCapacity: Double = 2500
     @AppStorage(AppKeys.foldColumns) private var foldColumns = 2
     @AppStorage(AppKeys.foldShowNext) private var foldShowNext = false
+    @AppStorage(AppKeys.showIntro) private var showIntro = true
+    @State private var playingIntro = false
 
     var body: some View {
         List {
@@ -86,6 +88,12 @@ struct SettingsView: View {
                 Text("Turn a selfie into a comic-style app icon with an Italian mustache.")
             }
             Section {
+                Toggle("Intro animation at start", isOn: $showIntro)
+                Button("Play intro", systemImage: "play.circle") { playingIntro = true }
+            } footer: {
+                Text("When the app starts, the oven heats up and bakes a pizza (about 5 seconds, tap to skip). Not shown with Reduce Motion or when you open the app from a quick action or notification.")
+            }
+            Section {
                 NavigationLink {
                     InfoView()
                 } label: {
@@ -94,6 +102,9 @@ struct SettingsView: View {
             } footer: {
                 Text("Version, changelog and pizza counter")
             }
+        }
+        .fullScreenCover(isPresented: $playingIntro) {
+            IntroAnimationView { playingIntro = false }
         }
     }
 }
