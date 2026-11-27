@@ -27,8 +27,8 @@ enum GuestPush {
 
     private static var service: GuestOrderService {
         let defaults = UserDefaults.standard
-        return GuestOrderService(project: (defaults.string(forKey: "fbProject") ?? GuestFirebaseDefaults.project).trimmingCharacters(in: .whitespaces),
-                                 apiKey: (defaults.string(forKey: "fbKey") ?? GuestFirebaseDefaults.apiKey).trimmingCharacters(in: .whitespaces))
+        return GuestOrderService(project: (defaults.string(forKey: AppKeys.fbProject) ?? GuestFirebaseDefaults.project).trimmingCharacters(in: .whitespaces),
+                                 apiKey: (defaults.string(forKey: AppKeys.fbKey) ?? GuestFirebaseDefaults.apiKey).trimmingCharacters(in: .whitespaces))
     }
 
     private static func setStatus(_ text: String) {

@@ -13,7 +13,7 @@ import SwiftUI
 final class DoughAnnouncer {
     static let shared = DoughAnnouncer()
 
-    @AppStorage("doughSpeak") var isEnabled: Bool = false
+    @AppStorage(AppKeys.doughSpeak) var isEnabled: Bool = false
 
     private var context: ModelContext?
     private var timer: Timer?

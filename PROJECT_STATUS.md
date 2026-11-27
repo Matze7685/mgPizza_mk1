@@ -35,6 +35,17 @@ Rezeptdetail: nur Bereich der aktuellen Phase aufgeklappt, Tipps/Feedback/Rezept
   Bytes 2–3 = Fühler 1 in °C Int16 LE, 4–5 = Fühler 2), Zielalarm, 45-Min-Abschalt-Erinnerung, State Restoration für Sperrbildschirm.
 - `Bluetooth/BLEDebugView.swift` – Bluetooth-Testansicht.
 
+- `Shared/AppKeys.swift` – Namen aller geteilten Einstellungen (`AppKeys.menuEventID` …) und `CurrentEvent.clear()`. Neue Einstellungen dort eintragen, keine Text-Schlüssel mehr in Ansichten.
+- `Events/` – aus `MenuView.swift` ausgelagert: `EventSheets.swift` (Gäste übernehmen, neuer Anlass, Extras, Planungsart), `MenuSettingsView.swift` (Pizzen & Mengen, Pizza-Editoren), `MenuPDF.swift`. `Model/MenuPizza+Toppings.swift`: Belag zusammenrechnen.
+- Pizzaabend-Assistent: im Anlass unter „Benötigter Belag“ „Teig planen“ → bestbewertetes Rezept des Stils als Vorlage, Anzahl aus den Bestellungen, Zeitplan nach Uhrzeit mit Servieren = Anlass.
+- Anlass-Ansicht holt Bestellungen jede Minute selbst (solange offen) und per Herunterziehen.
+- Schnellaktionen am App-Symbol: `AppRouter.updateShortcuts()` / `SceneDelegate` (in `AppRouter.swift`), AppDelegate liefert die Scene-Konfiguration.
+- Homescreen-Widget `PizzaWidget/PizzaStatusWidget.swift`: liest `WidgetSnapshot` (Shared, beide Targets) aus der App Group `group.com.einfachschwimmen.mgPizza-mk1`; die App schreibt ihn beim Verlassen (`WidgetSnapshot+App.swift`).
+- `IconStudio/` – Icon-Studio (Einstellungen): Foto → Vision-Gesicht → Comic-Filter → Schnurrbart/Kochmütze → 1024er PNG zum Teilen. iOS kann das App-Symbol nicht zur Laufzeit durch ein eigenes Bild ersetzen; das Bild kommt in `Assets.xcassets/AppIcon`.
+- `Styles/Theme.swift` – gemeinsame Farben; Akzentfarbe (Assets › AccentColor) Tomatenrot wie die Gästeseite.
+- Tests: Target `mgPizza_mk1Tests` (Swift Testing, ⌘U) mit Teigberechnung, Durchgängen, Belag und Anlass-Status.
+- Datenbankfehler beim Start: kein Absturz mehr, die App läuft dann im Speicher und zeigt oben einen roten Hinweis (`StoreProblem`).
+
 ## Offene Ideen / Wünsche des Nutzers
 - Home-Assistant-Anbindung für zuverlässige HomePod-Ansagen (Nutzer: „später“).
 - Optional: Schritt „Teiglinge formen“ nach dem Kneten.

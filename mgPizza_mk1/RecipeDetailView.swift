@@ -214,6 +214,12 @@ struct RecipeDetailView: View {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     ActiveDoughRow(recipe: recipeData, now: context.date, showsName: false)
                 }
+                // Teiglinge formen: beim Herausnehmen aus dem Kühlschrank (bzw. sofort, ohne Kühlschrank)
+                if recipeData.phase() == .fridge || (recipeData.phase() == .room && recipeData.coolTime == 0) {
+                    Label(recipeData.shapingText, systemImage: recipeData.isDetroit ? "square.grid.2x2" : "circle.grid.3x3")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
                 Button("Stop timer", systemImage: "stop.circle", role: .destructive) {
                     recipeData.stopTimers()
                 }
@@ -345,7 +351,7 @@ struct PhaseProgressView: View {
                     Image(systemName: state == .done ? "checkmark.circle.fill" : item.2)
                         .font(iconsOnly ? .body : .title3)
                         .frame(width: iconsOnly ? 28 : 36, height: iconsOnly ? 28 : 36)
-                        .background(Circle().fill(state == .current ? Color.orange.opacity(0.25) : Color.clear))
+                        .background(Circle().fill(state == .current ? Theme.doughHighlight : Color.clear))
                         .foregroundStyle(state == .done ? .green : (state == .current ? .orange : .gray))
                     if !iconsOnly {
                         Text(item.1)

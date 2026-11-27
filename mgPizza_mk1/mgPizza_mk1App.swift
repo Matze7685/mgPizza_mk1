@@ -20,6 +20,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         return true
     }
 
+    // Schnellaktionen am App-Symbol: eigener Scene-Delegate (SwiftUI reicht sie sonst nicht weiter)
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession,
+                     options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = SceneDelegate.self
+        return configuration
+    }
+
     // Push bei Gästebestellungen (GuestPush): Token von Apple an Firestore weitergeben
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         GuestPush.didRegister(deviceToken: deviceToken)
@@ -39,6 +47,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
 }
 
+/// Fehler beim Öffnen der Datenbank (nil = alles in Ordnung)
+enum StoreProblem {
+    static var message: String?
+}
+
 @main
 struct mgPizza_mk1App: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -56,7 +69,12 @@ struct mgPizza_mk1App: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // Datenbank lässt sich nicht öffnen (z. B. nach einer unpassenden Modelländerung): nicht abstürzen,
+            // sondern vorübergehend ohne gespeicherte Daten starten und oben einen Hinweis zeigen.
+            // Die Datei bleibt unangetastet, ein korrigiertes Update kann sie wieder öffnen.
+            StoreProblem.message = error.localizedDescription
+            let memory = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            return try! ModelContainer(for: schema, configurations: [memory])
         }
     }()
 
@@ -66,7 +84,6 @@ struct mgPizza_mk1App: App {
                 .environmentObject(TimerLogic())
                 .environmentObject(ovenMonitor)
         }
-//        .modelContainer(for: RecipeSetupData.self)
         .modelContainer(sharedModelContainer)
     }
 }

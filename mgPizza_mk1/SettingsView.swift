@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("doughSpeak") private var doughSpeak = false
-    @AppStorage("showDoughStatus") private var showDoughStatus = true
-    @AppStorage("mixerCapacity") private var mixerCapacity: Double = 2500
-    @AppStorage("foldColumns") private var foldColumns = 2
-    @AppStorage("foldShowNext") private var foldShowNext = false
+    @AppStorage(AppKeys.doughSpeak) private var doughSpeak = false
+    @AppStorage(AppKeys.showDoughStatus) private var showDoughStatus = true
+    @AppStorage(AppKeys.mixerCapacity) private var mixerCapacity: Double = 2500
+    @AppStorage(AppKeys.foldColumns) private var foldColumns = 2
+    @AppStorage(AppKeys.foldShowNext) private var foldShowNext = false
 
     var body: some View {
         List {
@@ -75,6 +75,15 @@ struct SettingsView: View {
                 } label: {
                     Label("Bluetooth Test (Ooni Hub)", systemImage: "antenna.radiowaves.left.and.right")
                 }
+            }
+            Section {
+                NavigationLink {
+                    IconStudioView()
+                } label: {
+                    Label("Icon studio", systemImage: "face.smiling")
+                }
+            } footer: {
+                Text("Turn a selfie into a comic-style app icon with an Italian mustache.")
             }
             Section {
                 NavigationLink {

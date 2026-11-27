@@ -18,7 +18,7 @@ struct TimerStatusView: View {
     }
 
     @EnvironmentObject var ovenMonitor: OvenMonitor
-    @AppStorage("doughSpeak") private var doughSpeak = false
+    @AppStorage(AppKeys.doughSpeak) private var doughSpeak = false
     @Query(filter: #Predicate<RecipeSetupData> { $0.kneadStepEnd != nil }) private var kneading: [RecipeSetupData]
 
     @State private var authorization: UNAuthorizationStatus = .notDetermined

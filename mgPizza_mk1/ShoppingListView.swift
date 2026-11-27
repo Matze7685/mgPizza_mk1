@@ -69,12 +69,33 @@ struct ShoppingListView: View {
                     }
                 }
             }
+            if items.contains(where: { !$0.isDone }) {
+                // Für Erinnerungen, Nachrichten oder WhatsApp: offene Einträge als Text, nach Quelle gruppiert
+                ShareLink(item: shareText, subject: Text("Shopping list")) {
+                    Label("Share list", systemImage: "square.and.arrow.up")
+                }
+            }
             if items.contains(where: \.isDone) {
                 Button("Remove checked items", systemImage: "trash", role: .destructive) {
                     items.filter(\.isDone).forEach { modelContext.delete($0) }
                 }
             }
         }
+    }
+
+    /// Noch nicht abgehakte Einträge als Text, z. B. „Salami-Abend:\n• Mozzarella – 500 g“
+    private var shareText: String {
+        groups.compactMap { group -> String? in
+            let open = group.items.filter { !$0.isDone }
+            guard !open.isEmpty else { return nil }
+            let header = group.source.isEmpty ? String(localized: "Other") : group.source
+            let lines = open.map { item in
+                let name = NSLocalizedString(item.name, comment: "")   // z. B. „Flour“ → „Mehl“
+                return item.amount.isEmpty ? "• \(name)" : "• \(name) – \(item.amount)"
+            }
+            return ([header + ":"] + lines).joined(separator: "\n")
+        }
+        .joined(separator: "\n\n")
     }
 
     private func addItem() {
@@ -116,6 +137,8 @@ struct ShoppingPickerSheet: View {
                                     .foregroundStyle(entry.isSelected ? .green : .gray)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(Text(LocalizedStringKey(entry.name)))
+                            .accessibilityAddTraits(entry.isSelected ? .isSelected : [])
                             Text(LocalizedStringKey(entry.name))
                             Spacer()
                             TextField("Amount", text: $entry.amount)

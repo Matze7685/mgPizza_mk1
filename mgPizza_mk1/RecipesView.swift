@@ -40,8 +40,14 @@ struct RecipesView: View {
             .pickerStyle(.segmented)
 
             if recipes.isEmpty {
-                ContentUnavailableView("No recipes yet", systemImage: "book",
-                                       description: Text("Create one with the + button."))
+                ContentUnavailableView {
+                    Label("No recipes yet", systemImage: "book")
+                } description: {
+                    Text("Create one with the + button.")
+                } actions: {
+                    Button("New dough") { AppRouter.shared.showNewRecipe = true }
+                        .buttonStyle(.borderedProminent)
+                }
             }
             ForEach(sortedRecipes) { recipe in
                 NavigationLink {
@@ -49,7 +55,7 @@ struct RecipesView: View {
                 } label: {
                     RecipeRow(recipe: recipe)
                 }
-                .listRowBackground(recipe.isActive ? Color.orange.opacity(0.12) : nil)
+                .listRowBackground(recipe.isActive ? Theme.doughBackground : nil)
                 .swipeActions(edge: .leading) {
                     Button("Use as template", systemImage: "doc.on.doc") {
                         templateRecipe = recipe.copyAsTemplate()
@@ -117,6 +123,18 @@ struct StarRatingView: View {
                     .onTapGesture {
                         if isEditable { rating = (rating == star ? 0 : star) }
                     }
+            }
+        }
+        // VoiceOver: ein Element „Bewertung, 3 von 5 Sternen“, mit Wischen nach oben/unten änderbar
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Rating")
+        .accessibilityValue(Text("\(rating) of 5 stars"))
+        .accessibilityAdjustableAction { direction in
+            guard isEditable else { return }
+            switch direction {
+            case .increment: rating = min(rating + 1, 5)
+            case .decrement: rating = max(rating - 1, 0)
+            @unknown default: break
             }
         }
     }

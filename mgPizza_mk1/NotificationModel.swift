@@ -70,7 +70,7 @@ enum DoughNotifications {
                 body: String(localized: "\(name): get ready to take the dough out of the fridge."))
             add(id: "\(id)-fridge", at: out,
                 title: String(localized: "Take the dough out!"),
-                body: String(localized: "\(name): take the dough out of the fridge and portion it into balls."))
+                body: "\(name): " + recipe.shapingText)
         }
         if let serving = recipe.servingDate {
             add(id: "\(id)-serving", at: serving,

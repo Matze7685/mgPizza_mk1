@@ -269,7 +269,7 @@ extension RecipeSetupData {
 
     /// Max. Teigmenge der Knetmaschine in g (Einstellungen)
     static var mixerCapacity: Double {
-        let value = UserDefaults.standard.double(forKey: "mixerCapacity")
+        let value = UserDefaults.standard.double(forKey: AppKeys.mixerCapacity)
         return value > 0 ? value : 2500
     }
 
@@ -375,6 +375,14 @@ extension RecipeSetupData {
             return "\(value) g \(item.name)"
         }
         .joined(separator: " · ")
+    }
+
+    /// Was beim Herausnehmen zu tun ist, z. B. „Teig aus dem Kühlschrank nehmen und 8 Teiglinge à 250 g formen.“
+    var shapingText: String {
+        let count = Int(doughBallsCount), grams = Int(doughWeight.rounded())
+        return isDetroit
+            ? String(localized: "Take the dough out of the fridge and spread it into \(count) pans (\(grams) g each).")
+            : String(localized: "Take the dough out of the fridge and shape \(count) dough balls of \(grams) g.")
     }
 
     /// Zutaten für die Einkaufsliste (Wasser wird ausgelassen)

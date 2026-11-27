@@ -13,12 +13,11 @@ enum MainTab: Hashable {
 }
 
 struct MainView: View {
-    @State private var isShowingNewRecipeView: Bool = false
     @State private var isShowingSettings: Bool = false
     @ObservedObject private var router = AppRouter.shared
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
-    @AppStorage("showDoughStatus") private var showDoughStatus = true
+    @AppStorage(AppKeys.showDoughStatus) private var showDoughStatus = true
     @Query(filter: #Predicate<RecipeSetupData> { $0.isStarted == true || $0.isInProgress == true })
     private var activeRecipes: [RecipeSetupData]
     
@@ -48,9 +47,20 @@ struct MainView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .showShoppingList)) { _ in router.selectedTab = .shopping }
             .safeAreaInset(edge: .top, spacing: 0) {
-                // Nicht auf der Startseite: dort steht der Teigstatus schon groß in der Karte
-                if showDoughStatus && router.selectedTab != .activity {
-                    DoughStatusBar().padding(.vertical, 4)   // oben angeheftet, in Rezepten und Karte
+                VStack(spacing: 0) {
+                    if let problem = StoreProblem.message {
+                        // Datenbank ließ sich nicht öffnen: App läuft ohne gespeicherte Daten
+                        Label("Saved data could not be opened. Changes are not kept. (\(problem))",
+                              systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.red.opacity(0.15))
+                    }
+                    // Nicht auf der Startseite: dort steht der Teigstatus schon groß in der Karte
+                    if showDoughStatus && router.selectedTab != .activity {
+                        DoughStatusBar().padding(.vertical, 4)   // oben angeheftet, in Rezepten und Karte
+                    }
                 }
             }
             // Laufende Timer in die Dynamic Island schieben, sobald die App verlassen wird
@@ -59,6 +69,8 @@ struct MainView: View {
                 if phase != .active {
                     try? modelContext.save()   // Timer-Stand sichern, falls iOS die App im Hintergrund beendet
                     moveTimersToDynamicIsland()
+                    AppRouter.updateShortcuts()
+                    WidgetSnapshot.update(context: modelContext)
                 }
             }
             .toolbar {
@@ -69,7 +81,7 @@ struct MainView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("New Recipe", systemImage: "plus") {
-                        isShowingNewRecipeView.toggle()
+                        router.showNewRecipe = true
                     }
                 }
             }
@@ -79,6 +91,7 @@ struct MainView: View {
             .onAppear {
                 SeedImporter.importIfNeeded(into: modelContext)
                 DoughAnnouncer.shared.start(context: modelContext)
+                AppRouter.updateShortcuts()
             }
             .sheet(isPresented: $isShowingSettings) {
                 NavigationStack {
@@ -90,8 +103,12 @@ struct MainView: View {
                         }
                 }
             }
-            .sheet(isPresented: $isShowingNewRecipeView) {
-                RecipeContainerView(recipeSetupData: RecipeSetupData(), isShowingNewRecipeView: $isShowingNewRecipeView)
+            .sheet(isPresented: $router.showNewRecipe) {
+                RecipeContainerView(recipeSetupData: RecipeSetupData(), isShowingNewRecipeView: $router.showNewRecipe)
+            }
+            // Schnellaktion „Geteilte Ansicht“
+            .fullScreenCover(isPresented: $router.showFoldView) {
+                OrdersFoldView()
             }
         }
     }

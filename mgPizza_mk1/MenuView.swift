@@ -9,15 +9,12 @@ import SwiftUI
 /// Tab „Anlass“: alle Anlässe auf einen Blick, neuen Anlass anlegen. Pizzen und Mengen liegen im Untermenü.
 struct EventsView: View {
     @Environment(\.modelContext) private var modelContext
-    @AppStorage("menuEventID") private var eventID = ""
-    @AppStorage("menuTitle") private var menuTitle = ""
-    @AppStorage("menuDate") private var menuDate: Double = Date().timeIntervalSince1970
-    @AppStorage("guestNames") private var guestNames = ""
-    @AppStorage("guestIntro") private var intro = ""
-    @AppStorage("guestOrdersClosed") private var ordersClosed = false
-    @AppStorage("menuHiddenPizzas") private var hiddenText = ""
-    @AppStorage("menuEventDone") private var isDone = false
-    @AppStorage("menuFixedMode") private var isFixed = false
+    @AppStorage(AppKeys.menuEventID) private var eventID = ""
+    @AppStorage(AppKeys.menuTitle) private var menuTitle = ""
+    @AppStorage(AppKeys.menuDate) private var menuDate: Double = Date().timeIntervalSince1970
+    @AppStorage(AppKeys.guestNames) private var guestNames = ""
+    @AppStorage(AppKeys.guestIntro) private var intro = ""
+    @AppStorage(AppKeys.guestOrdersClosed) private var ordersClosed = false
     @State private var evenings: [GuestEvening] = []
     @State private var showingNew = false
     @State private var created: GuestEvening?
@@ -37,6 +34,10 @@ struct EventsView: View {
                 if evenings.isEmpty {
                     Text("Create your first event: name and date. Then add the guests and publish the menu.")
                 }
+            }
+            if evenings.isEmpty {
+                ContentUnavailableView("No events yet", systemImage: "party.popper",
+                                       description: Text("A pizza night, a birthday, a team lunch: plan the pizzas, invite guests and collect their orders."))
             }
             if !upcoming.isEmpty {
                 Section("Upcoming") { ForEach(upcoming) { row($0) } }
@@ -85,6 +86,13 @@ struct EventsView: View {
             MenuPizza.addGratedCheeseIfNeeded(into: modelContext)
         }
         .onChange(of: openEvening) { _, open in if open == nil { reload() } }
+        // Schnellaktion „Bestellungen“: aktuellen Anlass öffnen
+        .onReceive(AppRouter.shared.$openEventID) { id in
+            guard let id, !id.isEmpty else { return }
+            reload()
+            if let evening = evenings.first(where: { $0.id == id }) { openEvening = evening }
+            AppRouter.shared.openEventID = nil
+        }
     }
 
     private func row(_ evening: GuestEvening) -> some View {
@@ -151,16 +159,7 @@ struct EventsView: View {
         if evening.publishedAt != nil { try? await GuestOrderService.current.deleteEvent(id: evening.id) }
         GuestEvenings.remove(id: evening.id)
         if evening.id == eventID {
-            // Der gelöschte Anlass war der aktuelle: leer weitermachen
-            eventID = ""
-            menuTitle = ""
-            guestNames = ""
-            intro = ""
-            ordersClosed = false
-            hiddenText = ""
-            isDone = false
-            isFixed = false
-            UserDefaults.standard.removeObject(forKey: "menuFixedExtras")
+            CurrentEvent.clear()   // Der gelöschte Anlass war der aktuelle: leer weitermachen
         }
         reload()
     }
@@ -185,17 +184,17 @@ struct EventDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
     @Query private var sauces: [SauceRecipe]
-    @AppStorage("menuEventID") private var eventID = ""
-    @AppStorage("menuTitle") private var menuTitle = ""
-    @AppStorage("menuDate") private var menuDate: Double = Date().timeIntervalSince1970
-    @AppStorage("guestNames") private var guestNames = ""
-    @AppStorage("guestIntro") private var intro = ""
-    @AppStorage("guestOrdersClosed") private var ordersClosed = false
-    @AppStorage("menuHiddenPizzas") private var hiddenText = ""
-    @AppStorage("menuEventDone") private var isDone = false
-    @AppStorage("menuFixedMode") private var isFixed = false
+    @AppStorage(AppKeys.menuEventID) private var eventID = ""
+    @AppStorage(AppKeys.menuTitle) private var menuTitle = ""
+    @AppStorage(AppKeys.menuDate) private var menuDate: Double = Date().timeIntervalSince1970
+    @AppStorage(AppKeys.guestNames) private var guestNames = ""
+    @AppStorage(AppKeys.guestIntro) private var intro = ""
+    @AppStorage(AppKeys.guestOrdersClosed) private var ordersClosed = false
+    @AppStorage(AppKeys.menuHiddenPizzas) private var hiddenText = ""
+    @AppStorage(AppKeys.menuEventDone) private var isDone = false
+    @AppStorage(AppKeys.menuFixedMode) private var isFixed = false
     /// Feste Mengen: Extras pro Sorte als JSON (Pizza-Name -> Extras)
-    @AppStorage("menuFixedExtras") private var fixedExtrasJSON = ""
+    @AppStorage(AppKeys.menuFixedExtras) private var fixedExtrasJSON = ""
     @State private var choosingExtras: MenuPizza?
     @State private var orders: [GuestOrder] = []
     @State private var publishedAt: Date?
@@ -211,6 +210,10 @@ struct EventDetailView: View {
     @State private var confirmingDelete = false
     @State private var editingPizza: MenuPizza?
     @State private var pdfURL: URL?
+    /// Pizzaabend-Assistent: vorbereitetes Teigrezept für diesen Anlass
+    @State private var plannedDough: RecipeSetupData?
+    @Query(sort: \RecipeSetupData.createdAt, order: .reverse) private var doughRecipes: [RecipeSetupData]
+    @Environment(\.scenePhase) private var scenePhase
 
     private var service: GuestOrderService { .current }
     private var guests: [String] {
@@ -290,6 +293,22 @@ struct EventDetailView: View {
             publishedAt = GuestEvenings.all.first { $0.id == evening.id }?.publishedAt
             // Bei festen Mengen keine Gästebestellungen übernehmen (würden die Mengen überschreiben)
             if isPublished && !isFixed { await loadOrders(updateShopping: false) }
+            // Solange der Anlass offen ist, jede Minute neue Bestellungen holen (kein Knopfdruck nötig)
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                guard !Task.isCancelled else { break }
+                if isPublished && !isFixed && !isPast && !isBusy && scenePhase == .active {
+                    await loadOrders(updateShopping: false)
+                }
+            }
+        }
+        // Nach unten ziehen: Bestellungen sofort holen
+        .refreshable {
+            if isPublished && !isFixed { await loadOrders(updateShopping: true) }
+        }
+        .sheet(item: $plannedDough) { recipe in
+            RecipeContainerView(recipeSetupData: recipe,
+                                isShowingNewRecipeView: Binding { plannedDough != nil } set: { if !$0 { plannedDough = nil } })
         }
         // Jede Änderung gleich in der Übersicht speichern
         .onChange(of: current) { _, new in if new.id == evening.id { GuestEvenings.upsert(new) } }
@@ -564,7 +583,7 @@ struct EventDetailView: View {
         } header: {
             Text("4 · Orders")
         } footer: {
-            Text("Orders from the guest page are counted automatically. Without guest page: enter the counts by hand under “Pizzas ordered”. Swipe an order to release it for a new phone or to delete it.")
+            Text("New orders arrive automatically every minute while this page is open, or pull down to refresh. Without guest page: enter the counts by hand under “Pizzas ordered”. Swipe an order to release it for a new phone or to delete it.")
         }
     }
 
@@ -577,6 +596,13 @@ struct EventDetailView: View {
                 updateShoppingList()
                 AppRouter.shared.selectedTab = .shopping
             }
+            // Pizzaabend-Assistent: passender Teig mit Servierzeit = Anlass
+            if roundCount > 0 {
+                Button("Plan dough: \(roundCount) dough balls", systemImage: "wand.and.stars") { planDough(detroit: false) }
+            }
+            if detroitCount > 0 {
+                Button("Plan dough: \(detroitCount) Detroit pans", systemImage: "wand.and.stars") { planDough(detroit: true) }
+            }
             Button("Reset orders", systemImage: "arrow.counterclockwise", role: .destructive) { resetOrderCounts() }
         } header: {
             Text("Needed toppings")
@@ -587,6 +613,31 @@ struct EventDetailView: View {
                 Text("Dough: \(roundCount) dough balls, \(detroitCount) Detroit pans – create the dough recipe with the + button.")
             }
         }
+    }
+
+    /// Teig für diesen Anlass vorbereiten: bestes bisheriges Rezept des Stils als Vorlage,
+    /// Anzahl aus den Bestellungen, Servieren zum Datum des Anlasses. Öffnet die Teig-Einstellungen zum Prüfen.
+    private func planDough(detroit: Bool) {
+        let sameStyle = doughRecipes.filter { $0.isDetroit == detroit }
+        let base = sameStyle.max { ($0.rating, $0.createdAt) < ($1.rating, $1.createdAt) }
+        let recipe = base?.copyAsTemplate() ?? RecipeSetupData()
+        if base == nil && detroit {
+            recipe.style = "detroit"
+            recipe.waterRatio = 72
+            recipe.saltRatio = 2.5
+            recipe.oilRatio = 2
+            recipe.kneadSteps = KneadStep.plan(forStyle: "detroit")
+            recipe.applyDetroitWeight()
+        }
+        recipe.doughBallsCount = Double(max(detroit ? detroitCount : roundCount, 1))
+        recipe.name = detroit ? "\(title) · Detroit" : title
+        // Zeitplan nach Uhrzeit: Servieren = Anlass, raus aus dem Kühlschrank = Servieren − Raumgare
+        let serving = max(date, Date().addingTimeInterval(3600))
+        recipe.dateSelection = serving
+        recipe.fridgeOutSelection = max(Date(), serving.addingTimeInterval(-recipe.roomTime * 3600))
+        recipe.fridgeTimeMode = "OUT"
+        recipe.roomTime = max(0, serving.timeIntervalSince(recipe.fridgeOutSelection) / 3600)
+        plannedDough = recipe
     }
 
     private func number(of pizza: MenuPizza) -> Int? {
@@ -816,821 +867,11 @@ struct EventDetailView: View {
             do { try await service.deleteEvent(id: eventID) } catch { status = error.localizedDescription; return }
         }
         GuestEvenings.remove(id: eventID)
-        eventID = ""
-        menuTitle = ""
-        guestNames = ""
-        intro = ""
-        ordersClosed = false
-        hiddenText = ""
-        isDone = false
-        isFixed = false
-        fixedExtrasJSON = ""
+        CurrentEvent.clear()
         resetOrderCounts()
         dismiss()
     }
 }
-
-/// Gäste von früheren Anlässen übernehmen: alle eines Anlasses oder einzelne Namen
-struct GuestPickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    var evenings: [GuestEvening]
-    var existing: [String]
-    var onAdd: ([String]) -> Void
-    @State private var selected: Set<String> = []
-
-    private func isNew(_ name: String) -> Bool {
-        !existing.contains { $0.caseInsensitiveCompare(name) == .orderedSame }
-    }
-
-    /// Alle bekannten Namen, die noch nicht auf der Liste stehen
-    private var names: [String] {
-        var seen: [String] = []
-        for name in evenings.sorted(by: { $0.date > $1.date }).flatMap(\.guests)
-        where isNew(name) && !seen.contains(where: { $0.caseInsensitiveCompare(name) == .orderedSame }) {
-            seen.append(name)
-        }
-        return seen.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-    }
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section("All guests of an event") {
-                    ForEach(evenings.filter { !$0.guests.isEmpty }.sorted { $0.date > $1.date }) { evening in
-                        Button {
-                            selected.formUnion(evening.guests.filter(isNew))
-                        } label: {
-                            LabeledContent(evening.title, value: "\(evening.guests.count)")
-                        }
-                        .foregroundStyle(.primary)
-                    }
-                }
-                Section("Single guests") {
-                    ForEach(names, id: \.self) { name in
-                        Button {
-                            if selected.contains(name) { selected.remove(name) } else { selected.insert(name) }
-                        } label: {
-                            HStack {
-                                Image(systemName: selected.contains(name) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(selected.contains(name) ? .green : .gray)
-                                Text(name).foregroundStyle(.primary)
-                            }
-                        }
-                    }
-                    if names.isEmpty {
-                        Text("All earlier guests are already on the list.").foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .navigationTitle("Earlier guests")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add (\(selected.count))") {
-                        onAdd(names.filter(selected.contains))
-                        dismiss()
-                    }
-                    .disabled(selected.isEmpty)
-                }
-            }
-        }
-    }
-}
-
-/// Neuen Anlass anlegen: nur Name und Datum (Text optional). Danach geht es direkt zu Gästen und Speisekarte.
-struct NewEventSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    var onCreate: (String, Date, String, Bool) -> Void
-
-    @State private var title = ""
-    @State private var fixed = false
-    @State private var date = Calendar.current.date(bySettingHour: 19, minute: 0, second: 0, of: .now) ?? .now
-    @State private var intro = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name of the event, e.g. Anna's 40th", text: $title)
-                    DatePicker("Date", selection: $date)
-                    if !fixed {
-                        TextField("Welcome text for guests (optional)", text: $intro, axis: .vertical).lineLimit(1...4)
-                    }
-                }
-                Section {
-                    PlanModePicker(isFixed: $fixed)
-                } footer: {
-                    if fixed {
-                        Text("Next you set how many of each pizza you make, e.g. 5× Salami and 5× Tuna. No guest list needed.")
-                    } else {
-                        Text("Next you add the guests and publish the menu.")
-                    }
-                }
-            }
-            .navigationTitle("New event")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        onCreate(title.trimmingCharacters(in: .whitespaces), date,
-                                 fixed ? "" : intro.trimmingCharacters(in: .whitespacesAndNewlines), fixed)
-                        dismiss()
-                    }
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
-}
-
-/// Feste Mengen: Zusatzzutaten für eine Sorte ankreuzen (Liste „Zusatzmengen pro Pizza“, Mengen kommen von dort)
-struct ExtrasPickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let pizza: MenuPizza
-    @State var selected: Set<String>
-    var onSave: ([String]) -> Void
-
-    /// Gespeicherte Zusatzzutaten ohne das, was schon auf der Pizza ist
-    private var options: [String] {
-        var seen = Set<String>()
-        let own = pizza.toppings.map { $0.name.lowercased() }
-        return (ExtraDefaults.all.map(\.name) + MenuPizza.alwaysOfferedExtras + selected.sorted())
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { name in
-                let key = name.lowercased()
-                guard !key.isEmpty, !seen.contains(key) else { return false }
-                seen.insert(key)
-                return !own.contains { $0 == key || $0.hasPrefix(key + " ") || $0.hasPrefix(key + "(") }
-            }
-            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
-    }
-
-    var body: some View {
-        NavigationStack {
-            // Zwei Spalten, alphabetisch (wie auf der Gästeseite)
-            ScrollView {
-                LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
-                          alignment: .leading, spacing: 14) {
-                    ForEach(options, id: \.self) { name in
-                        Button {
-                            if selected.contains(name) { selected.remove(name) } else { selected.insert(name) }
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: selected.contains(name) ? "checkmark.circle.fill" : "circle")
-                                    .font(.title3).foregroundStyle(selected.contains(name) ? .green : .gray)
-                                Text(name).foregroundStyle(.primary).lineLimit(2)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Extras for \(pizza.name)")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        onSave(options.filter { selected.contains($0) })
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
-}
-
-/// Wie werden die Pizzen eines Anlasses geplant: Gäste bestellen selbst oder feste Mengen pro Sorte
-struct PlanModePicker: View {
-    @Binding var isFixed: Bool
-
-    var body: some View {
-        Picker("Pizzas", selection: $isFixed) {
-            Text("Guests order").tag(false)
-            Text("Fixed quantities").tag(true)
-        }
-        .pickerStyle(.segmented)
-    }
-}
-
-/// Untermenü „Pizzen & Mengen“: auswählbare Pizzen, Belag, Zusatzmengen und Einstellungen der Gästeseite (ändert sich selten)
-struct MenuSettingsView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \MenuPizza.sortIndex) private var pizzas: [MenuPizza]
-    @AppStorage("fbProject") private var project = GuestFirebaseDefaults.project
-    @AppStorage("fbKey") private var apiKey = GuestFirebaseDefaults.apiKey
-    @AppStorage("guestPageURL") private var pageURL = GuestFirebaseDefaults.pageURL
-    @AppStorage(GuestPush.enabledKey) private var pushEnabled = false
-    @AppStorage(GuestPush.statusKey) private var pushStatus = ""
-    @State private var editingPizza: MenuPizza?
-    @State private var isShowingToppingAmounts = false
-    @State private var isShowingNewPizza = false
-
-    private var planPizzas: [MenuPizza] { pizzas.filter { !$0.isGuestCustom } }
-
-    var body: some View {
-        List {
-            Section {
-                ForEach(planPizzas) { pizza in
-                    MenuPizzaRow(pizza: pizza, number: nil, showsOrders: false) { editingPizza = pizza }
-                }
-                .onDelete { offsets in
-                    let list = planPizzas
-                    offsets.forEach { modelContext.delete(list[$0]) }
-                }
-                Button("Add pizza", systemImage: "plus") { isShowingNewPizza = true }
-            } header: {
-                Text("Available pizzas")
-            } footer: {
-                Text("Toggle the circle to make a pizza available. Tap a pizza to edit its toppings. For each event you can still untick single pizzas.")
-            }
-
-            Section {
-                Button("Topping amounts for all pizzas", systemImage: "scalemass") { isShowingToppingAmounts = true }
-                NavigationLink { ExtraDefaultsEditor() } label: {
-                    Label("Extra amounts per pizza", systemImage: "plus.square.on.square")
-                }
-            } header: {
-                Text("Amounts")
-            } footer: {
-                Text("Change e.g. the tomato sauce once and every pizza gets the new amount. Extra amounts: how much one pizza needs when a guest adds an ingredient.")
-            }
-
-            Section {
-                Toggle("Push for guest orders", systemImage: "bell.badge", isOn: $pushEnabled)
-                    .onChange(of: pushEnabled) { _, on in Task { on ? await GuestPush.enable() : await GuestPush.disable() } }
-                if pushEnabled && !pushStatus.isEmpty {
-                    Text(pushStatus).font(.caption).foregroundStyle(.secondary)
-                }
-                // Alles vorbelegt: normalerweise nichts zu tun. Nur für ein eigenes Firebase-Projekt oder eine andere Adresse.
-                DisclosureGroup("Advanced (already set up)") {
-                    TextField("Firebase project ID", text: $project).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("Firebase API key", text: $apiKey).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("Guest page address (https://…)", text: $pageURL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .keyboardType(.URL)
-                    Button("Reset to defaults", systemImage: "arrow.uturn.backward") {
-                        project = GuestFirebaseDefaults.project
-                        apiKey = GuestFirebaseDefaults.apiKey
-                        pageURL = GuestFirebaseDefaults.pageURL
-                    }
-                }
-            } header: {
-                Text("Guest page")
-            } footer: {
-                Text("A notification on this iPhone when a guest orders, changes or deletes an order. Needs Pizza-Push on the Mac mini (hosting/mac-mini/pizza-push).")
-            }
-        }
-        .navigationTitle("Pizzas & amounts")
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $isShowingToppingAmounts) {
-            ToppingAmountsEditor(pizzas: planPizzas)
-        }
-        .sheet(isPresented: $isShowingNewPizza) {
-            NewPizzaSheet(pizzas: planPizzas, nextSortIndex: (pizzas.map(\.sortIndex).max() ?? 0) + 1)
-        }
-        .onAppear { MenuPizza.addGratedCheeseIfNeeded(into: modelContext) }
-        .sheet(item: $editingPizza) { pizza in
-            MenuPizzaEditor(pizza: pizza)
-        }
-    }
-}
-
-extension MenuPizza {
-    /// Belag aller Bestellungen zusammengerechnet (gleicher Name + Einheit)
-    /// - Parameter sauce: Mit Saucenrezept wird die Tomatensauce in ihre Zutaten aufgeteilt (für die Einkaufsliste)
-    static func aggregatedToppings(of onMenu: [MenuPizza], sauce: SauceRecipe? = nil) -> [(key: String, name: String, amount: Double, unit: String)] {
-        var totals: [String: (name: String, amount: Double, unit: String)] = [:]
-        var order: [String] = []
-        // Gleiche Zutat zusammenrechnen, auch wenn sie unterschiedlich heißt („Cooked ham“ ↔ „Schinken“,
-        // „Mozzarella (fior di latte)“ ↔ „Mozzarella“) oder in anderer Einheit steht (g ↔ Stück).
-        func addPlain(_ name: String, _ amount: Double, _ unit: String) {
-            var key = "\(name.lowercased())|\(unit)"
-            var amount = amount
-            if totals[key] == nil, let match = existingKey(for: name, unit: unit, in: totals, order: order) {
-                key = match.key
-                if match.unit != unit, let converted = convert(amount, from: unit, to: match.unit, name: name) { amount = converted }
-            }
-            if totals[key] == nil { order.append(key) }
-            totals[key, default: (name, 0, unit)].amount += amount
-        }
-        func add(_ name: String, _ amount: Double, _ unit: String) {
-            if let sauce, isTomatoSauce(name), unit == "g" || unit == "ml" {
-                for part in sauce.parts(forSauce: amount) where part.amount > 0 { addPlain(part.name, part.amount, part.unit) }
-            } else {
-                addPlain(name, amount, unit)
-            }
-        }
-        for pizza in onMenu where pizza.orderCount > 0 {
-            for topping in pizza.toppings {
-                let count = max(0, pizza.orderCount - (pizza.removedToppings[topping.name] ?? 0))
-                if count > 0 { add(topping.name, topping.amount * Double(count), topping.unit) }
-            }
-        }
-        // Zusatzzutaten der Gäste mit Standardmenge pro Pizza (Einstellung „Extra amounts per pizza“)
-        for pizza in onMenu where pizza.orderCount > 0 {
-            for (name, count) in pizza.guestExtras.sorted(by: { $0.key < $1.key }) where count > 0 {
-                let standard = ExtraDefaults.amount(for: name)
-                add(name, standard.amount * Double(count), standard.unit)
-            }
-        }
-        return order.compactMap { key -> (key: String, name: String, amount: Double, unit: String)? in
-            guard let item = totals[key] else { return nil }
-            return (key, item.name, item.amount, item.unit)
-        }
-    }
-
-    private static func normalized(_ name: String) -> String {
-        // Namen im Belag sind oft englische Schlüssel („Cooked ham“), die App zeigt sie übersetzt („Schinken“)
-        Bundle.main.localizedString(forKey: name, value: nil, table: nil)
-            .lowercased().replacingOccurrences(of: "\\(.*?\\)", with: "", options: .regularExpression)
-            .trimmingCharacters(in: .whitespaces)
-    }
-
-    /// „Tomatensauce“, „Tomato sauce“, „Pizzasauce“ …
-    static func isTomatoSauce(_ name: String) -> Bool {
-        let text = normalized(name).replacingOccurrences(of: " ", with: "")
-        return ["tomatensauce", "tomatosauce", "pizzasauce", "tomatensoße", "tomatensosse"].contains { text.contains($0) }
-    }
-
-    /// Menge für die Einkaufsliste: Gramm/ml ganz, Stück aufgerundet
-    static func shoppingAmount(_ amount: Double, unit: String) -> String {
-        switch unit {
-        case "g", "ml": return formatted(amount >= 10 ? amount.rounded() : (amount * 10).rounded() / 10, unit: unit)
-        case "pcs": return formatted(amount.rounded(.up), unit: unit)
-        default: return formatted((amount * 4).rounded(.up) / 4, unit: unit)
-        }
-    }
-
-    /// Alle Zutaten der bestellten Pizzen für die Einkaufsliste (Tomatensauce nach Rezept aufgeteilt)
-    static func shoppingItems(of pizzas: [MenuPizza], sauce: SauceRecipe?) -> [(String, String)] {
-        aggregatedToppings(of: pizzas, sauce: sauce).map { ($0.name, shoppingAmount($0.amount, unit: $0.unit)) }
-    }
-
-    private static func words(_ name: String) -> [String] {
-        name.split(whereSeparator: { $0 == " " || $0 == "-" || $0 == "/" }).map(String.init)
-    }
-
-    /// Schon vorhandener Eintrag für dieselbe Zutat (Namen enthalten sich gegenseitig); gleiche Einheit hat Vorrang
-    private static func existingKey(for name: String, unit: String, in totals: [String: (name: String, amount: Double, unit: String)],
-                                    order: [String]) -> (key: String, unit: String)? {
-        let wanted = normalized(name)
-        guard !wanted.isEmpty else { return nil }
-        let matches = order.compactMap { key -> (key: String, unit: String)? in
-            guard let item = totals[key] else { return nil }
-            let have = normalized(item.name)
-            // ganze Wörter vergleichen: „Oliven“ passt zu „Schwarze Oliven“, „Tomaten“ aber nicht zu „Tomatensauce“
-            let haveWords = Set(words(have)), wantedWords = Set(words(wanted))
-            guard !haveWords.isEmpty, haveWords.isSubset(of: wantedWords) || wantedWords.isSubset(of: haveWords) else { return nil }
-            // andere Einheit nur, wenn umrechenbar
-            if item.unit != unit, convert(1, from: unit, to: item.unit, name: name) == nil { return nil }
-            return (key, item.unit)
-        }
-        return matches.first { $0.unit == unit } ?? matches.first
-    }
-
-    /// Gewicht eines Stücks in Gramm für gängige Zutaten (zum Umrechnen zwischen g und Stück)
-    private static let pieceGrams: [String: Double] = ["zwiebel": 150, "onion": 150, "knoblauch": 5, "garlic": 5,
-                                                       "ei": 60, "egg": 60, "tomate": 100, "paprika": 150]
-
-    private static func convert(_ amount: Double, from: String, to: String, name: String) -> Double? {
-        let words = normalized(name).split(whereSeparator: { $0 == " " || $0 == "-" }).map(String.init)
-        guard let grams = pieceGrams.first(where: { words.contains($0.key) })?.value else { return nil }
-        switch (from, to) {
-        case ("g", "pcs"): return amount / grams
-        case ("pcs", "g"): return amount * grams
-        default: return nil
-        }
-    }
-}
-
-struct MenuPizzaRow: View {
-    @Bindable var pizza: MenuPizza
-    var number: Int?
-    var showsOrders = true
-    var onEdit: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            if !showsOrders {
-                Button {
-                    pizza.isOnMenu.toggle()
-                } label: {
-                    Image(systemName: pizza.isOnMenu ? "checkmark.circle.fill" : "circle")
-                        .font(.title3)
-                        .foregroundStyle(pizza.isOnMenu ? .green : .gray)
-                }
-                .buttonStyle(.plain)
-            }
-
-            Button(action: onEdit) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text((number.map { "\($0). " } ?? "") + pizza.name).font(.headline)
-                    if !pizza.toppingsText.isEmpty {
-                        Text(pizza.toppingsText).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-
-            if showsOrders {
-                Stepper("\(pizza.orderCount)", value: $pizza.orderCount, in: 0...99)
-                    .fixedSize()
-                    .monospacedDigit()
-            }
-        }
-        .opacity(pizza.isOnMenu || showsOrders ? 1 : 0.5)
-    }
-}
-
-/// Belagmengen für alle Pizzen auf einmal: Jede Zutat steht einmal da, eine Änderung gilt für jede Pizza mit dieser Zutat.
-struct ToppingAmountsEditor: View {
-    @Environment(\.dismiss) private var dismiss
-    var pizzas: [MenuPizza]
-
-    private struct ToppingGroup: Identifiable {
-        var id: String { key }
-        var key: String
-        var name: String
-        var unit: String
-        var count: Int
-    }
-
-    private static func key(_ topping: Topping) -> String {
-        "\(topping.name.trimmingCharacters(in: .whitespaces).lowercased())|\(topping.unit)"
-    }
-
-    private var groups: [ToppingGroup] {
-        var result: [ToppingGroup] = []
-        for topping in pizzas.flatMap(\.toppings) where !topping.name.trimmingCharacters(in: .whitespaces).isEmpty {
-            let key = Self.key(topping)
-            if let index = result.firstIndex(where: { $0.key == key }) {
-                result[index].count += 1
-            } else {
-                result.append(ToppingGroup(key: key, name: topping.name, unit: topping.unit, count: 1))
-            }
-        }
-        return result
-    }
-
-    private func amounts(of key: String) -> [Double] {
-        pizzas.flatMap(\.toppings).filter { Self.key($0) == key }.map(\.amount)
-    }
-
-    /// Häufigste Menge anzeigen; beim Ändern bekommen alle Pizzen mit dieser Zutat die neue Menge
-    private func binding(for key: String) -> Binding<Double> {
-        Binding {
-            let values = amounts(of: key)
-            let counts = Dictionary(values.map { ($0, 1) }, uniquingKeysWith: +)
-            return counts.max { $0.value == $1.value ? $0.key > $1.key : $0.value < $1.value }?.key ?? 0
-        } set: { newValue in
-            for pizza in pizzas {
-                var toppings = pizza.toppings
-                var changed = false
-                for index in toppings.indices where Self.key(toppings[index]) == key && toppings[index].amount != newValue {
-                    toppings[index].amount = newValue
-                    changed = true
-                }
-                if changed { pizza.toppings = toppings }
-            }
-        }
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    ForEach(groups) { group in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(group.name)
-                                if Set(amounts(of: group.key)).count > 1 {
-                                    Text("On \(group.count) pizzas, amounts differ")
-                                        .font(.caption).foregroundStyle(.orange)
-                                } else {
-                                    Text("On \(group.count) pizzas")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
-                            }
-                            Spacer()
-                            AmountField(value: binding(for: group.key))
-                            Text(LocalizedStringKey(group.unit)).foregroundStyle(.secondary)
-                        }
-                    }
-                } footer: {
-                    Text("Amount per pizza. A change applies to every pizza with this topping; you can still change single pizzas afterwards.")
-                }
-            }
-            .navigationTitle("Topping amounts")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
-            }
-        }
-    }
-}
-
-/// Neue Pizza: alle bisherigen Zutaten zum Ankreuzen mit Menge, optional eine andere Pizza als Vorlage
-struct NewPizzaSheet: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-    var pizzas: [MenuPizza]
-    var nextSortIndex: Int
-
-    private struct Choice: Identifiable {
-        var id = UUID()
-        var key: String
-        var name: String
-        var unit: String
-        var amount: Double
-        var selected = false
-        /// Selbst hinzugefügte Zutat (Name und Einheit frei wählbar)
-        var isCustom: Bool { key.hasPrefix("custom-") }
-    }
-
-    @State private var name = ""
-    @State private var template: PersistentIdentifier?
-    @State private var choices: [Choice] = []
-    @State private var didLoad = false
-
-    private static func key(_ name: String, _ unit: String) -> String {
-        "\(name.trimmingCharacters(in: .whitespaces).lowercased())|\(unit)"
-    }
-
-    /// Jede bisher verwendete Zutat einmal, mit der häufigsten Menge
-    private func loadChoices() {
-        var amounts: [String: [Double]] = [:]
-        var result: [Choice] = []
-        for topping in pizzas.flatMap(\.toppings) where !topping.name.trimmingCharacters(in: .whitespaces).isEmpty {
-            let key = Self.key(topping.name, topping.unit)
-            if amounts[key] == nil {
-                result.append(Choice(key: key, name: topping.name, unit: topping.unit, amount: topping.amount))
-            }
-            amounts[key, default: []].append(topping.amount)
-        }
-        for index in result.indices {
-            let counts = Dictionary((amounts[result[index].key] ?? []).map { ($0, 1) }, uniquingKeysWith: +)
-            if let common = counts.max(by: { $0.value == $1.value ? $0.key > $1.key : $0.value < $1.value })?.key {
-                result[index].amount = common
-            }
-        }
-        // Reibekäse gehört auf jede Pizza: vorhandenen Eintrag (egal wie er heißt) vorauswählen, nur wenn keiner da ist neu anbieten
-        if let index = result.firstIndex(where: { MenuPizza.isGratedCheese($0.name) }) {
-            result[index].selected = true
-        } else {
-            let cheese = MenuPizza.gratedCheese
-            result.append(Choice(key: Self.key(cheese.name, cheese.unit), name: cheese.name, unit: cheese.unit,
-                                 amount: cheese.amount, selected: true))
-        }
-        // Reibekäse und Mozzarella ganz oben, der Rest alphabetisch
-        choices = result.sorted { a, b in
-            let rankA = Self.rank(a.name), rankB = Self.rank(b.name)
-            if rankA != rankB { return rankA < rankB }
-            return Self.displayName(a.name).localizedStandardCompare(Self.displayName(b.name)) == .orderedAscending
-        }
-    }
-
-    private static func rank(_ name: String) -> Int {
-        if MenuPizza.isGratedCheese(name) { return 0 }
-        if displayName(name).lowercased().contains("mozzarella") { return 1 }
-        return 2
-    }
-
-    /// Angezeigter Name (Belag-Namen sind teils englische Schlüssel, z. B. „Cooked ham“ → „Schinken“)
-    private static func displayName(_ name: String) -> String {
-        Bundle.main.localizedString(forKey: name, value: nil, table: nil)
-    }
-
-    /// Belag der Vorlage übernehmen: genau diese Zutaten mit ihren Mengen anhaken (Liste bleibt alphabetisch)
-    private func apply(template id: PersistentIdentifier?) {
-        guard let pizza = pizzas.first(where: { $0.persistentModelID == id }) else { return }
-        for index in choices.indices { choices[index].selected = false }
-        for topping in pizza.toppings where !topping.name.trimmingCharacters(in: .whitespaces).isEmpty {
-            let key = Self.key(topping.name, topping.unit)
-            if let index = choices.firstIndex(where: { $0.key == key }) {
-                choices[index].amount = topping.amount
-                choices[index].selected = true
-            }
-        }
-    }
-
-    private var selectedCount: Int { choices.filter(\.selected).count }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $name)
-                    Picker("Template", selection: $template) {
-                        Text("None").tag(PersistentIdentifier?.none)
-                        ForEach(pizzas) { pizza in
-                            Text(pizza.name).tag(Optional(pizza.persistentModelID))
-                        }
-                    }
-                } footer: {
-                    Text("With a template, its toppings and amounts are ticked. You can change everything.")
-                }
-
-                Section {
-                    ForEach($choices) { $choice in
-                        HStack {
-                            Button {
-                                choice.selected.toggle()
-                            } label: {
-                                Image(systemName: choice.selected ? "checkmark.circle.fill" : "circle")
-                                    .font(.title3)
-                                    .foregroundStyle(choice.selected ? .green : .gray)
-                            }
-                            .buttonStyle(.plain)
-                            if choice.isCustom {
-                                TextField("Topping", text: $choice.name)
-                            } else {
-                                Text(LocalizedStringKey(choice.name))
-                                    .foregroundStyle(choice.selected ? .primary : .secondary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .contentShape(Rectangle())
-                                    .onTapGesture { choice.selected.toggle() }
-                            }
-                            AmountField(value: $choice.amount)
-                            if choice.isCustom {
-                                Picker("Unit", selection: $choice.unit) {
-                                    ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { unit in
-                                        Text(LocalizedStringKey(unit)).tag(unit)
-                                    }
-                                }
-                                .labelsHidden()
-                                .fixedSize()
-                            } else {
-                                Text(LocalizedStringKey(choice.unit)).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    Button("Other topping", systemImage: "plus") {
-                        choices.append(Choice(key: "custom-\(UUID().uuidString)", name: "", unit: "g", amount: 50, selected: true))
-                    }
-                } header: {
-                    Text("Toppings per pizza")
-                } footer: {
-                    Text("All toppings of your pizzas. Tick what goes on this pizza and adjust the amount.")
-                }
-            }
-            .navigationTitle("New pizza")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Create") { create() }
-                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-            .onAppear {
-                guard !didLoad else { return }
-                didLoad = true
-                loadChoices()
-            }
-            .onChange(of: template) { _, id in apply(template: id) }
-        }
-    }
-
-    private func create() {
-        let toppings = choices
-            .filter { $0.selected && !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
-            .map { Topping(name: $0.name.trimmingCharacters(in: .whitespaces), amount: $0.amount, unit: $0.unit) }
-        let source = pizzas.first { $0.persistentModelID == template }
-        let pizza = MenuPizza(name: name.trimmingCharacters(in: .whitespaces), toppings: toppings,
-                              sortIndex: nextSortIndex, isDetroit: source?.isDetroit ?? false)
-        modelContext.insert(pizza)
-        try? modelContext.save()
-        dismiss()
-    }
-}
-
-struct MenuPizzaEditor: View {
-    @Environment(\.dismiss) private var dismiss
-    @Bindable var pizza: MenuPizza
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $pizza.name)
-                    TextField("Short description (optional)", text: $pizza.info)
-                    Toggle("Detroit (pan)", isOn: $pizza.isDetroit)
-                }
-                Section {
-                    ForEach($pizza.toppings) { $topping in
-                        HStack {
-                            TextField("Topping", text: $topping.name)
-                            AmountField(value: $topping.amount)
-                            Picker("Unit", selection: $topping.unit) {
-                                ForEach(["g", "ml", "pcs", "tsp"], id: \.self) { unit in
-                                    Text(LocalizedStringKey(unit)).tag(unit)
-                                }
-                            }
-                            .labelsHidden()
-                            .fixedSize()
-                        }
-                    }
-                    .onDelete { pizza.toppings.remove(atOffsets: $0) }
-                    .onMove { pizza.toppings.move(fromOffsets: $0, toOffset: $1) }
-                    Button("Add topping", systemImage: "plus") {
-                        pizza.toppings.append(Topping(name: "", amount: 50))
-                    }
-                } header: {
-                    Text("Toppings per pizza")
-                }
-            }
-            .navigationTitle(pizza.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { EditButton() }
-                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
-            }
-        }
-    }
-}
-
-/// Speisekarte als hübsches PDF zum Verschicken
-enum MenuPDF {
-    @MainActor
-    static func render(title: String, date: Date, pizzas: [MenuPizza]) -> URL? {
-        let card = MenuCardView(title: title, date: date,
-                                items: pizzas.map { ($0.name, $0.info, $0.toppingsText) })
-            .frame(width: 595)          // A4-Breite in Punkt
-        let renderer = ImageRenderer(content: card)
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(String(localized: "Menu")).pdf")
-        var ok = false
-        renderer.render { size, draw in
-            var box = CGRect(origin: .zero, size: CGSize(width: 595, height: max(size.height, 842)))
-            guard let context = CGContext(url as CFURL, mediaBox: &box, nil) else { return }
-            context.beginPDFPage(nil)
-            // oben ausrichten
-            context.translateBy(x: 0, y: box.height - size.height)
-            draw(context)
-            context.endPDFPage()
-            context.closePDF()
-            ok = true
-        }
-        return ok ? url : nil
-    }
-}
-
-struct MenuCardView: View {
-    var title: String
-    var date: Date
-    var items: [(name: String, info: String, toppings: String)]
-
-    var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 6) {
-                Text("🍕").font(.system(size: 48))
-                Text(title).font(.system(size: 34, weight: .bold, design: .serif))
-                Text(date, format: .dateTime.weekday(.wide).day().month(.wide).hour().minute())
-                    .font(.system(size: 16, design: .serif)).foregroundStyle(.secondary)
-            }
-            Rectangle().fill(Color.red.opacity(0.6)).frame(width: 120, height: 2)
-            VStack(alignment: .leading, spacing: 18) {
-                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                    HStack(alignment: .firstTextBaseline, spacing: 14) {
-                        Text("\(index + 1)")
-                            .font(.system(size: 20, weight: .bold, design: .serif))
-                            .foregroundStyle(.red)
-                            .frame(width: 28)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(item.name).font(.system(size: 20, weight: .semibold, design: .serif))
-                            if !item.info.isEmpty {
-                                Text(item.info).font(.system(size: 13, design: .serif)).italic().foregroundStyle(.secondary)
-                            }
-                            if !item.toppings.isEmpty {
-                                Text(item.toppings).font(.system(size: 14, design: .serif))
-                            }
-                        }
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Please reply with number × count, e.g. “1×2, 3×1”. Thanks!")
-                .font(.system(size: 13, design: .serif)).italic().foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(48)
-        .background(Color(red: 1, green: 0.98, blue: 0.94))
-        .environment(\.colorScheme, .light)
-    }
-}
-
-extension Notification.Name {
-    /// Wechselt in den Tab „Einkauf“
-    static let showShoppingList = Notification.Name("showShoppingList")
-}
-
 
 #Preview {
     NavigationStack { EventsView() }
